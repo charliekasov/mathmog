@@ -84,7 +84,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       if (difficulty === 'Easy') {
         levelUpData = {
           from: 'Easy', to: 'Medium',
-          emojis: '😊⛏️🍳🥞',
+          emojis: '😊 shovel 🍳🥞',
           title: "We're all out of easy problems because",
           allCapsTitle: 'YOU JUST ATE THEM FOR BREAKFAST',
           subtitle: "Ready for medium?",
@@ -94,7 +94,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       if (difficulty === 'Medium') {
          levelUpData = {
           from: 'Medium', to: 'Hard',
-          emojis: '💪🐓🌋',
+          emojis: '💪💃🌋',
           title: "This medium world cannot contain you",
           subtitle: "Ready for hard?",
           options: { yes: "Let's ride", no: "This is my safe space" }
