@@ -119,6 +119,7 @@ const CraftyContent = () => (
            <ul className="space-y-4 list-disc list-inside text-sm">
              <li><strong>Divisibility by 7:</strong> Double the last digit and subtract it from the rest of the number. If the result is 0 or divisible by 7, the original number is too. Repeat if necessary.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 343 → 34 - (3×2) = 28. Since 28 is divisible by 7, so is 343.</span><br/><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 672 → 67 - (2×2) = 63. Since 63 is divisible by 7, so is 672.</span></li>
              <li><strong>Divisibility by 11:</strong> Alternately add and subtract the digits from left to right. If the result is 0 or divisible by 11, the original number is too.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 8679 → 8 - 6 + 7 - 9 = 0. Divisible.</span><br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 9581 → 9 - 5 + 8 - 1 = 11. Divisible.</span><br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 2907 → 2 - 9 + 0 - 7 = -14. Not divisible.</span></li>
+             <li><strong>Divisibility by 12:</strong> If the number is divisible by both 3 and 4, it is divisible by 12.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 552 → Divisible by 3 (5+5+2=12) and 4 (last two digits, 52). So, divisible by 12.</span></li>
            </ul>
         </StudySection>
     </div>
