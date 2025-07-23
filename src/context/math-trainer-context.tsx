@@ -135,7 +135,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
                         consecutiveCorrect: 0
                     }));
                 } else {
-                     setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: newConsecutive }));
+                     setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
                 }
 
             } else if (currentDifficulty === 'Hard' && newConsecutive >= 7) {
