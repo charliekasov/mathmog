@@ -93,7 +93,7 @@ export default function ProblemDisplay() {
                 type={currentProblem.inputType} 
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
-                onKeyPress={(e) => { if (e.key === 'Enter') { if (feedback && !speedChallenge.isActive) { handleNewProblem(); } else { onCheckAnswer(); } } }}
+                onKeyPress={(e) => { if (e.key === 'Enter') { if (feedback) { handleNewProblem(); } else { onCheckAnswer(); } } }}
                 placeholder={currentProblem.placeholder || "Your answer..."}
                 className="p-4 text-xl text-center h-14"
                 disabled={feedback !== '' && !speedChallenge.isActive}
