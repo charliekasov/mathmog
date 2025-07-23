@@ -71,7 +71,7 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
             return `${num} → ${digits.join(' + ')} = ${sumFor9}. Since ${sumFor9} is ${sumFor9 % 9 === 0 ? '' : 'not '}divisible by 9, ${num} is ${isDivisible ? '' : 'not '}divisible by 9.`;
         case 11:
             const alternatingSum = digits.reduce((acc, digit, index) => acc + digit * Math.pow(-1, index), 0);
-            const alternatingSumStr = digits.map((d, i) => (i % 2 === 0 ? `${d}` : `- ${d}`)).join(' ');
+            const alternatingSumStr = digits.map((d, i) => (i > 0 ? (i % 2 !== 0 ? ` - ${d}`: ` + ${d}`) : `${d}`)).join('');
             return `${num} → ${alternatingSumStr} = ${alternatingSum}. Since ${alternatingSum} is ${alternatingSum % 11 === 0 ? '' : 'not '}divisible by 11, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 11.`;
         case 12:
              const isDivBy3For12 = digits.reduce((a, b) => a + b, 0) % 3 === 0;
@@ -99,44 +99,51 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
           let num = Math.floor(Math.random() * (max - min + 1)) + min; const answer = perfectCubes[num] || num * num * num; return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation: `${num}³ = ${num}×${num}×${num} = ${answer}`, inputType: 'number' };
         } 
         if (type === 'fraction') {
-            const denominators = [3, 4, 5, 6, 7, 8, 9];
+            const denominators = Object.keys(fractionBasesByDenominator).map(Number);
             let num: number, den: number;
             
             den = denominators[Math.floor(Math.random() * denominators.length)];
+            const availableNumerators = fractionBasesByDenominator[den].numerators;
+            num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
             
-            if (difficulty === 'Hard') {
-                const maxNumerator = 99 + (hardModeBonus * 100);
-                num = Math.floor(Math.random() * maxNumerator) + 1;
-            } else {
-                // For Easy and Medium, numerator should be smaller than denominator
-                num = Math.floor(Math.random() * (den - 1)) + 1;
-            }
-
-            const { precision, repeating } = fractionBasesByDenominator[den];
+            const { precision } = fractionBasesByDenominator[den];
             
             const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
-            const nonRepeatingConversionTypes = ['fracToDec', 'fracToPerc', 'decToPerc', 'percToDec'];
+            const conversionType = allConversionTypes[Math.floor(Math.random() * allConversionTypes.length)];
             
-            const conversionTypes = repeating ? nonRepeatingConversionTypes : allConversionTypes;
-
-            const conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
-            const decimalValue = num / den; const percentValue = decimalValue * 100;
+            const decimalValue = num / den;
+            const percentValue = decimalValue * 100;
 
             switch (conversionType) {
                 case 'fracToDec': return { question: `Convert ${num}/${den} to a decimal (round to ${precision} places)`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction to Decimal', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
-                case 'decToFrac': { const s = simplifyFraction(num, den); const [sN, sD] = s.split('/').map(Number); const qD = parseFloat((sN/sD).toFixed(precision)); return { question: `Convert ${qD} to a fraction`, answer: s, type: 'Decimal to Fraction', explanation: `${qD} is the decimal for ${s}`, inputType: 'text' }; }
-                case 'fracToPerc': return { question: `Convert ${num}/${den} to a percent (round to ${precision - 2 > 0 ? precision - 2 : 0} decimal places)`, answer: parseFloat(percentValue.toFixed(precision - 2 > 0 ? precision - 2 : 0)), type: 'Fraction to Percent', explanation: `${num}/${den} = ${decimalValue} = ${percentValue.toFixed(2)}%`, inputType: 'number' };
-                case 'percToFrac': { const s = simplifyFraction(num, den); const [sN, sD] = s.split('/').map(Number); const qP = parseFloat(((sN / sD) * 100).toFixed(2)); return { question: `Convert ${qP}% to a fraction`, answer: s, type: 'Percent to Fraction', explanation: `${qP}% = ${qP}/100 = ${s}`, inputType: 'text' }; }
-                case 'decToPerc': { const d = parseFloat(decimalValue.toFixed(precision)); return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(precision - 2 > 0 ? precision - 2 : 0)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; }
-                case 'percToDec': {
-                    const places = Math.floor(Math.random() * 2) + 2; // 2 or 3
+                case 'decToFrac': {
+                    const simplified = simplifyFraction(num, den);
+                    const questionDecimal = parseFloat(decimalValue.toFixed(precision));
+                    return { question: `Convert ${questionDecimal} to a fraction`, answer: simplified, type: 'Decimal to Fraction', explanation: `${questionDecimal} is the decimal for ${simplified}`, inputType: 'text' };
+                }
+                case 'fracToPerc': {
+                    const roundedPercent = parseFloat(percentValue.toFixed(Math.max(0, precision - 2)));
+                    return { question: `Convert ${num}/${den} to a percent (round to ${Math.max(0, precision - 2)} decimal places)`, answer: roundedPercent, type: 'Fraction to Percent', explanation: `${num}/${den} = ${decimalValue} ≈ ${roundedPercent}%`, inputType: 'number' };
+                }
+                case 'percToFrac': {
+                    const simplified = simplifyFraction(num, den);
+                    const places = Math.max(2, precision);
                     const questionPercent = parseFloat(percentValue.toFixed(places));
-                    const answer = parseFloat((questionPercent / 100).toFixed(places + 2));
+                    return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
+                }
+                case 'decToPerc': { 
+                    const places = Math.max(2, precision);
+                    const d = parseFloat(decimalValue.toFixed(places)); 
+                    return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(places - 2)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; 
+                }
+                case 'percToDec': {
+                    const places = Math.max(2, precision);
+                    const questionPercent = parseFloat(percentValue.toFixed(places));
+                    const answer = parseFloat(decimalValue.toFixed(places + 2));
                     const question = `Convert ${questionPercent}% to a decimal (round to ${places + 2} places)`;
                     const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
                     return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
                 }
-                default: return { question: `Convert ${num}/${den} to a decimal`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction Conversions', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
             }
         }
         
