@@ -8,14 +8,14 @@ export const simplifyFraction = (num: number, den: number) => {
 };
 
 // Helper data for the fraction generator
-const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number }> = {
-    3: { numerators: [1, 2], precision: 2 },
-    4: { numerators: [1, 3], precision: 2 },
-    5: { numerators: [1, 2, 3, 4], precision: 1 },
-    6: { numerators: [1, 5], precision: 3 },
-    7: { numerators: [1, 2, 3, 4, 5, 6], precision: 3 },
-    8: { numerators: [1, 3, 5, 7], precision: 3 },
-    9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2 },
+const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean }> = {
+    3: { numerators: [1, 2], precision: 2, repeating: true },
+    4: { numerators: [1, 3], precision: 2, repeating: false },
+    5: { numerators: [1, 2, 3, 4], precision: 1, repeating: false },
+    6: { numerators: [1, 5], precision: 3, repeating: true },
+    7: { numerators: [1, 2, 3, 4, 5, 6], precision: 3, repeating: true },
+    8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
+    9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true },
 };
 
 // Reference data
@@ -54,9 +54,16 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             if (difficulty === 'Easy') { den = easyDenominators[Math.floor(Math.random() * easyDenominators.length)]; num = Math.floor(Math.random() * (den - 1)) + 1; } 
             else if (difficulty === 'Medium') { den = mediumAndHardDenominators[Math.floor(Math.random() * mediumAndHardDenominators.length)]; num = Math.floor(Math.random() * 99) + 1; } 
             else { den = mediumAndHardDenominators[Math.floor(Math.random() * mediumAndHardDenominators.length)]; const maxNumerator = 999 + (hardModeBonus * 100); num = Math.floor(Math.random() * maxNumerator) + 1; }
-            const { precision } = fractionBasesByDenominator[den];
-            const conversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec']; const conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
+            const { precision, repeating } = fractionBasesByDenominator[den];
+            
+            const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
+            const nonRepeatingConversionTypes = ['fracToDec', 'fracToPerc', 'decToPerc', 'percToDec'];
+            
+            const conversionTypes = repeating ? nonRepeatingConversionTypes : allConversionTypes;
+
+            const conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
             const decimalValue = num / den; const percentValue = decimalValue * 100;
+
             switch (conversionType) {
                 case 'fracToDec': return { question: `Convert ${num}/${den} to a decimal (round to ${precision} places)`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction to Decimal', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
                 case 'decToFrac': { const s = simplifyFraction(num, den); const [sN, sD] = s.split('/').map(Number); const qD = parseFloat((sN/sD).toFixed(precision)); return { question: `Convert ${qD} to a fraction`, answer: s, type: 'Decimal to Fraction', explanation: `${qD} is the decimal for ${s}`, inputType: 'text' }; }
