@@ -50,10 +50,19 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
           let num = Math.floor(Math.random() * (max - min + 1)) + min; const answer = perfectCubes[num] || num * num * num; return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation: `${num}³ = ${num}×${num}×${num} = ${answer}`, inputType: 'number' };
         } 
         if (type === 'fraction') {
-            const easyDenominators = [3, 4, 5, 6, 8, 9]; const mediumAndHardDenominators = [3, 4, 5, 6, 7, 8, 9]; let num, den;
-            if (difficulty === 'Easy') { den = easyDenominators[Math.floor(Math.random() * easyDenominators.length)]; num = Math.floor(Math.random() * (den - 1)) + 1; } 
-            else if (difficulty === 'Medium') { den = mediumAndHardDenominators[Math.floor(Math.random() * mediumAndHardDenominators.length)]; num = Math.floor(Math.random() * 99) + 1; } 
-            else { den = mediumAndHardDenominators[Math.floor(Math.random() * mediumAndHardDenominators.length)]; const maxNumerator = 999 + (hardModeBonus * 100); num = Math.floor(Math.random() * maxNumerator) + 1; }
+            const denominators = [3, 4, 5, 6, 7, 8, 9];
+            let num: number, den: number;
+            
+            den = denominators[Math.floor(Math.random() * denominators.length)];
+            
+            if (difficulty === 'Hard') {
+                const maxNumerator = 99 + (hardModeBonus * 100);
+                num = Math.floor(Math.random() * maxNumerator) + 1;
+            } else {
+                // For Easy and Medium, numerator should be smaller than denominator
+                num = Math.floor(Math.random() * (den - 1)) + 1;
+            }
+
             const { precision, repeating } = fractionBasesByDenominator[den];
             
             const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
