@@ -4,7 +4,6 @@
 import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode, type Dispatch, type SetStateAction } from 'react';
 import { generateProblem, simplifyFraction } from '@/lib/math-problems';
 import type { Mode, Difficulty, Problem, SpeedChallengeState, AdaptiveData, PendingLevelUp } from '@/lib/types';
-import { getAdaptiveLevelUpSuggestion } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
 interface MathTrainerContextType {
@@ -79,44 +78,43 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setFeedback('');
     setShowAnswer(false);
   }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus]);
-  
-  const handleLevelUpLogic = useCallback(async (difficulty: Difficulty, consecutiveCorrect: number) => {
-    if (difficulty !== 'Hard') {
-      const suggestion = await getAdaptiveLevelUpSuggestion({
-        currentDifficulty: difficulty,
-        consecutiveCorrect: consecutiveCorrect,
-      });
-  
-      if (suggestion && suggestion.suggestLevelUp) {
+
+  const handleLevelUpLogic = useCallback((difficulty: Difficulty) => {
+      let newDifficulty: Difficulty | null = null;
+      if (difficulty === 'Easy') newDifficulty = 'Medium';
+      if (difficulty === 'Medium') newDifficulty = 'Hard';
+
+      if (newDifficulty) {
         setAdaptiveData(prev => ({
           ...prev,
           consecutiveCorrect: 0, // Reset on suggestion
           pendingLevelUp: {
             from: difficulty,
-            to: suggestion.newDifficulty as Difficulty,
-            message: suggestion.reason,
+            to: newDifficulty as Difficulty,
+            message: `You've answered 7 in a row correctly. Ready to move up to ${newDifficulty}?`,
             options: { yes: "Let's Go!", no: "Not yet." },
           },
         }));
       }
-    } else if (difficulty === 'Hard') {
-      setAdaptiveData(prev => ({
-        ...prev,
-        consecutiveCorrect: 0, // Reset on bonus
-        hardModeBonus: (prev.hardModeBonus || 0) + 1,
-      }));
-      toast({
-        title: "🔥 Hard Mode Bonus!",
-        description: "Difficulty increased slightly. You're on fire!",
-      });
-    }
-  }, [toast]);
+    }, []);
   
   useEffect(() => {
     if (adaptiveData.consecutiveCorrect >= 7 && !speedChallenge.isActive && !adaptiveData.pendingLevelUp) {
-      handleLevelUpLogic(currentDifficulty, adaptiveData.consecutiveCorrect);
+      if (currentDifficulty === 'Hard') {
+          setAdaptiveData(prev => ({
+            ...prev,
+            consecutiveCorrect: 0, // Reset on bonus
+            hardModeBonus: (prev.hardModeBonus || 0) + 1,
+          }));
+          toast({
+            title: "🔥 Hard Mode Bonus!",
+            description: "Difficulty increased slightly. You're on fire!",
+          });
+      } else {
+        handleLevelUpLogic(currentDifficulty);
+      }
     }
-  }, [adaptiveData.consecutiveCorrect, currentDifficulty, speedChallenge.isActive, adaptiveData.pendingLevelUp, handleLevelUpLogic]);
+  }, [adaptiveData.consecutiveCorrect, currentDifficulty, speedChallenge.isActive, adaptiveData.pendingLevelUp, handleLevelUpLogic, toast]);
 
   const handleCheckAnswer = useCallback(async (answerToCheck: string) => {
     if (!currentProblem || answerToCheck.trim() === '') return;
