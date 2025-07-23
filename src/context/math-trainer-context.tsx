@@ -140,24 +140,25 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         }
     }
 
-    setScore(prev => ({ correct: prev.correct + (isCorrect ? 1 : 0), total: prev.total + 1 }));
-
     if (isCorrect) {
       setFeedback('✅ Correct!');
+      setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
+
       if (speedChallenge.isActive) {
         setTimeout(handleNewProblem, 500);
       } else {
-        const newConsecutive = adaptiveData.consecutiveCorrect + 1;
-        setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: newConsecutive }));
-        // We pass newConsecutive directly to the logic handler
-        await handleLevelUpLogic(currentDifficulty, newConsecutive);
+        setAdaptiveData(prev => {
+            const newConsecutive = prev.consecutiveCorrect + 1;
+            handleLevelUpLogic(currentDifficulty, newConsecutive);
+            return { ...prev, consecutiveCorrect: newConsecutive };
+        });
       }
     } else {
       setFeedback(`❌ Incorrect. The correct answer is ${currentProblem.answer}`);
       if (!speedChallenge.isActive) { setShowAnswer(true); }
       setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
     }
-  }, [currentProblem, speedChallenge.isActive, handleNewProblem, adaptiveData.consecutiveCorrect, handleLevelUpLogic, currentDifficulty]);
+  }, [currentProblem, speedChallenge.isActive, handleNewProblem, handleLevelUpLogic, currentDifficulty]);
 
 
   const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty) => {
