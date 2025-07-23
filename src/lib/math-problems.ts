@@ -93,9 +93,32 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 default: return { question: `Convert ${num}/${den} to a decimal`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction Conversions', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
             }
         }
-        const divisors = [3, 4, 5, 9, 6, 7, 8, 11].slice(0, difficulty === 'Easy' ? 4 : (difficulty === 'Medium' ? 6 : 8)); const divisor = divisors[Math.floor(Math.random() * divisors.length)];
-        let min = 100, max = 999; if (difficulty === 'Hard') { max += (hardModeBonus * 1000); }
-        const testNum = Math.floor(Math.random() * (max - min + 1)) + min; const isDivisible = testNum % divisor === 0;
+        
+        let divisor: number;
+        let testNum: number;
+        let min = 100, max = 999;
+        const evenDivisors = [4, 6, 8];
+
+        if (difficulty === 'Easy') {
+            const divisors = [3, 4, 5, 6];
+            divisor = divisors[Math.floor(Math.random() * divisors.length)];
+        } else if (difficulty === 'Medium') {
+            const divisors = [3, 4, 6, 8, 7, 9, 11];
+            divisor = divisors[Math.floor(Math.random() * divisors.length)];
+            min = 1000; max = 9999;
+        } else { // Hard
+            const divisors = [7, 8, 9, 11, 12, 13];
+            divisor = divisors[Math.floor(Math.random() * divisors.length)];
+            min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
+        }
+
+        testNum = Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        if (evenDivisors.includes(divisor) && testNum % 2 !== 0) {
+            testNum += 1;
+        }
+
+        const isDivisible = testNum % divisor === 0;
         return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility Rules', explanation: `${testNum} ${isDivisible ? 'is' : 'is not'} divisible by ${divisor}`, inputType: 'buttons', options: ['yes', 'no'] };
     };
 
