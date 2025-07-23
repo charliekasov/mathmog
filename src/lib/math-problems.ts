@@ -71,8 +71,8 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
             return `${num} → ${digits.join(' + ')} = ${sumFor9}. Since ${sumFor9} is ${sumFor9 % 9 === 0 ? '' : 'not '}divisible by 9, ${num} is ${isDivisible ? '' : 'not '}divisible by 9.`;
         case 11:
             const alternatingSum = digits.reduce((acc, digit, index) => acc + digit * Math.pow(-1, index), 0);
-            const alternatingSumStr = digits.map((d, i) => (i % 2 === 0 ? `+${d}` : `-${d}`)).join(' ').slice(1);
-            return `${num} → ${alternatingSumStr} = ${alternatingSum}. Since ${alternatingSum} is ${alternatingSum % 11 === 0 ? '' : 'not '}divisible by 11, ${num} is ${isDivisible ? '' : 'not '}divisible by 11.`;
+            const alternatingSumStr = digits.map((d, i) => (i % 2 === 0 ? `${d}` : `- ${d}`)).join(' ');
+            return `${num} → ${alternatingSumStr} = ${alternatingSum}. Since ${alternatingSum} is ${alternatingSum % 11 === 0 ? '' : 'not '}divisible by 11, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 11.`;
         case 12:
              const isDivBy3For12 = digits.reduce((a, b) => a + b, 0) % 3 === 0;
              const isDivBy4For12 = (num % 100) % 4 === 0;
@@ -129,11 +129,10 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 case 'percToFrac': { const s = simplifyFraction(num, den); const [sN, sD] = s.split('/').map(Number); const qP = parseFloat(((sN / sD) * 100).toFixed(2)); return { question: `Convert ${qP}% to a fraction`, answer: s, type: 'Percent to Fraction', explanation: `${qP}% = ${qP}/100 = ${s}`, inputType: 'text' }; }
                 case 'decToPerc': { const d = parseFloat(decimalValue.toFixed(precision)); return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(precision - 2 > 0 ? precision - 2 : 0)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; }
                 case 'percToDec': {
-                    const questionPrecision = Math.floor(Math.random() * 3) + 2;
-                    const questionPercent = parseFloat(percentValue.toFixed(questionPrecision));
-                    const answer = parseFloat((questionPercent / 100).toFixed(questionPrecision + 2));
-                    
-                    const question = `Convert ${questionPercent}% to a decimal (round to ${questionPrecision + 2} places)`;
+                    const places = Math.floor(Math.random() * 2) + 2; // 2 or 3
+                    const questionPercent = parseFloat(percentValue.toFixed(places));
+                    const answer = parseFloat((questionPercent / 100).toFixed(places + 2));
+                    const question = `Convert ${questionPercent}% to a decimal (round to ${places + 2} places)`;
                     const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
                     return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
                 }
@@ -146,18 +145,24 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         let min = 100, max = 999;
         
         const easyDivisors = [3, 4, 5, 6];
-        const mediumDivisors = [3, 4, 6, 8, 9, 11];
-        const hardDivisors = [7, 8, 9, 11, 12, 13];
+        const mediumDivisors = [3, 4, 6, 8, 9];
+        const hardDivisors = [7, 8, 9, 12, 13];
+        const bonusHardDivisors = [11];
 
         if (difficulty === 'Easy') {
             divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
-            min = divisor === 5 ? 10 : 100;
-            max = divisor === 5 ? 99: 999;
+            min = 100;
+            max = 999;
+            if (divisor === 5) { min = 10; max = 99; }
         } else if (difficulty === 'Medium') {
             divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
             min = 1000; max = 9999;
         } else { // Hard
-            divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
+            if (hardModeBonus > 0 && Math.random() < 0.3) { // 30% chance for a bonus question
+                divisor = bonusHardDivisors[Math.floor(Math.random() * bonusHardDivisors.length)];
+            } else {
+                divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
+            }
             min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
         }
 
