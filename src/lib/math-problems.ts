@@ -77,8 +77,6 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
              const isDivBy3For12 = digits.reduce((a, b) => a + b, 0) % 3 === 0;
              const isDivBy4For12 = (num % 100) % 4 === 0;
              return `To be divisible by 12, a number must be divisible by both 3 and 4. For ${num}, it is ${isDivBy3For12 ? '' : 'not '}divisible by 3 and ${isDivBy4For12 ? '' : 'not '}divisible by 4. So, it is ${isDivisible ? '' : 'not '}divisible by 12.`;
-        case 13: // Rule is complex
-             return `${num} ${isDivisible ? 'is' : 'is not'} divisible by 13. (This is another complex rule, often checked with long division!).`;
         default:
             return `${num} ${isDivisible ? 'is' : 'is not'} divisible by ${divisor}`;
     }
@@ -106,14 +104,15 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             const availableNumerators = fractionBasesByDenominator[den].numerators;
             num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
             
-            const { precision } = fractionBasesByDenominator[den];
+            const { precision, repeating } = fractionBasesByDenominator[den];
             
             const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
             let conversionType: string;
             
             do {
                 conversionType = allConversionTypes[Math.floor(Math.random() * allConversionTypes.length)];
-            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && (num/den * 100) % 100 === 0 );
+                // Exclude perc/dec to frac questions for whole numbers and repeating decimals
+            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && ((num/den * 100) % 100 === 0 || repeating) );
 
             
             const decimalValue = num / den;
@@ -144,8 +143,8 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 case 'percToDec': {
                     const places = Math.max(2, precision);
                     const questionPercent = parseFloat(percentValue.toFixed(places));
-                    const answer = parseFloat(decimalValue.toFixed(places + 2));
-                    const question = `Convert ${questionPercent}% to a decimal (round to ${places + 2} places)`;
+                    const answer = parseFloat(decimalValue.toFixed(places));
+                    const question = `Convert ${questionPercent}% to a decimal (round to ${places} places)`;
                     const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
                     return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
                 }
