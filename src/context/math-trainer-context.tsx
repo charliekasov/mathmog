@@ -81,8 +81,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus]);
   
   const handleLevelUpLogic = useCallback(async (difficulty: Difficulty, consecutiveCorrect: number) => {
-    if (consecutiveCorrect < 7) return;
-
     if (difficulty !== 'Hard') {
       const suggestion = await getAdaptiveLevelUpSuggestion({
         currentDifficulty: difficulty,
@@ -115,10 +113,10 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
   
   useEffect(() => {
-    if (adaptiveData.consecutiveCorrect > 0 && !speedChallenge.isActive) {
+    if (adaptiveData.consecutiveCorrect >= 7 && !speedChallenge.isActive && !adaptiveData.pendingLevelUp) {
       handleLevelUpLogic(currentDifficulty, adaptiveData.consecutiveCorrect);
     }
-  }, [adaptiveData.consecutiveCorrect, currentDifficulty, speedChallenge.isActive, handleLevelUpLogic]);
+  }, [adaptiveData.consecutiveCorrect, currentDifficulty, speedChallenge.isActive, adaptiveData.pendingLevelUp, handleLevelUpLogic]);
 
   const handleCheckAnswer = useCallback(async (answerToCheck: string) => {
     if (!currentProblem || answerToCheck.trim() === '') return;
