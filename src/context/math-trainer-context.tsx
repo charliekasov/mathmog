@@ -135,7 +135,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
                         consecutiveCorrect: 0
                     }));
                 } else {
-                     setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
+                     setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: newConsecutive }));
                 }
 
             } else if (currentDifficulty === 'Hard' && newConsecutive >= 7) {
@@ -153,7 +153,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         if (!speedChallenge.isActive) { setShowAnswer(true); }
         setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
     }
-  }, [currentProblem, speedChallenge.isActive, handleNewProblem, currentDifficulty, adaptiveData.consecutiveCorrect, toast]);
+  }, [currentProblem, speedChallenge.isActive, handleNewProblem, currentDifficulty, adaptiveData, toast]);
 
   const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty) => {
     setCurrentLevel(level);
