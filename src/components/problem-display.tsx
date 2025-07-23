@@ -22,18 +22,18 @@ const LevelUpDialog = () => {
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">🎉 You're Leveling Up! 🎉</DialogTitle>
           <DialogDescription className="text-center pt-2">
-            {pendingLevelUp.message}
+            You've answered 7 in a row correctly. Ready to move up to {pendingLevelUp.to}?
           </DialogDescription>
         </DialogHeader>
         <div className="text-center text-xl font-semibold text-primary my-4">
           Ready for {pendingLevelUp.to}?
         </div>
         <DialogFooter className="sm:justify-center">
-          <Button type="button" onClick={() => handleLevelUp(false)} variant="secondary">
-            {pendingLevelUp.options.no}
+          <Button type="button" onClick={() => handleLevelUp(false)} variant="outline">
+            Not yet.
           </Button>
           <Button type="button" onClick={() => handleLevelUp(true)}>
-            {pendingLevelUp.options.yes}
+            Let's Go!
           </Button>
         </DialogFooter>
       </DialogContent>
