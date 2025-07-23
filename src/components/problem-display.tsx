@@ -96,7 +96,7 @@ export default function ProblemDisplay() {
                 onKeyPress={(e) => { if (e.key === 'Enter') { if (feedback) { handleNewProblem(); } else { onCheckAnswer(); } } }}
                 placeholder={currentProblem.placeholder || "Your answer..."}
                 className="p-4 text-xl text-center h-14"
-                disabled={feedback !== '' && !speedChallenge.isActive}
+                disabled={speedChallenge.isActive && feedback !== ''}
                 autoFocus
             />
           )}

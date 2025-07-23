@@ -89,32 +89,47 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 case 'fracToPerc': return { question: `Convert ${num}/${den} to a percent (round to ${precision - 2 > 0 ? precision - 2 : 0} decimal places)`, answer: parseFloat(percentValue.toFixed(precision - 2 > 0 ? precision - 2 : 0)), type: 'Fraction to Percent', explanation: `${num}/${den} = ${decimalValue} = ${percentValue.toFixed(2)}%`, inputType: 'number' };
                 case 'percToFrac': { const s = simplifyFraction(num, den); const [sN, sD] = s.split('/').map(Number); const qP = parseFloat(((sN / sD) * 100).toFixed(2)); return { question: `Convert ${qP}% to a fraction`, answer: s, type: 'Percent to Fraction', explanation: `${qP}% = ${qP}/100 = ${s}`, inputType: 'text' }; }
                 case 'decToPerc': { const d = parseFloat(decimalValue.toFixed(precision)); return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(precision - 2 > 0 ? precision - 2 : 0)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; }
-                case 'percToDec': { const p = parseFloat(percentValue.toFixed(2)); return { question: `Convert ${p}% to a decimal`, answer: parseFloat((p / 100).toFixed(precision)), type: 'Percent to Decimal', explanation: `${p}% ÷ 100 = ${p / 100}`, inputType: 'number' }; }
+                case 'percToDec': { 
+                    const finalPrecision = precision + 2;
+                    const answer = parseFloat((percentValue / 100).toFixed(finalPrecision));
+                    const question = `Convert ${percentValue.toFixed(2)}% to a decimal (round to ${finalPrecision} places)`;
+                    const explanation = `${percentValue.toFixed(2)}% ÷ 100 = ${answer}`;
+                    return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
+                }
                 default: return { question: `Convert ${num}/${den} to a decimal`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction Conversions', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
             }
         }
         
+        // Divisibility Rules
         let divisor: number;
         let testNum: number;
         let min = 100, max = 999;
-        const evenDivisors = [4, 6, 8];
+        
+        // Define divisors by difficulty
+        const easyDivisors = [3, 4, 5, 6];
+        const mediumDivisors = [3, 4, 6, 8, 7, 9, 11];
+        const hardDivisors = [7, 8, 9, 11, 12, 13];
+        const evenOnlyDivisors = [4, 6, 8, 12];
 
         if (difficulty === 'Easy') {
-            const divisors = [3, 4, 5, 6];
-            divisor = divisors[Math.floor(Math.random() * divisors.length)];
+            divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
+            if (divisor !== 5) {
+                min = 100; max = 999;
+            } else {
+                min = 10; max = 99;
+            }
         } else if (difficulty === 'Medium') {
-            const divisors = [3, 4, 6, 8, 7, 9, 11];
-            divisor = divisors[Math.floor(Math.random() * divisors.length)];
+            divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
             min = 1000; max = 9999;
         } else { // Hard
-            const divisors = [7, 8, 9, 11, 12, 13];
-            divisor = divisors[Math.floor(Math.random() * divisors.length)];
+            divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
             min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
         }
 
         testNum = Math.floor(Math.random() * (max - min + 1)) + min;
         
-        if (evenDivisors.includes(divisor) && testNum % 2 !== 0) {
+        // Ensure test number is even if divisor requires it
+        if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
             testNum += 1;
         }
 
