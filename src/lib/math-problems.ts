@@ -130,8 +130,8 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             switch (conversionType) {
                 case 'fracToDec': return { question: `Convert ${num}/${den} to a decimal (round to ${precision} places)`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction to Decimal', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
                 case 'decToFrac': {
-                    if (decimalValue * 100 % 100 === 0) { // Avoid whole numbers like 1.0
-                        return generateLevel1Problem(); // Recurse to get a different problem
+                    if (decimalValue * 100 % 100 === 0 || repeating) { 
+                        return generateLevel1Problem();
                     }
                     const simplified = simplifyFraction(num, den);
                     const questionDecimal = parseFloat(decimalValue.toFixed(precision));
@@ -142,7 +142,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                     return { question: `Convert ${num}/${den} to a percent (round to ${Math.max(0, precision - 2)} decimal places)`, answer: roundedPercent, type: 'Fraction to Percent', explanation: `${num}/${den} = ${decimalValue} ≈ ${roundedPercent}%`, inputType: 'number' };
                 }
                 case 'percToFrac': {
-                    if (percentValue % 100 === 0) { // Avoid whole numbers like 100%
+                    if (percentValue % 100 === 0 || repeating) {
                        return generateLevel1Problem(); // Recurse
                     }
                     const simplified = simplifyFraction(num, den);
@@ -156,10 +156,11 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                     return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(places - 2)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; 
                 }
                 case 'percToDec': {
-                    const places = precision > 2 ? precision : 2;
-                    const questionPercent = parseFloat(percentValue.toFixed(places - 2));
-                    const answer = parseFloat(decimalValue.toFixed(places));
-                    const question = `Convert ${questionPercent}% to a decimal (round to ${places} places)`;
+                    const dPlaces = String(num/den).split('.')[1]?.length || 2;
+                    const pPlaces = Math.max(0, dPlaces - 2);
+                    const questionPercent = parseFloat((num/den * 100).toFixed(pPlaces));
+                    const question = `Convert ${questionPercent}% to a decimal (round to ${dPlaces} places)`;
+                    const answer = parseFloat((num/den).toFixed(dPlaces));
                     const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
                     return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
                 }
@@ -258,11 +259,35 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     };
 
     const generateLevel3Problem = (): Problem => {
+        // 50% chance to get a "multiply by 8" problem on easy/medium
+        if ((difficulty === 'Easy' || difficulty === 'Medium') && Math.random() < 0.5) {
+            const multiplier = 8;
+            let numMin = 10, numMax = 99; // Easy: 2-digit numbers
+            if (difficulty === 'Medium') {
+                numMin = 100; numMax = 999; // Medium: 3-digit numbers
+            }
+            const num = Math.floor(Math.random() * (numMax - numMin + 1)) + numMin;
+            const answer = num * multiplier;
+            const explanation = `${num} × 8 = ${num}×2×2×2 = ${num*2}×2×2 = ${num*4}×2 = ${answer}`;
+            return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+
+        // Fallback to other strategic multiplication problems
         let numMin = 20, numMax = 50, multiplier = [12, 15][Math.floor(Math.random()*2)];
         if (difficulty === 'Medium') { numMin = 30; numMax = 70; multiplier = [12, 15][Math.floor(Math.random()*2)]; }
         if (difficulty === 'Hard') { numMin = 50 + (hardModeBonus*5); numMax = 100 + (hardModeBonus*5); multiplier = [9, 11, 19, 99][Math.floor(Math.random()*4)]; }
         const num = Math.floor(Math.random() * (numMax-numMin+1)) + numMin;
-        return { question: `${num} × ${multiplier} = ?`, answer: num * multiplier, type: 'Strategic Multiplication', explanation: `${num} × ${multiplier} = ${num * multiplier}`, inputType: 'number' };
+        const answer = num * multiplier;
+
+        let explanation = `${num} × ${multiplier} = ${answer}`;
+        if (multiplier === 9) explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
+        if (multiplier === 11) explanation = `${num} × 11 = ${num*10} + ${num} = ${answer}`;
+        if (multiplier === 12) explanation = `${num} × 12 = ${num} × (10 + 2) = ${num*10} + ${num*2} = ${answer}`;
+        if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
+        if (multiplier === 19) explanation = `${num} × 19 = ${num} × (20 - 1) = ${num*20} - ${num} = ${answer}`;
+        if (multiplier === 99) explanation = `${num} × 99 = ${num} × (100 - 1) = ${num*100} - ${num} = ${answer}`;
+        
+        return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
     };
 
     let generator: () => Problem;
