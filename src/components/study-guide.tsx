@@ -60,6 +60,7 @@ export default function StudyGuide() {
            <li><strong>Divisibility by 3:</strong> If the sum of the digits is divisible by 3, the number is too. <span className="font-mono text-xs text-muted-foreground">(462 → 4+6+2=12)</span></li>
            <li><strong>Divisibility by 4:</strong> If the last two digits are divisible by 4, the number is too. <span className="font-mono text-xs text-muted-foreground">(1,236 → 36 is divisible by 4)</span></li>
            <li><strong>Divisibility by 6:</strong> If the number is divisible by both 2 (is even) and 3.</li>
+           <li><strong>Divisibility by 11:</strong> Alternately add and subtract the digits. If the result is 0 or divisible by 11, the number is too.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 2907 → 2 - 9 + 0 - 7 = -14 (not div by 11)</span><br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 8679 → 8 - 6 + 7 - 9 = 0 (is div by 11)</span></li>
          </ul>
       </StudySection>
     </div>
