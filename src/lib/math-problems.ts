@@ -35,7 +35,17 @@ export const commonFractionConversions = Object.entries(fractionBasesByDenominat
     }))
 );
 
-export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number): Problem => {
+const createUniqueProblem = (generator: () => Problem, history: string[]): Problem => {
+    let problem: Problem;
+    let attempt = 0;
+    do {
+        problem = generator();
+        attempt++;
+    } while (history.includes(problem.question) && attempt < 50); // Failsafe to prevent infinite loops
+    return problem;
+}
+
+export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
 
     const generateLevel1Problem = (): Problem => {
         const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
@@ -146,10 +156,11 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         return { question: `${num} × ${multiplier} = ?`, answer: num * multiplier, type: 'Strategic Multiplication', explanation: `${num} × ${multiplier} = ${num * multiplier}`, inputType: 'number' };
     };
 
-    if (level === 1) return generateLevel1Problem();
-    if (level === 2) return generateLevel2Problem();
-    if (level === 3) return generateLevel3Problem();
-    
-    // Fallback
-    return generateLevel1Problem();
+    let generator: () => Problem;
+    if (level === 1) generator = generateLevel1Problem;
+    else if (level === 2) generator = generateLevel2Problem;
+    else if (level === 3) generator = generateLevel3Problem;
+    else generator = generateLevel1Problem; // Fallback
+
+    return createUniqueProblem(generator, history);
 };
