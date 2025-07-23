@@ -85,7 +85,8 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         levelUpData = {
           from: 'Easy', to: 'Medium',
           emojis: '😊⛏️🍳🥞',
-          title: "We're all out of easy problems because YOU JUST ATE THEM FOR BREAKFAST",
+          title: "We're all out of easy problems because",
+          allCapsTitle: 'YOU JUST ATE THEM FOR BREAKFAST',
           subtitle: "Ready for medium?",
           options: { yes: "sounds delicious", no: "nah I'm good" }
         };

@@ -25,6 +25,7 @@ export interface PendingLevelUp {
   to: Difficulty;
   emojis: string;
   title: string;
+  allCapsTitle?: string;
   subtitle: string;
   options: {
     yes: string;

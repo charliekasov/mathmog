@@ -23,6 +23,7 @@ const LevelUpDialog = () => {
           <DialogTitle className="text-center text-2xl">
             <div className="text-4xl mb-4">{pendingLevelUp.emojis}</div>
             <span className="font-extrabold text-lg block">{pendingLevelUp.title}</span>
+            {pendingLevelUp.allCapsTitle && <span className="font-extrabold text-lg block">{pendingLevelUp.allCapsTitle}</span>}
           </DialogTitle>
           <DialogDescription className="text-center pt-2 text-primary font-semibold text-lg">
             {pendingLevelUp.subtitle}
