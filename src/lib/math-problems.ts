@@ -109,7 +109,12 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             const { precision } = fractionBasesByDenominator[den];
             
             const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
-            const conversionType = allConversionTypes[Math.floor(Math.random() * allConversionTypes.length)];
+            let conversionType: string;
+            
+            do {
+                conversionType = allConversionTypes[Math.floor(Math.random() * allConversionTypes.length)];
+            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && (num/den * 100) % 100 === 0 );
+
             
             const decimalValue = num / den;
             const percentValue = decimalValue * 100;
@@ -153,7 +158,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         
         const easyDivisors = [3, 4, 5, 6];
         const mediumDivisors = [3, 4, 6, 8, 9];
-        const hardDivisors = [7, 8, 9, 12, 13];
+        const hardDivisors = [7, 8, 9, 12];
         const bonusHardDivisors = [11];
 
         if (difficulty === 'Easy') {
