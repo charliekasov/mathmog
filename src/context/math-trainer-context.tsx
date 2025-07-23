@@ -80,20 +80,31 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus]);
 
   const handleLevelUpLogic = useCallback((difficulty: Difficulty) => {
-      let newDifficulty: Difficulty | null = null;
-      if (difficulty === 'Easy') newDifficulty = 'Medium';
-      if (difficulty === 'Medium') newDifficulty = 'Hard';
+      let levelUpData: PendingLevelUp | null = null;
+      if (difficulty === 'Easy') {
+        levelUpData = {
+          from: 'Easy', to: 'Medium',
+          emojis: '😊⛏️🍳🥞',
+          title: "We're all out of easy problems because YOU JUST ATE THEM FOR BREAKFAST",
+          subtitle: "Ready for medium?",
+          options: { yes: "sounds delicious", no: "nah I'm good" }
+        };
+      }
+      if (difficulty === 'Medium') {
+         levelUpData = {
+          from: 'Medium', to: 'Hard',
+          emojis: '💪🐓🌋',
+          title: "This medium world cannot contain you",
+          subtitle: "Ready for hard?",
+          options: { yes: "Let's ride", no: "This is my safe space" }
+        };
+      }
 
-      if (newDifficulty) {
+      if (levelUpData) {
         setAdaptiveData(prev => ({
           ...prev,
           consecutiveCorrect: 0, // Reset on suggestion
-          pendingLevelUp: {
-            from: difficulty,
-            to: newDifficulty as Difficulty,
-            message: `You've answered 7 in a row correctly. Ready to move up to ${newDifficulty}?`,
-            options: { yes: "Let's Go!", no: "Not yet." },
-          },
+          pendingLevelUp: levelUpData,
         }));
       }
     }, []);
@@ -160,6 +171,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setFeedback(`❌ Incorrect. The correct answer is ${currentProblem.answer}`);
       if (!speedChallenge.isActive) { setShowAnswer(true); }
+      setScore(prev => ({ ...prev, total: prev.total + 1 }));
       setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
     }
   }, [currentProblem, speedChallenge.isActive, handleNewProblem]);

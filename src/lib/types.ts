@@ -23,7 +23,9 @@ export interface SpeedChallengeState {
 export interface PendingLevelUp {
   from: Difficulty;
   to: Difficulty;
-  message: string;
+  emojis: string;
+  title: string;
+  subtitle: string;
   options: {
     yes: string;
     no: string;

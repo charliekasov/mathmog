@@ -20,20 +20,20 @@ const LevelUpDialog = () => {
     <Dialog open={!!pendingLevelUp} onOpenChange={(open) => !open && handleLevelUp(false)}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl">🎉 You're Leveling Up! 🎉</DialogTitle>
-          <DialogDescription className="text-center pt-2">
-            You've answered 7 in a row correctly. Ready to move up to {pendingLevelUp.to}?
+          <DialogTitle className="text-center text-2xl">
+            <div className="text-4xl mb-4">{pendingLevelUp.emojis}</div>
+            <span className="font-extrabold text-lg block">{pendingLevelUp.title}</span>
+          </DialogTitle>
+          <DialogDescription className="text-center pt-2 text-primary font-semibold text-lg">
+            {pendingLevelUp.subtitle}
           </DialogDescription>
         </DialogHeader>
-        <div className="text-center text-xl font-semibold text-primary my-4">
-          Ready for {pendingLevelUp.to}?
-        </div>
-        <DialogFooter className="sm:justify-center">
-          <Button type="button" onClick={() => handleLevelUp(false)} variant="outline">
-            Not yet.
+        <DialogFooter className="sm:justify-center gap-2 mt-4">
+          <Button type="button" onClick={() => handleLevelUp(false)} variant="secondary" className="text-muted-foreground">
+            {pendingLevelUp.options.no}
           </Button>
-          <Button type="button" onClick={() => handleLevelUp(true)}>
-            Let's Go!
+          <Button type="button" onClick={() => handleLevelUp(true)} className="bg-green-600 hover:bg-green-700">
+            {pendingLevelUp.options.yes}
           </Button>
         </DialogFooter>
       </DialogContent>
