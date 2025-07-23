@@ -89,11 +89,12 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 case 'fracToPerc': return { question: `Convert ${num}/${den} to a percent (round to ${precision - 2 > 0 ? precision - 2 : 0} decimal places)`, answer: parseFloat(percentValue.toFixed(precision - 2 > 0 ? precision - 2 : 0)), type: 'Fraction to Percent', explanation: `${num}/${den} = ${decimalValue} = ${percentValue.toFixed(2)}%`, inputType: 'number' };
                 case 'percToFrac': { const s = simplifyFraction(num, den); const [sN, sD] = s.split('/').map(Number); const qP = parseFloat(((sN / sD) * 100).toFixed(2)); return { question: `Convert ${qP}% to a fraction`, answer: s, type: 'Percent to Fraction', explanation: `${qP}% = ${qP}/100 = ${s}`, inputType: 'text' }; }
                 case 'decToPerc': { const d = parseFloat(decimalValue.toFixed(precision)); return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(precision - 2 > 0 ? precision - 2 : 0)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; }
-                case 'percToDec': { 
+                case 'percToDec': {
                     const finalPrecision = precision + 2;
+                    const questionPrecision = finalPrecision;
                     const answer = parseFloat((percentValue / 100).toFixed(finalPrecision));
-                    const question = `Convert ${percentValue.toFixed(2)}% to a decimal (round to ${finalPrecision} places)`;
-                    const explanation = `${percentValue.toFixed(2)}% ÷ 100 = ${answer}`;
+                    const question = `Convert ${percentValue.toFixed(questionPrecision)}% to a decimal (round to ${finalPrecision} places)`;
+                    const explanation = `${percentValue.toFixed(questionPrecision)}% ÷ 100 = ${answer}`;
                     return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
                 }
                 default: return { question: `Convert ${num}/${den} to a decimal`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction Conversions', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
