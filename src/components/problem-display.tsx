@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMathTrainer } from '@/context/math-trainer-context';
