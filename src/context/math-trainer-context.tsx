@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode, type Dispatch, type SetStateAction } from 'react';
@@ -78,14 +79,16 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setFeedback('');
     setShowAnswer(false);
   }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus]);
-
+  
   const handleLevelUpLogic = useCallback(async (difficulty: Difficulty, consecutiveCorrect: number) => {
-    if (difficulty !== 'Hard' && consecutiveCorrect >= 7) {
+    if (consecutiveCorrect < 7) return;
+
+    if (difficulty !== 'Hard') {
       const suggestion = await getAdaptiveLevelUpSuggestion({
         currentDifficulty: difficulty,
         consecutiveCorrect: consecutiveCorrect,
       });
-
+  
       if (suggestion && suggestion.suggestLevelUp) {
         setAdaptiveData(prev => ({
           ...prev,
@@ -98,7 +101,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
           },
         }));
       }
-    } else if (difficulty === 'Hard' && consecutiveCorrect >= 7) {
+    } else if (difficulty === 'Hard') {
       setAdaptiveData(prev => ({
         ...prev,
         consecutiveCorrect: 0, // Reset on bonus
@@ -110,6 +113,12 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   }, [toast]);
+  
+  useEffect(() => {
+    if (adaptiveData.consecutiveCorrect > 0 && !speedChallenge.isActive) {
+      handleLevelUpLogic(currentDifficulty, adaptiveData.consecutiveCorrect);
+    }
+  }, [adaptiveData.consecutiveCorrect, currentDifficulty, speedChallenge.isActive, handleLevelUpLogic]);
 
   const handleCheckAnswer = useCallback(async (answerToCheck: string) => {
     if (!currentProblem || answerToCheck.trim() === '') return;
@@ -147,18 +156,17 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       if (speedChallenge.isActive) {
         setTimeout(handleNewProblem, 500);
       } else {
-        setAdaptiveData(prev => {
-            const newConsecutive = prev.consecutiveCorrect + 1;
-            handleLevelUpLogic(currentDifficulty, newConsecutive);
-            return { ...prev, consecutiveCorrect: newConsecutive };
-        });
+        setAdaptiveData(prev => ({
+          ...prev, 
+          consecutiveCorrect: prev.consecutiveCorrect + 1 
+        }));
       }
     } else {
       setFeedback(`❌ Incorrect. The correct answer is ${currentProblem.answer}`);
       if (!speedChallenge.isActive) { setShowAnswer(true); }
       setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
     }
-  }, [currentProblem, speedChallenge.isActive, handleNewProblem, handleLevelUpLogic, currentDifficulty]);
+  }, [currentProblem, speedChallenge.isActive, handleNewProblem]);
 
 
   const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty) => {
