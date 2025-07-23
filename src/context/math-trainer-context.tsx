@@ -84,7 +84,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       if (difficulty === 'Easy') {
         levelUpData = {
           from: 'Easy', to: 'Medium',
-          emojis: '😊 shovel 🍳🥞',
+          emojis: '😋🪏🍳🥞',
           title: "We're all out of easy problems because",
           allCapsTitle: 'YOU JUST ATE THEM FOR BREAKFAST',
           subtitle: "Ready for medium?",
