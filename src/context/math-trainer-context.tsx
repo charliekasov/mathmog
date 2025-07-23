@@ -135,7 +135,8 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
                         consecutiveCorrect: 0
                     }));
                 } else {
-                     setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: newConsecutive }));
+                    // if AI decides not to level up, keep counting
+                    setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: newConsecutive }));
                 }
 
             } else if (currentDifficulty === 'Hard' && newConsecutive >= 7) {
