@@ -20,9 +20,10 @@ const HowToPractice = () => (
                 <AccordionTrigger>How Do I Practice?</AccordionTrigger>
                 <AccordionContent>
                     <ul className="space-y-3 mt-3 list-disc list-inside pl-2">
+                        <li><strong>Choose a Mode</strong> - Start with <strong>Memorize</strong> to build a foundation, then move to <strong>Estimate</strong> to develop intuition, and finally <strong>Get Crafty</strong> to learn advanced strategies.</li>
                         <li><strong>Start with Medium</strong> - If it's too hard, drop to Easy. If it's too easy, the app will suggest moving to Hard.</li>
-                        <li><strong>Learn in chunks</strong> - Use Study Mode to master small pieces at a time (like 1²-5² before tackling 6²-10²).</li>
-                        <li><strong>Build speed before advancing</strong> - Use Speed Challenge to develop automaticity - getting answers quickly, not just correctly.</li>
+                        <li><strong>Build speed before advancing</strong> - Use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, not just correctly.</li>
+                        <li><strong>Use your keyboard</strong> - For text answers, press `Enter` to check your answer and again for the next problem. For "Yes/No" questions, use the `y` and `n` keys.</li>
                     </ul>
                 </AccordionContent>
             </AccordionItem>
