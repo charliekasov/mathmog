@@ -1,4 +1,5 @@
 
+
 import type { Difficulty, Problem } from '@/lib/types';
 
 // Helper for simplifying fractions
@@ -44,7 +45,7 @@ const createUniqueProblem = (generator: () => Problem, history: string[]): Probl
     do {
         problem = generator();
         attempt++;
-    } while (history.includes(problem.question) && attempt < 50); // Failsafe to prevent infinite loops
+    } while (history.includes(problem.question.toString()) && attempt < 50); // Failsafe to prevent infinite loops
     return problem;
 }
 
@@ -142,17 +143,18 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
         } 
         if (type === 'fraction') {
+            // Prevent fraction problems in hard mode.
+            if (difficulty === 'Hard') return generateLevel1Problem();
+
             const easyDenominators = [4, 5];
             const mediumDenominators = [3, 6, 8, 9];
-            const hardDenominators = [7]; 
+            const hardDenominators = [7]; // Kept for future use, but not used now
             
             let denominators: number[];
             if (difficulty === 'Easy') {
                 denominators = easyDenominators;
-            } else if (difficulty === 'Medium') {
+            } else { // Medium
                 denominators = mediumDenominators;
-            } else { // Hard
-                denominators = hardDenominators;
             }
             
             let num: number, den: number;
@@ -216,7 +218,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         
         const easyDivisors = [3, 4, 5, 6, 9];
         const mediumDivisors = [3, 4, 6, 8, 9];
-        const hardDivisors = [8, 9];
+        const hardDivisors = [7, 8, 9, 11, 12];
 
         if (difficulty === 'Easy') {
             divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
@@ -232,7 +234,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
         }
 
-        const evenOnlyDivisors = [4, 6, 8];
+        const evenOnlyDivisors = [4, 6, 8, 12];
         testNum = Math.floor(Math.random() * (max - min + 1)) + min;
         if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
             testNum += 1;
@@ -255,38 +257,43 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         if (type === 'rootEstimation' && difficulty !== 'Easy') {
             const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
             const table = isCubeRoot ? perfectCubes : perfectSquares;
-            const bases = Object.keys(table).map(Number);
-
-            if (difficulty === 'Medium' || (difficulty === 'Hard' && isCubeRoot)) {
-                const base = bases[Math.floor(Math.random() * (bases.length - 2)) + 1];
-                const lowerBound = table[base];
-                const upperBound = table[base + 1];
-                const num = Math.floor(Math.random() * (upperBound - lowerBound - 1)) + lowerBound + 1;
-                
-                const midPoint = (lowerBound + upperBound) / 2;
-                const closerInt = num < midPoint ? base : base + 1;
-                
-                const questionText = `${isCubeRoot ? '∛' : '√'}${num} is between the consecutive integers ___ and ___, and is closer to ___.`;
-                const answerText = `${base},${base + 1},${closerInt}`;
-                const explanation = isCubeRoot 
-                    ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${base+1} (${(base+1)}³=${upperBound}). The midpoint is ${midPoint}, and ${num} is closer to ${closerInt}.`
-                    : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${base+1} (${(base+1)}²=${upperBound}). The midpoint is ${midPoint}, and ${num} is closer to ${closerInt}.`;
-                
-                return { question: questionText, answer: answerText, type: `Root Estimation`, explanation, inputType: 'text', placeholder: "a,b,c" };
-            } else if (difficulty === 'Hard' && !isCubeRoot) {
-                const base = (Math.floor(Math.random() * 8) + 2) * 10;
-                const lowerBound = base * base;
-                const upperBound = (base + 10) * (base + 10);
-                const num = Math.floor(Math.random() * (upperBound - lowerBound - 1)) + lowerBound + 1;
-
-                const midPoint = (lowerBound + upperBound) / 2;
-                const closerMultiple = num < midPoint ? base : base + 10;
-
-                const questionText = `√${num} is between the multiples of ten ___ and ___, and is closer to ___.`;
-                const answerText = `${base},${base + 10},${closerMultiple}`;
-                const explanation = `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} and ${base+10}. The midpoint is ${midPoint}, and ${num} is closer to ${closerMultiple}.`;
-                return { question: questionText, answer: answerText, type: `Root Estimation`, explanation, inputType: 'text', placeholder: "a,b,c" };
+            const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
+            
+            let base: number, nextBase: number;
+            
+            if(isCubeRoot) { // Cube roots
+                 const validBases = bases.filter(b => b <= 10 && b > 0);
+                 base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+                 nextBase = base + 1;
+            } else { // Square roots
+                if (difficulty === 'Medium') {
+                    const validBases = bases.filter(b => b > 0 && b < 20);
+                    base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+                    nextBase = base + 1;
+                } else { // Hard
+                    const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
+                    base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+                    nextBase = base + 10;
+                }
             }
+
+            const lowerBound = table[base];
+            const upperBound = table[nextBase];
+            const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
+            
+            const midPoint = (lowerBound + upperBound) / 2;
+            const closerInt = num < midPoint ? base : nextBase;
+            
+            const questionTextParts = isCubeRoot
+                ? [`${isCubeRoot ? '∛' : '√'}${num} is between the consecutive integers`, `and`, `, and is closer to`]
+                : [`${isCubeRoot ? '∛' : '√'}${num} is between the multiples of ten`, `and`, `, and is closer to`];
+
+            const answerText = `${base},${nextBase},${closerInt}`;
+            const explanation = isCubeRoot 
+                ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${nextBase} (${nextBase}³=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`
+                : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${nextBase} (${nextBase}²=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
+            
+            return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
         }
         
         let aMin = 10, aMax = 30, bMin = 5, bMax = 15;
@@ -305,11 +312,11 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         const upperBound = roundUpA * roundUpB;
         const bestEstimate = bestEstimateA * bestEstimateB;
 
-        const explanation = `The exact answer is ${a * b}. A good way to estimate is to find the bounds. 
+        const explanation = `A good way to estimate is to find the bounds. 
 Lower bound: ${roundDownA} × ${roundDownB} = ${lowerBound}. 
 Upper bound: ${roundUpA} × ${roundUpB} = ${upperBound}. 
 A solid estimate is ${bestEstimateA} × ${bestEstimateB} = ${bestEstimate}. 
-Your answer should be between ${lowerBound} and ${upperBound}.`;
+Your answer should be between ${lowerBound} and ${upperBound}. The exact answer is ${a*b}.`;
         
         return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number' };
     };
@@ -317,7 +324,7 @@ Your answer should be between ${lowerBound} and ${upperBound}.`;
     const generateLevel3Problem = (): Problem => {
         let type;
         
-        const easyOps = ['mul_4', 'div_4', 'mul_8'];
+        const easyOps = ['mul_4', 'div_4'];
         const mediumOps = ['mul_8', 'mul_12_15', 'adv_div'];
         const hardOps = ['mul_9_11_19_99', 'adv_div'];
 
@@ -330,7 +337,7 @@ Your answer should be between ${lowerBound} and ${upperBound}.`;
         }
 
         if (type === 'adv_div') {
-            const divisors = (difficulty === 'Medium' || difficulty === 'Hard') ? [7, 11, 12] : [];
+            const divisors = (difficulty === 'Medium') ? [7, 11, 12] : [7, 11, 12];
             const divisor = divisors[Math.floor(Math.random() * divisors.length)];
             let min, max;
             if (difficulty === 'Medium') {
@@ -360,7 +367,7 @@ Your answer should be between ${lowerBound} and ${upperBound}.`;
             return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         if (type === 'mul_8') { 
-            const numDigits = (difficulty === 'Easy' || difficulty === 'Medium') ? (difficulty === 'Easy' ? 2 : 3) : 2; // Fallback for hard
+            const numDigits = 2; // Medium only
             const min = Math.pow(10, numDigits - 1);
             const max = Math.pow(10, numDigits) - 1;
             num = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -400,9 +407,3 @@ Your answer should be between ${lowerBound} and ${upperBound}.`;
 
     return createUniqueProblem(generator, history);
 };
-
-
-
-
-
-    

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useMathTrainer } from '@/context/math-trainer-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -59,6 +59,57 @@ const ChallengeResults = () => {
     )
 }
 
+const MultiTextInput = ({ questionParts, onComplete, onCheck }: { questionParts: string[], onComplete: (val: string) => void, onCheck: () => void }) => {
+    const [answers, setAnswers] = useState<string[]>(['', '', '']);
+    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    useEffect(() => {
+        onComplete(answers.join(','));
+    }, [answers, onComplete]);
+    
+    useEffect(() => {
+        inputRefs.current[0]?.focus();
+    }, []);
+
+    const handleChange = (index: number, value: string) => {
+        const newAnswers = [...answers];
+        newAnswers[index] = value;
+        setAnswers(newAnswers);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+        if (e.key === 'Tab' && !e.shiftKey && index < 2) {
+            e.preventDefault();
+            inputRefs.current[index + 1]?.focus();
+        } else if (e.key === 'Tab' && e.shiftKey && index > 0) {
+            e.preventDefault();
+            inputRefs.current[index - 1]?.focus();
+        } else if (e.key === 'Enter') {
+            onCheck();
+        }
+    };
+    
+    return (
+         <div className="flex flex-wrap items-center justify-center gap-2 text-xl md:text-2xl font-bold">
+            {questionParts.map((part, i) => (
+                <div key={i} className="contents">
+                    <span>{part}</span>
+                    {i < answers.length && (
+                         <Input
+                            ref={el => inputRefs.current[i] = el}
+                            type="number"
+                            value={answers[i]}
+                            onChange={(e) => handleChange(i, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, i)}
+                            className="w-20 text-center text-xl h-12"
+                         />
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
+
 export default function ProblemDisplay() {
   const { currentProblem, userAnswer, setUserAnswer, feedback, showAnswer, speedChallenge, handleCheckAnswer, handleNewProblem } = useMathTrainer();
   
@@ -66,7 +117,6 @@ export default function ProblemDisplay() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore key presses if an input element is focused
       if (document.activeElement?.tagName.toLowerCase() === 'input') {
         return;
       }
@@ -105,7 +155,7 @@ export default function ProblemDisplay() {
          <div className="mx-auto">
              <Badge variant="secondary">{currentProblem.type}</Badge>
          </div>
-        <CardTitle className="text-2xl md:text-3xl font-bold pt-2">{currentProblem.question}</CardTitle>
+        {currentProblem.inputType !== 'multi-text' && <CardTitle className="text-2xl md:text-3xl font-bold pt-2">{currentProblem.question}</CardTitle>}
       </CardHeader>
       <CardContent>
         <div className="max-w-md mx-auto px-4">
@@ -117,6 +167,8 @@ export default function ProblemDisplay() {
                 </Button>
               ))}
             </div>
+          ) : currentProblem.inputType === 'multi-text' && Array.isArray(currentProblem.question) ? (
+              <MultiTextInput questionParts={currentProblem.question} onComplete={setUserAnswer} onCheck={onCheckAnswer} />
           ) : (
             <Input 
                 type={currentProblem.inputType} 

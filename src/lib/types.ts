@@ -2,11 +2,11 @@ export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 export type Mode = 'practice' | 'study';
 
 export interface Problem {
-  question: string;
+  question: string | string[];
   answer: any;
   type: string;
   explanation: string;
-  inputType: 'number' | 'text' | 'buttons';
+  inputType: 'number' | 'text' | 'buttons' | 'multi-text';
   options?: string[];
   tolerance?: number;
   placeholder?: string;

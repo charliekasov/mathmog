@@ -62,19 +62,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setDarkMode(isDark);
-  }, []);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
   const handleNewProblem = useCallback(() => {
     let problemGenerated = false;
     let attempt = 0;
@@ -82,7 +69,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       try {
         const newProblem = generateProblem(currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory);
         setProblemHistory(prev => {
-            const newHistory = [...prev, newProblem.question];
+            const newHistory = [...prev, newProblem.question.toString()];
             if (newHistory.length > HISTORY_LIMIT) {
                 return newHistory.slice(newHistory.length - HISTORY_LIMIT);
             }
@@ -103,6 +90,21 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setFeedback('');
     setShowAnswer(false);
   }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory, toast]);
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setDarkMode(isDark);
+    handleNewProblem();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const handleLevelUpLogic = useCallback((difficulty: Difficulty) => {
       let levelUpData: PendingLevelUp | null = null;
@@ -156,7 +158,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const handleCheckAnswer = useCallback(async (answerToCheck: string) => {
     if (!currentProblem || feedback !== '') return;
     
-    // For button-based questions, we update the userAnswer state to reflect the choice
     if (currentProblem.inputType === 'buttons') {
       setUserAnswer(answerToCheck);
     }
@@ -168,32 +169,21 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     if (currentProblem.type.includes('Estimation')) {
       const userValue = parseFloat(answerToCheck);
       if (isNaN(userValue)) {
+        if (currentProblem.inputType !== 'multi-text') {
           setFeedback(`❌ Incorrect. Please enter a valid number.`);
-          setScore(prev => ({ ...prev, total: prev.total + 1 }));
           setShowAnswer(true);
-          return;
-      }
-      
-      const exactAnswer = currentProblem.answer;
-      const deviation = Math.abs((userValue - exactAnswer) / exactAnswer);
-      
-      let feedbackMsg = '';
-      if (deviation < 0.02) {
-          feedbackMsg = `✅ Correct! (within 2% of exact answer) 👀 Are you, like, psychic?`;
-          isCorrect = true;
-      } else if (deviation < 0.10) {
-          feedbackMsg = `✅ Correct! Your estimate was within ${Math.ceil(deviation*100)}% of the answer.`;
-          isCorrect = true;
-      } else if (deviation < 0.20) {
-          feedbackMsg = `😬 Close! Your estimate was within ${Math.ceil(deviation*100)}%. That still counts!`;
-          isCorrect = true;
+        }
       } else {
-          feedbackMsg = `❌ Not quite. The exact answer is ${exactAnswer}.`;
-          isCorrect = false;
+        isCorrect = true; // For estimation, we just mark it as correct and show explanation
+        setFeedback(`✅ Correct!`);
+        setShowAnswer(true);
       }
-      
-      setFeedback(feedbackMsg);
-      setShowAnswer(true);
+
+    } else if (currentProblem.inputType === 'multi-text') {
+        const cleanedAnswer = answerToCheck.replace(/\s/g, '');
+        isCorrect = cleanedAnswer === currentProblem.answer;
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Not quite. The exact answer is ${currentProblem.answer}`);
+        if(!isCorrect) setShowAnswer(true);
 
     } else if (currentProblem.type.includes('Root Estimation')) {
         const cleanedAnswer = answerToCheck.replace(/\s/g, '');
@@ -253,7 +243,8 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setProblemHistory([]);
     setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
     setScore({ correct: 0, total: 0 });
-  }, []);
+    handleNewProblem();
+  }, [handleNewProblem]);
 
   const handleLevelUp = useCallback((accept: boolean) => {
     if (accept && adaptiveData.pendingLevelUp) {
@@ -281,12 +272,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
     handleNewProblem();
   }, [handleNewProblem]);
-
-  useEffect(() => {
-    handleNewProblem();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLevel, currentDifficulty]);
-  
 
   useEffect(() => {
     if (speedChallenge.isActive && speedChallenge.timeLeft > 0) {
@@ -319,6 +304,3 @@ export const useMathTrainer = () => {
   }
   return context;
 };
-
-
-    
