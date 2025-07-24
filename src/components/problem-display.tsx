@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useEffect } from 'react';
 import { useMathTrainer } from '@/context/math-trainer-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,6 +64,34 @@ export default function ProblemDisplay() {
   
   const onCheckAnswer = () => handleCheckAnswer(userAnswer);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key presses if an input element is focused
+      if (document.activeElement?.tagName.toLowerCase() === 'input') {
+        return;
+      }
+      
+      if (feedback && e.key === 'Enter') {
+        handleNewProblem();
+        return;
+      }
+
+      if (currentProblem?.inputType === 'buttons' && !feedback) {
+        if (e.key.toLowerCase() === 'y') {
+          handleCheckAnswer('yes');
+        } else if (e.key.toLowerCase() === 'n') {
+          handleCheckAnswer('no');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentProblem, feedback, handleCheckAnswer, handleNewProblem]);
+
   if (!currentProblem) {
     if (speedChallenge.enabled && !speedChallenge.isActive && speedChallenge.results) {
         return <ChallengeResults />;
@@ -83,7 +112,7 @@ export default function ProblemDisplay() {
           {currentProblem.inputType === 'buttons' ? (
             <div className="flex gap-3 justify-center">
               {currentProblem.options?.map((option) => (
-                <Button key={option} size="lg" onClick={() => { setUserAnswer(option); setTimeout(() => handleCheckAnswer(option), 100); }} disabled={feedback !== ''} variant={userAnswer === option ? 'default' : 'secondary'} className="text-xl min-w-[120px]">
+                <Button key={option} size="lg" onClick={() => handleCheckAnswer(option)} disabled={feedback !== ''} variant={userAnswer === option ? 'default' : 'secondary'} className="text-xl min-w-[120px]">
                   {option.charAt(0).toUpperCase() + option.slice(1)}
                 </Button>
               ))}
@@ -102,7 +131,7 @@ export default function ProblemDisplay() {
           )}
           {!speedChallenge.isActive && (
             <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                <Button onClick={onCheckAnswer} disabled={feedback !== '' || userAnswer.trim() === ''} size="lg" className="flex-1 text-lg">
+                <Button onClick={onCheckAnswer} disabled={feedback !== '' || userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} size="lg" className="flex-1 text-lg">
                     <Check className="w-5 h-5 mr-2" /> Check Answer
                 </Button>
                 {feedback && (

@@ -76,21 +76,33 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [darkMode]);
 
   const handleNewProblem = useCallback(() => {
-    const newProblem = generateProblem(currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory);
+    let problemGenerated = false;
+    let attempt = 0;
+    while (!problemGenerated && attempt < 10) {
+      try {
+        const newProblem = generateProblem(currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory);
+        setProblemHistory(prev => {
+            const newHistory = [...prev, newProblem.question];
+            if (newHistory.length > HISTORY_LIMIT) {
+                return newHistory.slice(newHistory.length - HISTORY_LIMIT);
+            }
+            return newHistory;
+        });
+        setCurrentProblem(newProblem);
+        problemGenerated = true;
+      } catch (error) {
+        console.error("Error generating problem, retrying...", error);
+        attempt++;
+      }
+    }
+    if (!problemGenerated) {
+        toast({ title: "Error", description: "Could not generate a new problem. Please try changing the level or difficulty.", variant: "destructive" });
+    }
     
-    setProblemHistory(prev => {
-        const newHistory = [...prev, newProblem.question];
-        if (newHistory.length > HISTORY_LIMIT) {
-            return newHistory.slice(newHistory.length - HISTORY_LIMIT);
-        }
-        return newHistory;
-    });
-    
-    setCurrentProblem(newProblem);
     setUserAnswer('');
     setFeedback('');
     setShowAnswer(false);
-  }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory]);
+  }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory, toast]);
 
   const handleLevelUpLogic = useCallback((difficulty: Difficulty) => {
       let levelUpData: PendingLevelUp | null = null;
@@ -142,7 +154,14 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [adaptiveData.consecutiveCorrect, currentDifficulty, speedChallenge.isActive, adaptiveData.pendingLevelUp, handleLevelUpLogic, toast]);
 
   const handleCheckAnswer = useCallback(async (answerToCheck: string) => {
-    if (!currentProblem || answerToCheck.trim() === '') return;
+    if (!currentProblem || feedback !== '') return;
+    
+    // For button-based questions, we update the userAnswer state to reflect the choice
+    if (currentProblem.inputType === 'buttons') {
+      setUserAnswer(answerToCheck);
+    }
+    
+    if (answerToCheck.trim() === '') return;
 
     let isCorrect = false;
     if (currentProblem.type.includes('Root Estimation')) {
@@ -188,7 +207,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       setScore(prev => ({ ...prev, total: prev.total + 1 }));
       setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
     }
-  }, [currentProblem, speedChallenge.isActive, handleNewProblem]);
+  }, [currentProblem, speedChallenge.isActive, handleNewProblem, feedback]);
 
 
   const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty) => {
@@ -197,21 +216,18 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setProblemHistory([]);
     setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
     setScore({ correct: 0, total: 0 });
-    handleNewProblem();
-  }, [handleNewProblem]);
+  }, []);
 
   const handleLevelUp = useCallback((accept: boolean) => {
     if (accept && adaptiveData.pendingLevelUp) {
       const { to } = adaptiveData.pendingLevelUp;
-      setCurrentDifficulty(to);
-      setProblemHistory([]);
-      setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0, currentAdaptiveLevel: to, hardModeBonus: 0 }));
+      handleLevelDifficultyChange(currentLevel, to);
+      setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, currentAdaptiveLevel: to }));
       toast({ title: `Difficulty set to ${to}!` });
-      handleNewProblem();
     } else {
       setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0 }));
     }
-  }, [adaptiveData.pendingLevelUp, toast, handleNewProblem]);
+  }, [adaptiveData.pendingLevelUp, toast, handleLevelDifficultyChange, currentLevel]);
 
   const handleStartSpeedChallenge = useCallback(() => {
     setSpeedChallenge(prev => ({ ...prev, isActive: true, timeLeft: prev.duration * 60, results: null }));
