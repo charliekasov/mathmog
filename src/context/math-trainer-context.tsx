@@ -23,7 +23,7 @@ interface MathTrainerContextType {
   speedChallenge: SpeedChallengeState;
   setSpeedChallenge: Dispatch<SetStateAction<SpeedChallengeState>>;
   handleCheckAnswer: (answerToCheck: string) => void;
-  handleNewProblem: () => void;
+  handleNewProblem: (level?: number, difficulty?: Difficulty) => void;
   handleLevelDifficultyChange: (level: number, difficulty: Difficulty) => void;
   handleStartSpeedChallenge: () => void;
   handleReset: () => void;
@@ -62,12 +62,15 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleNewProblem = useCallback(() => {
+  const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
     let problemGenerated = false;
     let attempt = 0;
+    const levelToUse = level || currentLevel;
+    const difficultyToUse = difficulty || currentDifficulty;
+    
     while (!problemGenerated && attempt < 10) {
       try {
-        const newProblem = generateProblem(currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory);
+        const newProblem = generateProblem(levelToUse, difficultyToUse, adaptiveData.hardModeBonus, problemHistory);
         setProblemHistory(prev => {
             const newHistory = [...prev, newProblem.question.toString()];
             if (newHistory.length > HISTORY_LIMIT) {
@@ -94,7 +97,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setDarkMode(isDark);
-    handleNewProblem();
+    handleNewProblem(1, 'Medium');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -169,13 +172,24 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     if (currentProblem.type.includes('Estimation')) {
       const userValue = parseFloat(answerToCheck);
       if (isNaN(userValue)) {
-        if (currentProblem.inputType !== 'multi-text') {
-          setFeedback(`❌ Incorrect. Please enter a valid number.`);
-          setShowAnswer(true);
-        }
+        setFeedback(`❌ Incorrect. Please enter a valid number.`);
+        setShowAnswer(true);
       } else {
-        isCorrect = true; // For estimation, we just mark it as correct and show explanation
-        setFeedback(`✅ Correct!`);
+        const exactAnswer = currentProblem.answer;
+        const deviation = Math.abs((userValue - exactAnswer) / exactAnswer) * 100;
+        
+        if (deviation <= 2) {
+          setFeedback(`🔮 Are you psychic?! You were within 2% of the exact answer!`);
+          isCorrect = true;
+        } else if (deviation <= 10) {
+          setFeedback(`✅ Correct! You were within ${deviation.toFixed(0)}% of the exact answer.`);
+          isCorrect = true;
+        } else if (deviation <= 20) {
+          setFeedback(`😬 Close! You were within ${deviation.toFixed(0)}% of the exact answer.`);
+          isCorrect = true; // Still counts as correct
+        } else {
+          setFeedback(`❌ Not quite. You were off by ${deviation.toFixed(0)}%.`);
+        }
         setShowAnswer(true);
       }
 
@@ -223,7 +237,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
 
       if (speedChallenge.isActive) {
-        setTimeout(handleNewProblem, 500);
+        setTimeout(() => handleNewProblem(), 500);
       } else {
         setAdaptiveData(prev => ({
           ...prev, 
@@ -243,7 +257,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setProblemHistory([]);
     setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
     setScore({ correct: 0, total: 0 });
-    handleNewProblem();
+    handleNewProblem(level, difficulty);
   }, [handleNewProblem]);
 
   const handleLevelUp = useCallback((accept: boolean) => {
