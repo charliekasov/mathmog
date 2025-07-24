@@ -197,7 +197,8 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setProblemHistory([]);
     setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
     setScore({ correct: 0, total: 0 });
-  }, []);
+    handleNewProblem();
+  }, [handleNewProblem]);
 
   const handleLevelUp = useCallback((accept: boolean) => {
     if (accept && adaptiveData.pendingLevelUp) {
@@ -206,10 +207,11 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       setProblemHistory([]);
       setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0, currentAdaptiveLevel: to, hardModeBonus: 0 }));
       toast({ title: `Difficulty set to ${to}!` });
+      handleNewProblem();
     } else {
       setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0 }));
     }
-  }, [adaptiveData.pendingLevelUp, toast]);
+  }, [adaptiveData.pendingLevelUp, toast, handleNewProblem]);
 
   const handleStartSpeedChallenge = useCallback(() => {
     setSpeedChallenge(prev => ({ ...prev, isActive: true, timeLeft: prev.duration * 60, results: null }));
@@ -227,7 +229,11 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     handleNewProblem();
   }, [handleNewProblem]);
 
-  useEffect(() => { handleNewProblem(); }, [currentLevel, currentDifficulty]);
+  useEffect(() => {
+    handleNewProblem();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLevel, currentDifficulty]);
+  
 
   useEffect(() => {
     if (speedChallenge.isActive && speedChallenge.timeLeft > 0) {
