@@ -164,9 +164,43 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     if (answerToCheck.trim() === '') return;
 
     let isCorrect = false;
-    if (currentProblem.type.includes('Root Estimation')) {
+
+    if (currentProblem.type.includes('Estimation')) {
+      const userValue = parseFloat(answerToCheck);
+      if (isNaN(userValue)) {
+          setFeedback(`❌ Incorrect. Please enter a valid number.`);
+          setScore(prev => ({ ...prev, total: prev.total + 1 }));
+          setShowAnswer(true);
+          return;
+      }
+      
+      const exactAnswer = currentProblem.answer;
+      const deviation = Math.abs((userValue - exactAnswer) / exactAnswer);
+      
+      let feedbackMsg = '';
+      if (deviation < 0.02) {
+          feedbackMsg = `✅ Correct! (within 2% of exact answer) 👀 Are you, like, psychic?`;
+          isCorrect = true;
+      } else if (deviation < 0.10) {
+          feedbackMsg = `✅ Correct! Your estimate was within ${Math.ceil(deviation*100)}% of the answer.`;
+          isCorrect = true;
+      } else if (deviation < 0.20) {
+          feedbackMsg = `😬 Close! Your estimate was within ${Math.ceil(deviation*100)}%. That still counts!`;
+          isCorrect = true;
+      } else {
+          feedbackMsg = `❌ Not quite. The exact answer is ${exactAnswer}.`;
+          isCorrect = false;
+      }
+      
+      setFeedback(feedbackMsg);
+      setShowAnswer(true);
+
+    } else if (currentProblem.type.includes('Root Estimation')) {
         const cleanedAnswer = answerToCheck.replace(/\s/g, '');
         isCorrect = cleanedAnswer === currentProblem.answer;
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
+        if(!isCorrect) setShowAnswer(true);
+
     } else if (currentProblem.inputType === 'text' && typeof currentProblem.answer === 'string' && currentProblem.answer.includes('/')) {
         try {
             const parts = answerToCheck.split('/');
@@ -179,18 +213,23 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
                 }
             }
         } catch (e) { isCorrect = false; }
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
+        if(!isCorrect) setShowAnswer(true);
     } else if (currentProblem.inputType === 'buttons') {
         isCorrect = answerToCheck.toLowerCase().trim() === currentProblem.answer.toString().toLowerCase();
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
+        if(!isCorrect) setShowAnswer(true);
     } else {
         const userValue = parseFloat(answerToCheck);
         if (!isNaN(userValue)) {
             const tolerance = currentProblem.tolerance || 0.001;
             isCorrect = Math.abs(userValue - currentProblem.answer) <= tolerance;
         }
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
+        if(!isCorrect) setShowAnswer(true);
     }
 
     if (isCorrect) {
-      setFeedback('✅ Correct!');
       setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
 
       if (speedChallenge.isActive) {
@@ -202,8 +241,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         }));
       }
     } else {
-      setFeedback(`❌ Incorrect. The correct answer is ${currentProblem.answer}`);
-      if (!speedChallenge.isActive) { setShowAnswer(true); }
       setScore(prev => ({ ...prev, total: prev.total + 1 }));
       setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
     }

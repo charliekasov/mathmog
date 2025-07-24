@@ -142,10 +142,11 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
         } 
         if (type === 'fraction') {
-            // Difficulty scaling for fractions
+            if (difficulty === 'Hard') return generateLevel1Problem(); // No fractions in hard mode memorize
+            
             const easyDenominators = [4, 5];
             const mediumDenominators = [3, 6, 8, 9];
-            const hardDenominators = [7]; // Denominator 7 is harder
+            const hardDenominators = [7]; 
             
             let denominators: number[];
             if (difficulty === 'Easy') {
@@ -154,7 +155,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 denominators = mediumDenominators;
             } else { // Hard
                 denominators = hardDenominators;
-                // If we're in hard mode, maybe also allow some complex medium ones? For now, just 7.
             }
             
             let num: number, den: number;
@@ -176,7 +176,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             const decimalValue = num / den;
             const percentValue = decimalValue * 100;
 
-            // Reroll if we get an integer percentage (e.g. 17/1 becomes 1700%)
             if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
               return generateLevel1Problem();
             }
@@ -291,12 +290,17 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             }
         }
         
-        let aMin = 10, aMax = 30, bMin = 5, bMax = 15, tolerance = 0.25; // Easy
-        if (difficulty === 'Medium') { aMin=20; aMax=70; bMin=10; bMax=40; tolerance = 0.20; }
-        if (difficulty === 'Hard') { aMin=50 + (hardModeBonus*10); aMax=150 + (hardModeBonus*10); bMin=20; bMax=80; tolerance = 0.15; }
+        let aMin = 10, aMax = 30, bMin = 5, bMax = 15;
+        if (difficulty === 'Medium') { aMin=20; aMax=70; bMin=10; bMax=40; }
+        if (difficulty === 'Hard') { aMin=50 + (hardModeBonus*10); aMax=150 + (hardModeBonus*10); bMin=20; bMax=80; }
         const a = Math.floor(Math.random() * (aMax-aMin+1)) + aMin;
         const b = Math.floor(Math.random() * (bMax-bMin+1)) + bMin;
-        return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation: `${a} × ${b} = ${a * b}`, inputType: 'number', tolerance: (a * b) * tolerance };
+
+        const roundA = Math.round(a / 10) * 10;
+        const roundB = Math.round(b / 10) * 10;
+        const explanation = `The exact answer is ${a * b}. A good way to estimate is to round to the nearest "friendly" numbers. For example, rounding ${a} to ${roundA} and ${b} to ${roundB} gives an estimate of ${roundA} × ${roundB} = ${roundA * roundB}.`;
+        
+        return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number' };
     };
 
     const generateLevel3Problem = (): Problem => {
@@ -315,7 +319,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         }
 
         if (type === 'adv_div') {
-            const divisors = difficulty === 'Medium' ? [7, 11, 12] : [7, 11, 12];
+            const divisors = (difficulty === 'Medium' || difficulty === 'Hard') ? [7, 11, 12] : [];
             const divisor = divisors[Math.floor(Math.random() * divisors.length)];
             let min, max;
             if (difficulty === 'Medium') {
@@ -345,7 +349,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         if (type === 'mul_8') { 
-            const numDigits = difficulty === 'Easy' ? 2 : 3;
+            const numDigits = (difficulty === 'Easy' || difficulty === 'Medium') ? (difficulty === 'Easy' ? 2 : 3) : 2; // Fallback for hard
             const min = Math.pow(10, numDigits - 1);
             const max = Math.pow(10, numDigits) - 1;
             num = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -385,5 +389,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
     return createUniqueProblem(generator, history);
 };
+
 
 
