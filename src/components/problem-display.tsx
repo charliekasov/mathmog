@@ -66,10 +66,11 @@ const MultiTextInput = ({ questionParts, onComplete, onCheck }: { questionParts:
     useEffect(() => {
         onComplete(answers.join(','));
     }, [answers, onComplete]);
-    
+
     useEffect(() => {
+        setAnswers(['', '', '']);
         inputRefs.current[0]?.focus();
-    }, []);
+    }, [questionParts]);
 
     const handleChange = (index: number, value: string) => {
         const newAnswers = [...answers];
