@@ -143,18 +143,17 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
         } 
         if (type === 'fraction') {
-            // Prevent fraction problems in hard mode.
-            if (difficulty === 'Hard') return generateLevel1Problem();
-
             const easyDenominators = [4, 5];
             const mediumDenominators = [3, 6, 8, 9];
-            const hardDenominators = [7]; // Kept for future use, but not used now
+            const hardDenominators = [7];
             
             let denominators: number[];
             if (difficulty === 'Easy') {
                 denominators = easyDenominators;
-            } else { // Medium
+            } else if (difficulty === 'Medium') {
                 denominators = mediumDenominators;
+            } else { // Hard
+                 denominators = hardDenominators;
             }
             
             let num: number, den: number;
@@ -260,8 +259,9 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
             
             let base: number, nextBase: number;
+            let questionWord = 'consecutive integers';
             
-            if(isCubeRoot) { // Cube roots
+            if (isCubeRoot) { // Cube roots (Hard)
                  const validBases = bases.filter(b => b <= 10 && b > 0);
                  base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
                  nextBase = base + 1;
@@ -274,6 +274,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                     const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
                     base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
                     nextBase = base + 10;
+                    questionWord = 'multiples of ten';
                 }
             }
 
@@ -284,10 +285,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             const midPoint = (lowerBound + upperBound) / 2;
             const closerInt = num < midPoint ? base : nextBase;
             
-            const questionTextParts = isCubeRoot
-                ? [`${isCubeRoot ? '∛' : '√'}${num} is between the consecutive integers`, `and`, `, and is closer to`]
-                : [`${isCubeRoot ? '∛' : '√'}${num} is between the multiples of ten`, `and`, `, and is closer to`];
-
+            const questionTextParts = [`${isCubeRoot ? '∛' : '√'}${num} is between the ${questionWord}`, `and`, `, and is closer to`];
             const answerText = `${base},${nextBase},${closerInt}`;
             const explanation = isCubeRoot 
                 ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${nextBase} (${nextBase}³=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`
@@ -407,3 +405,4 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
 
     return createUniqueProblem(generator, history);
 };
+
