@@ -38,15 +38,15 @@ const HowToStudy = () => (
                 <AccordionTrigger>How Do I Study?</AccordionTrigger>
                 <AccordionContent>
                     <ul className="space-y-4 mt-3 list-disc list-inside pl-2">
+                        <li><strong>Chunk information</strong> - Break complex topics into smaller pieces. Master 1²-5² before adding 6²-10².</li>
+                        <li><strong>Practice active recall</strong> - Close the study guide and test yourself. Can you recite all perfect squares 1²-10² from memory?</li>
+                        <li><strong>Alternate study and practice</strong> - Study a chunk (like 1²-5²), then immediately practice Easy problems using those squares.</li>
                         <li>
                             <strong>Use spaced repetition (2,3,5,7 method)</strong> - Study today, then review 2 days later, then 3 days after that, then 5 days, then 7 days. This spacing helps move information into long-term memory.
                             <div className="mt-2 p-3 rounded-md font-mono text-xs bg-muted text-muted-foreground">
                                 <strong>Schedule:</strong> Day 1: Study → Day 3: Review → Day 6: Review → Day 11: Review → Day 18: Review
                             </div>
                         </li>
-                        <li><strong>Chunk information</strong> - Break complex topics into smaller pieces. Master 1²-5² before adding 6²-10².</li>
-                        <li><strong>Practice active recall</strong> - Close the study guide and test yourself. Can you recite all perfect squares 1²-10² from memory?</li>
-                        <li><strong>Alternate study and practice</strong> - Study a chunk (like 1²-5²), then immediately practice Easy problems using those squares.</li>
                     </ul>
                 </AccordionContent>
             </AccordionItem>
