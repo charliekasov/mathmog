@@ -296,9 +296,21 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         const a = Math.floor(Math.random() * (aMax-aMin+1)) + aMin;
         const b = Math.floor(Math.random() * (bMax-bMin+1)) + bMin;
 
-        const roundA = Math.round(a / 10) * 10;
-        const roundB = Math.round(b / 10) * 10;
-        const explanation = `The exact answer is ${a * b}. A good way to estimate is to round to the nearest "friendly" numbers. For example, rounding ${a} to ${roundA} and ${b} to ${roundB} gives an estimate of ${roundA} × ${roundB} = ${roundA * roundB}.`;
+        const roundDownA = Math.floor(a / 10) * 10;
+        const roundDownB = Math.floor(b / 10) * 10;
+        const roundUpA = Math.ceil(a / 10) * 10;
+        const roundUpB = Math.ceil(b / 10) * 10;
+        const bestEstimateA = Math.round(a / 10) * 10;
+        const bestEstimateB = Math.round(b / 10) * 10;
+        const lowerBound = roundDownA * roundDownB;
+        const upperBound = roundUpA * roundUpB;
+        const bestEstimate = bestEstimateA * bestEstimateB;
+
+        const explanation = `The exact answer is ${a * b}. A good way to estimate is to find the bounds. 
+Lower bound: ${roundDownA} × ${roundDownB} = ${lowerBound}. 
+Upper bound: ${roundUpA} × ${roundUpB} = ${upperBound}. 
+A solid estimate is ${bestEstimateA} × ${bestEstimateB} = ${bestEstimate}. 
+Your answer should be between ${lowerBound} and ${upperBound}.`;
         
         return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number' };
     };
@@ -392,3 +404,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
 
 
+
+
+    
