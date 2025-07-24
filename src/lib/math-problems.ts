@@ -142,8 +142,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
         } 
         if (type === 'fraction') {
-            if (difficulty === 'Hard') return generateLevel1Problem(); // No fractions in hard mode memorize
-            
             const easyDenominators = [4, 5];
             const mediumDenominators = [3, 6, 8, 9];
             const hardDenominators = [7]; 
@@ -229,6 +227,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
             min = 1000; max = 9999;
         } else { // Hard
+            if (problemHistory.length % 2 === 0) return generateLevel1Problem(); // Only ask divisibility on hard sometimes
             divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
             min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
         }
@@ -267,7 +266,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 const midPoint = (lowerBound + upperBound) / 2;
                 const closerInt = num < midPoint ? base : base + 1;
                 
-                const questionText = `The ${isCubeRoot ? 'cube' : 'square'} root of ${num} is between the consecutive integers ___ and ___, and is closer to ___.`;
+                const questionText = `${isCubeRoot ? '∛' : '√'}${num} is between the consecutive integers ___ and ___, and is closer to ___.`;
                 const answerText = `${base},${base + 1},${closerInt}`;
                 const explanation = isCubeRoot 
                     ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${base+1} (${(base+1)}³=${upperBound}). The midpoint is ${midPoint}, and ${num} is closer to ${closerInt}.`
@@ -283,7 +282,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 const midPoint = (lowerBound + upperBound) / 2;
                 const closerMultiple = num < midPoint ? base : base + 10;
 
-                const questionText = `The square root of ${num} is between the multiples of ten ___ and ___, and is closer to ___.`;
+                const questionText = `√${num} is between the multiples of ten ___ and ___, and is closer to ___.`;
                 const answerText = `${base},${base + 10},${closerMultiple}`;
                 const explanation = `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} and ${base+10}. The midpoint is ${midPoint}, and ${num} is closer to ${closerMultiple}.`;
                 return { question: questionText, answer: answerText, type: `Root Estimation`, explanation, inputType: 'text', placeholder: "a,b,c" };
