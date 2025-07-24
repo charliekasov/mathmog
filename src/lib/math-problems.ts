@@ -101,11 +101,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
         
-        // Prevent easy fraction questions from appearing on Hard difficulty
-        if (difficulty === 'Hard' && type === 'fraction') {
-            type = ['square', 'cube', 'divisibility'][Math.floor(Math.random() * 3)];
-        }
-
         if (type === 'square') {
             let num: number;
             if (difficulty === 'Easy') {
@@ -149,8 +144,18 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         if (type === 'fraction') {
             // Difficulty scaling for fractions
             const easyDenominators = [4, 5];
-            const mediumDenominators = [3, 6, 7, 8, 9];
-            const denominators = difficulty === 'Easy' ? easyDenominators : mediumDenominators;
+            const mediumDenominators = [3, 6, 8, 9];
+            const hardDenominators = [7]; // Denominator 7 is harder
+            
+            let denominators: number[];
+            if (difficulty === 'Easy') {
+                denominators = easyDenominators;
+            } else if (difficulty === 'Medium') {
+                denominators = mediumDenominators;
+            } else { // Hard
+                denominators = hardDenominators;
+                // If we're in hard mode, maybe also allow some complex medium ones? For now, just 7.
+            }
             
             let num: number, den: number;
             
@@ -310,7 +315,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         }
 
         if (type === 'adv_div') {
-            const divisors = [7, 11, 12];
+            const divisors = difficulty === 'Medium' ? [7, 11, 12] : [7, 11, 12];
             const divisor = divisors[Math.floor(Math.random() * divisors.length)];
             let min, max;
             if (difficulty === 'Medium') {
@@ -380,4 +385,5 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
     return createUniqueProblem(generator, history);
 };
+
 
