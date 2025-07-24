@@ -99,8 +99,14 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
     const generateLevel1Problem = (): Problem => {
         const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
-        const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+        let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
         
+        // Prevent easy fraction questions from appearing on Hard difficulty
+        if (difficulty === 'Hard' && type === 'fraction') {
+            const otherTypes = ['square', 'cube', 'divisibility'];
+            type = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+        }
+
         if (type === 'square') {
             let num: number;
             if (difficulty === 'Easy') {
@@ -164,6 +170,9 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
             if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
               return generateLevel1Problem(); // Prevent 17/1 type questions
+            }
+            if ((conversionType === 'decToFrac') && repeating) {
+                return generateLevel1Problem(); // Prevent 0.89 -> 8/9 type questions
             }
 
             switch (conversionType) {
