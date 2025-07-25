@@ -106,6 +106,13 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         type = alternateTypes[Math.floor(Math.random() * alternateTypes.length)];
     }
 
+    // Make divisibility questions less common and non-recursive on Hard difficulty
+    if (difficulty === 'Hard' && type === 'divisibility' && Math.random() < 0.5) {
+        const alternateTypes = ['square', 'cube']; // Re-roll to something else
+        type = alternateTypes[Math.floor(Math.random() * alternateTypes.length)];
+    }
+
+
     if (type === 'square') {
         let num: number;
         if (difficulty === 'Easy') {
@@ -125,8 +132,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             explanation = `(${num})² = (${base}×10)² = ${base}²×10² = ${base*base}×100 = ${answer}`;
         }
         return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
-    } 
-    if (type === 'cube') {
+    } else if (type === 'cube') {
         let num: number;
         if (difficulty === 'Easy') {
             const isUnderweighted = Math.random() < 0.1;
@@ -145,8 +151,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             explanation = `(${num})³ = (${base}×10)³ = ${base}³×10³ = ${base*base*base}×1000 = ${answer}`;
         }
         return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
-    } 
-    if (type === 'fraction') {
+    } else if (type === 'fraction') {
         const easyDenominators = [4, 5];
         const mediumDenominators = [3, 6, 8, 9];
         const hardDenominators = [7];
@@ -212,45 +217,47 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
                 return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
             }
+            default:
+                // Fallback in case of an unexpected conversionType
+                return generateLevel1Problem(difficulty, hardModeBonus, history);
         }
-    }
-    
-    let divisor: number;
-    let testNum: number;
-    let min = 100, max = 999;
-    
-    const easyDivisors = [3, 4, 5, 6, 9];
-    const mediumDivisors = [3, 4, 6, 8, 9];
-    const hardDivisors = [7, 8, 9, 11, 12];
+    } else { // divisibility
+        let divisor: number;
+        let testNum: number;
+        let min = 100, max = 999;
+        
+        const easyDivisors = [3, 4, 5, 6, 9];
+        const mediumDivisors = [3, 4, 6, 8, 9];
+        const hardDivisors = [7, 8, 9, 11, 12];
 
-    if (difficulty === 'Easy') {
-        divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
-        min = 100;
-        max = 999;
-        if (divisor === 5) { min = 10; max = 99; }
-    } else if (difficulty === 'Medium') {
-        divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
-        min = 1000; max = 9999;
-    } else { // Hard
-        if (history.length % 2 === 0) return generateLevel1Problem(difficulty, hardModeBonus, history); // Only ask divisibility on hard sometimes
-        divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
-        min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
-    }
+        if (difficulty === 'Easy') {
+            divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
+            min = 100;
+            max = 999;
+            if (divisor === 5) { min = 10; max = 99; }
+        } else if (difficulty === 'Medium') {
+            divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
+            min = 1000; max = 9999;
+        } else { // Hard
+            divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
+            min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
+        }
 
-    const evenOnlyDivisors = [4, 6, 8, 12];
-    testNum = Math.floor(Math.random() * (max - min + 1)) + min;
-    if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
-        testNum += 1;
-    }
-    
-    if (divisor === 5 && testNum % 5 === 0) {
-        testNum += (Math.random() < 0.5 ? 1 : -1);
-    }
+        const evenOnlyDivisors = [4, 6, 8, 12];
+        testNum = Math.floor(Math.random() * (max - min + 1)) + min;
+        if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
+            testNum += 1;
+        }
+        
+        if (divisor === 5 && testNum % 5 === 0) {
+            testNum += (Math.random() < 0.5 ? 1 : -1);
+        }
 
-    const isDivisible = testNum % divisor === 0;
-    const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
+        const isDivisible = testNum % divisor === 0;
+        const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
 
-    return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility Rules', explanation, inputType: 'buttons', options: ['yes', 'no'] };
+        return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility Rules', explanation, inputType: 'buttons', options: ['yes', 'no'] };
+    }
 };
 
 const generateMultiplicationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
@@ -291,7 +298,7 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
 
 const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     try {
-        const problemTypes = ['multiplication', 'rootEstimation'] as const;
+        const problemTypes = (difficulty === 'Easy') ? ['multiplication'] : ['multiplication', 'rootEstimation'];
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
 
         if (type === 'rootEstimation') {
@@ -359,8 +366,8 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 };
 
 const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
-    let type;
-    
+    let type: string;
+
     const easyOps = ['mul_4', 'div_4'];
     const mediumOps = ['mul_8', 'mul_12_15', 'adv_div'];
     const hardOps = ['mul_9_11_19_99', 'adv_div'];
@@ -369,71 +376,72 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         type = easyOps[Math.floor(Math.random() * easyOps.length)];
     } else if (difficulty === 'Medium') {
         type = mediumOps[Math.floor(Math.random() * mediumOps.length)];
-    } else { // Hard
+    } else {
         type = hardOps[Math.floor(Math.random() * hardOps.length)];
     }
 
-    if (type === 'adv_div') {
-        const divisors = (difficulty === 'Medium') ? [7, 11, 12] : [7, 11, 12];
-        const divisor = divisors[Math.floor(Math.random() * divisors.length)];
-        let min, max;
-        if (difficulty === 'Medium') {
-            min = 100; max = 2000;
-        } else { // Hard
-            min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
+    switch (type) {
+        case 'adv_div': {
+            const divisors = (difficulty === 'Medium') ? [7, 11, 12] : [7, 11, 12];
+            const divisor = divisors[Math.floor(Math.random() * divisors.length)];
+            let min, max;
+            if (difficulty === 'Medium') {
+                min = 100; max = 2000;
+            } else { // Hard
+                min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
+            }
+            const testNum = Math.floor(Math.random() * (max - min + 1)) + min;
+            const isDivisible = testNum % divisor === 0;
+            const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
+            return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Advanced Divisibility', explanation, inputType: 'buttons', options: ['yes', 'no'] };
         }
-        const testNum = Math.floor(Math.random() * (max - min + 1)) + min;
-        const isDivisible = testNum % divisor === 0;
-        const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
-        return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Advanced Divisibility', explanation, inputType: 'buttons', options: ['yes', 'no'] };
+        case 'mul_4': {
+            const num = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
+            const answer = num * 4;
+            const explanation = `${num} × 4 = ${num}×2×2 = ${num*2}×2 = ${answer}`;
+            return { question: `${num} × 4 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_4': {
+            const num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 4; // Ensure it's divisible
+            const answer = num / 4;
+            const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
+            return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'mul_8': {
+            const numDigits = 2; // Medium only
+            const min = Math.pow(10, numDigits - 1);
+            const max = Math.pow(10, numDigits) - 1;
+            const num = Math.floor(Math.random() * (max - min + 1)) + min;
+            const answer = num * 8;
+            const explanation = `${num} × 8 = ${num}×2×2×2 = ${num*2}×2×2 = ${num*4}×2 = ${answer}`;
+            return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'mul_12_15': {
+            const multiplier = [12, 15][Math.floor(Math.random() * 2)];
+            const num = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
+            const answer = num * multiplier;
+            let explanation = `${num} × ${multiplier} = ${answer}`;
+            if (multiplier === 12) explanation = `${num} × 12 = ${num} × (10 + 2) = ${num*10} + ${num*2} = ${answer}`;
+            if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
+            return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'mul_9_11_19_99': {
+            const multiplier = [9, 11, 19, 99][Math.floor(Math.random() * 4)];
+            const numMin = 50 + (hardModeBonus * 5);
+            const numMax = 100 + (hardModeBonus * 5);
+            const num = Math.floor(Math.random() * (numMax - numMin + 1)) + numMin;
+            const answer = num * multiplier;
+            let explanation = `${num} × ${multiplier} = ${answer}`;
+            if (multiplier === 9) explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
+            if (multiplier === 11) explanation = `${num} × 11 = ${num*10} + ${num} = ${answer}`;
+            if (multiplier === 19) explanation = `${num} × 19 = ${num} × (20 - 1) = ${num*20} - ${num} = ${answer}`;
+            if (multiplier === 99) explanation = `${num} × 99 = ${num} × (100 - 1) = ${num*100} - ${num} = ${answer}`;
+            return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        default:
+             // Fallback to a known good state
+            return generateLevel3Problem(difficulty, hardModeBonus, history);
     }
-
-    // --- Strategic Multiplication & Division ---
-    let num: number;
-    
-    if (type === 'mul_4') {
-        num = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
-        const answer = num * 4;
-        const explanation = `${num} × 4 = ${num}×2×2 = ${num*2}×2 = ${answer}`;
-        return { question: `${num} × 4 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
-    }
-    if (type === 'div_4') {
-        num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 4; // Ensure it's divisible
-        const answer = num / 4;
-        const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
-        return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
-    }
-    if (type === 'mul_8') { 
-        const numDigits = 2; // Medium only
-        const min = Math.pow(10, numDigits - 1);
-        const max = Math.pow(10, numDigits) - 1;
-        num = Math.floor(Math.random() * (max - min + 1)) + min;
-        const answer = num * 8;
-        const explanation = `${num} × 8 = ${num}×2×2×2 = ${num*2}×2×2 = ${num*4}×2 = ${answer}`;
-        return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
-    }
-
-    let multiplier: number;
-    if (type === 'mul_12_15') { // Medium
-        multiplier = [12, 15][Math.floor(Math.random()*2)];
-        num = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
-    } else { // Hard (mul_9_11_19_99)
-        multiplier = [9, 11, 19, 99][Math.floor(Math.random()*4)];
-        const numMin = 50 + (hardModeBonus*5);
-        const numMax = 100 + (hardModeBonus*5);
-        num = Math.floor(Math.random() * (numMax-numMin+1)) + numMin;
-    }
-    
-    const answer = num * multiplier;
-    let explanation = `${num} × ${multiplier} = ${answer}`;
-    if (multiplier === 9) explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
-    if (multiplier === 11) explanation = `${num} × 11 = ${num*10} + ${num} = ${answer}`;
-    if (multiplier === 12) explanation = `${num} × 12 = ${num} × (10 + 2) = ${num*10} + ${num*2} = ${answer}`;
-    if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
-    if (multiplier === 19) explanation = `${num} × 19 = ${num} × (20 - 1) = ${num*20} - ${num} = ${answer}`;
-    if (multiplier === 99) explanation = `${num} × 99 = ${num} × (100 - 1) = ${num*100} - ${num} = ${answer}`;
-    
-    return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
 };
 
 export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
