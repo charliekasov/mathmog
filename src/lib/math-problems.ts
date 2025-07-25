@@ -445,6 +445,7 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 };
 
 export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+    console.log(`Generating problem for Level: ${level}, Difficulty: ${difficulty}`);
     let generatorFunction: (difficulty: Difficulty, hardModeBonus: number, history: string[]) => Problem;
 
     switch (level) {
@@ -458,9 +459,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             generatorFunction = generateLevel3Problem;
             break;
         default:
-            // Fallback to level 1 if an invalid level is provided
-            generatorFunction = generateLevel1Problem;
-            break;
+            throw new Error(`Invalid level requested: ${level}. Cannot generate problem.`);
     }
 
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
