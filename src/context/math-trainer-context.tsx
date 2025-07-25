@@ -98,6 +98,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setDarkMode(isDark);
+    // Generate initial problem on client side only to avoid hydration errors
     handleNewProblem(1, 'Medium');
   }, []);
 
