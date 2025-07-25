@@ -158,8 +158,8 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 denominators = easyDenominators;
             } else if (difficulty === 'Medium') {
                 denominators = mediumDenominators;
-            } else { // Hard
-                 denominators = hardDenominators;
+            } else { // Hard - No fractions in hard mode as per previous change
+                 return generateLevel1Problem(); 
             }
             
             let num: number, den: number;
@@ -305,11 +305,20 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
         }
         
-        let aMin = 10, aMax = 30, bMin = 5, bMax = 15;
-        if (difficulty === 'Medium') { aMin=20; aMax=70; bMin=10; bMax=40; }
-        if (difficulty === 'Hard') { aMin=50 + (hardModeBonus*10); aMax=150 + (hardModeBonus*10); bMin=20; bMax=80; }
-        const a = Math.floor(Math.random() * (aMax-aMin+1)) + aMin;
-        const b = Math.floor(Math.random() * (bMax-bMin+1)) + bMin;
+        let aMin = 11, aMax = 29, bMin = 11, bMax = 29;
+        if (difficulty === 'Medium') { aMin=21; aMax=69; bMin=11; bMax=39; }
+        if (difficulty === 'Hard') { aMin=51 + (hardModeBonus*10); aMax=149 + (hardModeBonus*10); bMin=21; bMax=79; }
+        
+        const generateNonMultipleOf10 = (min: number, max: number) => {
+            let num;
+            do {
+                num = Math.floor(Math.random() * (max - min + 1)) + min;
+            } while (num % 10 === 0);
+            return num;
+        };
+
+        const a = generateNonMultipleOf10(aMin, aMax);
+        const b = generateNonMultipleOf10(bMin, bMax);
 
         const roundDownA = Math.floor(a / 10) * 10;
         const roundDownB = Math.floor(b / 10) * 10;
@@ -409,11 +418,18 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
     };
 
     let generator: () => Problem;
-    if (level === 1) generator = generateLevel1Problem;
-    else if (level === 2) generator = generateLevel2Problem;
-    else if (level === 3) generator = generateLevel3Problem;
-    else generator = generateLevel1Problem; // Fallback
-
+    if (level === 1) {
+        generator = generateLevel1Problem;
+    } else if (level === 2) {
+        generator = generateLevel2Problem;
+    } else if (level === 3) {
+        generator = generateLevel3Problem;
+    } else {
+        // Fallback to a default generator if level is somehow invalid
+        generator = generateLevel1Problem;
+    }
+    
     return createUniqueProblem(generator, history);
 };
+
 
