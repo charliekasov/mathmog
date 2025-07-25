@@ -97,7 +97,7 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
 }
 
 export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
-
+    
     const generateLevel1Problem = (): Problem => {
         const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
@@ -158,8 +158,8 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                 denominators = easyDenominators;
             } else if (difficulty === 'Medium') {
                 denominators = mediumDenominators;
-            } else { // Hard - No fractions in hard mode as per previous change
-                 return generateLevel1Problem(); 
+            } else { // Hard
+                 denominators = hardDenominators;
             }
             
             let num: number, den: number;
@@ -256,14 +256,15 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     };
 
     const generateLevel2Problem = (): Problem => {
-        const problemTypes = ['multiplication', 'rootEstimation'];
-        let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
-        
-        // Don't ask root estimation on easy mode.
+        let type: 'multiplication' | 'rootEstimation';
+
         if (difficulty === 'Easy') {
             type = 'multiplication';
+        } else {
+            const problemTypes = ['multiplication', 'rootEstimation'] as const;
+            type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
         }
-
+        
         if (type === 'rootEstimation') {
             const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
             const table = isCubeRoot ? perfectCubes : perfectSquares;
@@ -336,7 +337,7 @@ Upper bound: ${roundUpA} × ${roundUpB} = ${upperBound}.
 A solid estimate is ${bestEstimateA} × ${bestEstimateB} = ${bestEstimate}. 
 Your answer should be between ${lowerBound} and ${upperBound}. The exact answer is ${a*b}.`;
         
-        return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number' };
+        return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number', tolerance: 0.20 };
     };
 
     const generateLevel3Problem = (): Problem => {
@@ -425,11 +426,11 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
     } else if (level === 3) {
         generator = generateLevel3Problem;
     } else {
-        // Fallback to a default generator if level is somehow invalid
         generator = generateLevel1Problem;
     }
     
     return createUniqueProblem(generator, history);
 };
+
 
 
