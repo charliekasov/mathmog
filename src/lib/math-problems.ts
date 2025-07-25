@@ -256,14 +256,8 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     };
 
     const generateLevel2Problem = (): Problem => {
-        let type: 'multiplication' | 'rootEstimation';
-
-        if (difficulty === 'Easy') {
-            type = 'multiplication';
-        } else {
-            const problemTypes = ['multiplication', 'rootEstimation'] as const;
-            type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
-        }
+        const problemTypes = ['multiplication', 'rootEstimation'] as const;
+        const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
         
         if (type === 'rootEstimation') {
             const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
@@ -278,7 +272,11 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
                  base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
                  nextBase = base + 1;
             } else { // Square roots
-                if (difficulty === 'Medium') {
+                if (difficulty === 'Easy') {
+                    const validBases = bases.filter(b => b > 0 && b < 10);
+                    base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+                    nextBase = base + 1;
+                } else if (difficulty === 'Medium') {
                     const validBases = bases.filter(b => b > 0 && b < 20);
                     base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
                     nextBase = base + 1;
@@ -431,6 +429,7 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
     
     return createUniqueProblem(generator, history);
 };
+
 
 
 
