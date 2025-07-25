@@ -154,15 +154,12 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     } else if (type === 'fraction') {
         const easyDenominators = [4, 5];
         const mediumDenominators = [3, 6, 8, 9];
-        const hardDenominators = [7];
         
         let denominators: number[];
         if (difficulty === 'Easy') {
             denominators = easyDenominators;
-        } else if (difficulty === 'Medium') {
+        } else { // Medium and Hard
             denominators = mediumDenominators;
-        } else { // Hard
-             denominators = hardDenominators;
         }
         
         let num: number, den: number;
@@ -228,7 +225,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         
         const easyDivisors = [3, 4, 5, 6, 9];
         const mediumDivisors = [3, 4, 6, 8, 9];
-        const hardDivisors = [7, 8, 9, 11, 12];
+        const hardDivisors = [8, 9]; // NOTE: Removed 7, 11, 12 from here.
 
         if (difficulty === 'Easy') {
             divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
