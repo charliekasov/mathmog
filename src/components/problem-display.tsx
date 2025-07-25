@@ -64,13 +64,15 @@ const MultiTextInput = ({ questionParts, onComplete, onCheck }: { questionParts:
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
-        onComplete(answers.join(','));
-    }, [answers, onComplete]);
+        setAnswers(['', '', '']);
+        if (inputRefs.current[0]) {
+            inputRefs.current[0].focus();
+        }
+    }, [questionParts]);
 
     useEffect(() => {
-        setAnswers(['', '', '']);
-        inputRefs.current[0]?.focus();
-    }, [questionParts]);
+        onComplete(answers.join(','));
+    }, [answers, onComplete]);
 
     const handleChange = (index: number, value: string) => {
         const newAnswers = [...answers];
@@ -188,7 +190,7 @@ export default function ProblemDisplay() {
                     <Check className="w-5 h-5 mr-2" /> Check Answer
                 </Button>
                 {feedback && (
-                    <Button onClick={handleNewProblem} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700">
+                    <Button onClick={() => handleNewProblem()} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700">
                         Next Problem <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
                 )}
