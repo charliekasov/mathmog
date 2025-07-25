@@ -234,7 +234,7 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
             min = 1000; max = 9999;
         } else { // Hard
-            if (problemHistory.length % 2 === 0) return generateLevel1Problem(); // Only ask divisibility on hard sometimes
+            if (history.length % 2 === 0) return generateLevel1Problem(); // Only ask divisibility on hard sometimes
             divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
             min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
         }
