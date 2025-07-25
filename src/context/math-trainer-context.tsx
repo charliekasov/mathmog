@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode, type Dispatch, type SetStateAction } from 'react';
@@ -168,7 +169,13 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
 
     let isCorrect = false;
 
-    if (currentProblem.type.includes('Estimation')) {
+    if (currentProblem.type.includes('Root Estimation')) {
+        const cleanedAnswer = answerToCheck.replace(/\s/g, '');
+        isCorrect = cleanedAnswer === currentProblem.answer;
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
+        if(!isCorrect) setShowAnswer(true);
+
+    } else if (currentProblem.type.includes('Estimation')) {
       const userValue = parseFloat(answerToCheck);
       if (isNaN(userValue)) {
         setFeedback(`❌ Incorrect. Please enter a valid number.`);
@@ -196,12 +203,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         const cleanedAnswer = answerToCheck.replace(/\s/g, '');
         isCorrect = cleanedAnswer === currentProblem.answer;
         setFeedback(isCorrect ? '✅ Correct!' : `❌ Not quite. The exact answer is ${currentProblem.answer}`);
-        if(!isCorrect) setShowAnswer(true);
-
-    } else if (currentProblem.type.includes('Root Estimation')) {
-        const cleanedAnswer = answerToCheck.replace(/\s/g, '');
-        isCorrect = cleanedAnswer === currentProblem.answer;
-        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
         if(!isCorrect) setShowAnswer(true);
 
     } else if (currentProblem.inputType === 'text' && typeof currentProblem.answer === 'string' && currentProblem.answer.includes('/')) {
@@ -317,5 +318,3 @@ export const useMathTrainer = () => {
   }
   return context;
 };
-
-    

@@ -253,62 +253,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility Rules', explanation, inputType: 'buttons', options: ['yes', 'no'] };
 };
 
-const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
-    const problemTypes = ['multiplication', 'rootEstimation'] as const;
-    let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
-    
-    if (type === 'rootEstimation') {
-        const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
-        const table = isCubeRoot ? perfectCubes : perfectSquares;
-        const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
-        
-        let base: number;
-        let nextBase: number;
-        let questionWord = 'consecutive integers';
-        
-        if (isCubeRoot) { // Cube roots (Hard)
-             const validBases = bases.filter(b => b <= 10 && b > 0);
-             base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-             nextBase = base + 1;
-        } else { // Square roots
-            if (difficulty === 'Easy') {
-                const validBases = bases.filter(b => b > 0 && b < 10);
-                base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-                nextBase = base + 1;
-            } else if (difficulty === 'Medium') {
-                const validBases = bases.filter(b => b > 0 && b < 20);
-                base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-                nextBase = base + 1;
-            } else { // Hard
-                const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
-                base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-                nextBase = base + 10;
-                questionWord = 'multiples of ten';
-            }
-        }
-
-        const lowerBound = table[base];
-        const upperBound = table[nextBase];
-        if (lowerBound === undefined || upperBound === undefined) {
-             // This case should not happen with the corrected logic, but as a failsafe:
-             return generateLevel2Problem(difficulty, hardModeBonus, history);
-        }
-
-        const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
-        
-        const midPoint = (lowerBound + upperBound) / 2;
-        const closerInt = num < midPoint ? base : nextBase;
-        
-        const questionTextParts = [`${isCubeRoot ? '∛' : '√'}${num} is between the ${questionWord}`, `and`, `, and is closer to`];
-        const answerText = `${base},${nextBase},${closerInt}`;
-        const explanation = isCubeRoot 
-            ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${nextBase} (${nextBase}³=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`
-            : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${nextBase} (${nextBase}²=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
-        
-        return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
-    }
-    
-    // Fallback to Multiplication if root estimation fails or is not chosen
+const generateMultiplicationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
     let aMin = 11, aMax = 29, bMin = 11, bMax = 29;
     if (difficulty === 'Medium') { aMin=21; aMax=69; bMin=11; bMax=39; }
     if (difficulty === 'Hard') { aMin=51 + (hardModeBonus*10); aMax=149 + (hardModeBonus*10); bMin=21; bMax=79; }
@@ -341,6 +286,76 @@ A solid estimate is ${bestEstimateA} × ${bestEstimateB} = ${bestEstimate}.
 Your answer should be between ${lowerBound} and ${upperBound}. The exact answer is ${a*b}.`;
     
     return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number', tolerance: 0.20 };
+}
+
+
+const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+    try {
+        const problemTypes = ['multiplication', 'rootEstimation'] as const;
+        let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+
+        if (type === 'rootEstimation') {
+            const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
+            const table = isCubeRoot ? perfectCubes : perfectSquares;
+            const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
+            
+            let base: number;
+            let nextBase: number;
+            let questionWord = 'consecutive integers';
+            
+            if (isCubeRoot) { // Cube roots (Hard)
+                 const validBases = bases.filter(b => b <= 10 && b > 0);
+                 const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+                 base = validBases[baseIndex];
+                 nextBase = validBases[baseIndex + 1];
+            } else { // Square roots
+                if (difficulty === 'Easy') {
+                    const validBases = bases.filter(b => b > 0 && b < 10);
+                    const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+                    base = validBases[baseIndex];
+                    nextBase = validBases[baseIndex + 1];
+                } else if (difficulty === 'Medium') {
+                    const validBases = bases.filter(b => b > 0 && b < 20);
+                    const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+                    base = validBases[baseIndex];
+                    nextBase = validBases[baseIndex + 1];
+                } else { // Hard
+                    const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
+                    const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+                    base = validBases[baseIndex];
+                    nextBase = validBases[baseIndex + 1]; // This will be base + 10
+                    questionWord = 'multiples of ten';
+                }
+            }
+
+            const lowerBound = table[base];
+            const upperBound = table[nextBase];
+            if (lowerBound === undefined || upperBound === undefined) {
+                 // This case should not happen with the corrected logic, but as a failsafe:
+                 return generateMultiplicationProblem(difficulty, hardModeBonus);
+            }
+
+            const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
+            
+            const midPoint = (lowerBound + upperBound) / 2;
+            const closerInt = num < midPoint ? base : nextBase;
+            
+            const questionTextParts = [`${isCubeRoot ? '∛' : '√'}${num} is between the ${questionWord}`, `and`, `, and is closer to`];
+            const answerText = `${base},${nextBase},${closerInt}`;
+            const explanation = isCubeRoot 
+                ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${nextBase} (${nextBase}³=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`
+                : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${nextBase} (${nextBase}²=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
+            
+            return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
+        }
+        
+        // Fallback to Multiplication if root estimation fails or is not chosen
+        return generateMultiplicationProblem(difficulty, hardModeBonus);
+    } catch (error) {
+        console.error("Error generating Level 2 problem, falling back to multiplication", error);
+        // Failsafe: if anything goes wrong, generate a simple multiplication problem
+        return generateMultiplicationProblem(difficulty, hardModeBonus);
+    }
 };
 
 const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
@@ -422,22 +437,24 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 };
 
 export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
-    
-    let generator: () => Problem;
+    let generatorFunction: (difficulty: Difficulty, hardModeBonus: number, history: string[]) => Problem;
+
     switch (level) {
         case 1:
-            generator = () => generateLevel1Problem(difficulty, hardModeBonus, history);
+            generatorFunction = generateLevel1Problem;
             break;
         case 2:
-            generator = () => generateLevel2Problem(difficulty, hardModeBonus, history);
+            generatorFunction = generateLevel2Problem;
             break;
         case 3:
-            generator = () => generateLevel3Problem(difficulty, hardModeBonus, history);
+            generatorFunction = generateLevel3Problem;
             break;
         default:
-            generator = () => generateLevel1Problem(difficulty, hardModeBonus, history);
+            // Fallback to level 1 if an invalid level is provided
+            generatorFunction = generateLevel1Problem;
             break;
     }
-    
+
+    const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
