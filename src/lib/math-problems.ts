@@ -96,340 +96,348 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
     }
 }
 
-export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+    const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
+    let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
     
-    const generateLevel1Problem = (): Problem => {
-        const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
-        let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
-        
-        // Prevent fraction questions on hard mode
-        if (difficulty === 'Hard' && type === 'fraction') {
-            const alternateTypes = ['square', 'cube', 'divisibility'];
-            type = alternateTypes[Math.floor(Math.random() * alternateTypes.length)];
-        }
+    // Prevent fraction questions on hard mode
+    if (difficulty === 'Hard' && type === 'fraction') {
+        const alternateTypes = ['square', 'cube', 'divisibility'];
+        type = alternateTypes[Math.floor(Math.random() * alternateTypes.length)];
+    }
 
-        if (type === 'square') {
-            let num: number;
-            if (difficulty === 'Easy') {
-                const isUnderweighted = Math.random() < 0.1;
-                num = isUnderweighted
-                    ? Math.floor(Math.random() * 3) + 1  // 1, 2, 3
-                    : Math.floor(Math.random() * 9) + 4; // 4-12
-            } else if (difficulty === 'Medium') {
-                num = Math.floor(Math.random() * 10) + 11; // 11-20
-            } else { // Hard
-                num = (Math.floor(Math.random() * 9) + 2) * 10; // 20, 30... 100
-            }
-            const answer = perfectSquares[num] || num * num;
-            let explanation = `${num}² = ${num}×${num} = ${answer}`;
-            if (difficulty === 'Hard' && num >= 20 && num % 10 === 0) {
-                const base = num / 10;
-                explanation = `(${num})² = (${base}×10)² = ${base}²×10² = ${base*base}×100 = ${answer}`;
-            }
-            return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
-        } 
-        if (type === 'cube') {
-            let num: number;
-            if (difficulty === 'Easy') {
-                const isUnderweighted = Math.random() < 0.1;
-                 num = isUnderweighted
-                    ? Math.floor(Math.random() * 2) + 1 // 1, 2
-                    : Math.floor(Math.random() * 3) + 3; // 3, 4, 5
-            } else if (difficulty === 'Medium') {
-                num = Math.floor(Math.random() * 7) + 4; // 4-10
-            } else { // Hard
-                num = (Math.floor(Math.random() * 9) + 2) * 10; // 20, 30... 100
-            }
-            const answer = perfectCubes[num] || num * num * num;
-            let explanation = `${num}³ = ${num}×${num}×${num} = ${answer}`;
-            if (difficulty === 'Hard' && num >= 20 && num % 10 === 0) {
-                const base = num / 10;
-                explanation = `(${num})³ = (${base}×10)³ = ${base}³×10³ = ${base*base*base}×1000 = ${answer}`;
-            }
-            return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
-        } 
-        if (type === 'fraction') {
-            const easyDenominators = [4, 5];
-            const mediumDenominators = [3, 6, 8, 9];
-            const hardDenominators = [7];
-            
-            let denominators: number[];
-            if (difficulty === 'Easy') {
-                denominators = easyDenominators;
-            } else if (difficulty === 'Medium') {
-                denominators = mediumDenominators;
-            } else { // Hard
-                 denominators = hardDenominators;
-            }
-            
-            let num: number, den: number;
-            
-            den = denominators[Math.floor(Math.random() * denominators.length)];
-            const availableNumerators = fractionBasesByDenominator[den].numerators;
-            num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
-            
-            const { precision, repeating } = fractionBasesByDenominator[den];
-            
-            const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
-            let conversionType: string;
-            
-            do {
-                conversionType = allConversionTypes[Math.floor(Math.random() * allConversionTypes.length)];
-             // Exclude DecToFrac/PercToFrac for repeating decimals, as it's ambiguous
-            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
-
-            const decimalValue = num / den;
-            const percentValue = decimalValue * 100;
-
-            if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
-              return generateLevel1Problem();
-            }
-
-            switch (conversionType) {
-                case 'fracToDec': return { question: `Convert ${num}/${den} to a decimal (round to ${precision} places)`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction to Decimal', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
-                case 'decToFrac': {
-                    const simplified = simplifyFraction(num, den);
-                    const questionDecimal = parseFloat(decimalValue.toFixed(precision));
-                    return { question: `Convert ${questionDecimal} to a fraction`, answer: simplified, type: 'Decimal to Fraction', explanation: `${questionDecimal} is the decimal for ${simplified}`, inputType: 'text' };
-                }
-                case 'fracToPerc': {
-                    const roundedPercent = parseFloat(percentValue.toFixed(Math.max(0, precision - 2)));
-                    return { question: `Convert ${num}/${den} to a percent (round to ${Math.max(0, precision - 2)} decimal places)`, answer: roundedPercent, type: 'Fraction to Percent', explanation: `${num}/${den} = ${decimalValue} ≈ ${roundedPercent}%`, inputType: 'number' };
-                }
-                case 'percToFrac': {
-                    const simplified = simplifyFraction(num, den);
-                    const places = Math.min(4, Math.max(2, precision));
-                    const questionPercent = parseFloat(percentValue.toFixed(places));
-                    return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
-                }
-                case 'decToPerc': { 
-                    const d = parseFloat(decimalValue.toFixed(2));
-                    return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(0)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; 
-                }
-                case 'percToDec': {
-                    const places = Math.max(2, Math.min(4, precision));
-                    const questionPercent = parseFloat(percentValue.toFixed(places));
-                    const question = `Convert ${questionPercent}% to a decimal (round to ${places} places)`;
-                    const answer = parseFloat(decimalValue.toFixed(places));
-                    const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
-                    return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
-                }
-            }
-        }
-        
-        let divisor: number;
-        let testNum: number;
-        let min = 100, max = 999;
-        
-        const easyDivisors = [3, 4, 5, 6, 9];
-        const mediumDivisors = [3, 4, 6, 8, 9];
-        const hardDivisors = [7, 8, 9, 11, 12];
-
+    if (type === 'square') {
+        let num: number;
         if (difficulty === 'Easy') {
-            divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
-            min = 100;
-            max = 999;
-            if (divisor === 5) { min = 10; max = 99; }
+            const isUnderweighted = Math.random() < 0.1;
+            num = isUnderweighted
+                ? Math.floor(Math.random() * 3) + 1  // 1, 2, 3
+                : Math.floor(Math.random() * 9) + 4; // 4-12
         } else if (difficulty === 'Medium') {
-            divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
-            min = 1000; max = 9999;
+            num = Math.floor(Math.random() * 10) + 11; // 11-20
         } else { // Hard
-            if (history.length % 2 === 0) return generateLevel1Problem(); // Only ask divisibility on hard sometimes
-            divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
-            min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
+            num = (Math.floor(Math.random() * 9) + 2) * 10; // 20, 30... 100
         }
-
-        const evenOnlyDivisors = [4, 6, 8, 12];
-        testNum = Math.floor(Math.random() * (max - min + 1)) + min;
-        if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
-            testNum += 1;
+        const answer = perfectSquares[num] || num * num;
+        let explanation = `${num}² = ${num}×${num} = ${answer}`;
+        if (difficulty === 'Hard' && num >= 20 && num % 10 === 0) {
+            const base = num / 10;
+            explanation = `(${num})² = (${base}×10)² = ${base}²×10² = ${base*base}×100 = ${answer}`;
+        }
+        return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
+    } 
+    if (type === 'cube') {
+        let num: number;
+        if (difficulty === 'Easy') {
+            const isUnderweighted = Math.random() < 0.1;
+             num = isUnderweighted
+                ? Math.floor(Math.random() * 2) + 1 // 1, 2
+                : Math.floor(Math.random() * 3) + 3; // 3, 4, 5
+        } else if (difficulty === 'Medium') {
+            num = Math.floor(Math.random() * 7) + 4; // 4-10
+        } else { // Hard
+            num = (Math.floor(Math.random() * 9) + 2) * 10; // 20, 30... 100
+        }
+        const answer = perfectCubes[num] || num * num * num;
+        let explanation = `${num}³ = ${num}×${num}×${num} = ${answer}`;
+        if (difficulty === 'Hard' && num >= 20 && num % 10 === 0) {
+            const base = num / 10;
+            explanation = `(${num})³ = (${base}×10)³ = ${base}³×10³ = ${base*base*base}×1000 = ${answer}`;
+        }
+        return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
+    } 
+    if (type === 'fraction') {
+        const easyDenominators = [4, 5];
+        const mediumDenominators = [3, 6, 8, 9];
+        const hardDenominators = [7];
+        
+        let denominators: number[];
+        if (difficulty === 'Easy') {
+            denominators = easyDenominators;
+        } else if (difficulty === 'Medium') {
+            denominators = mediumDenominators;
+        } else { // Hard
+             denominators = hardDenominators;
         }
         
-        if (divisor === 5 && testNum % 5 === 0) {
-            testNum += (Math.random() < 0.5 ? 1 : -1);
+        let num: number, den: number;
+        
+        den = denominators[Math.floor(Math.random() * denominators.length)];
+        const availableNumerators = fractionBasesByDenominator[den].numerators;
+        num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
+        
+        const { precision, repeating } = fractionBasesByDenominator[den];
+        
+        const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
+        let conversionType: string;
+        
+        do {
+            conversionType = allConversionTypes[Math.floor(Math.random() * allConversionTypes.length)];
+         // Exclude DecToFrac/PercToFrac for repeating decimals, as it's ambiguous
+        } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
+
+        const decimalValue = num / den;
+        const percentValue = decimalValue * 100;
+
+        if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
+          return generateLevel1Problem(difficulty, hardModeBonus, history);
         }
 
-        const isDivisible = testNum % divisor === 0;
-        const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
+        switch (conversionType) {
+            case 'fracToDec': return { question: `Convert ${num}/${den} to a decimal (round to ${precision} places)`, answer: parseFloat(decimalValue.toFixed(precision)), type: 'Fraction to Decimal', explanation: `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`, inputType: 'number' };
+            case 'decToFrac': {
+                const simplified = simplifyFraction(num, den);
+                const questionDecimal = parseFloat(decimalValue.toFixed(precision));
+                return { question: `Convert ${questionDecimal} to a fraction`, answer: simplified, type: 'Decimal to Fraction', explanation: `${questionDecimal} is the decimal for ${simplified}`, inputType: 'text' };
+            }
+            case 'fracToPerc': {
+                const roundedPercent = parseFloat(percentValue.toFixed(Math.max(0, precision - 2)));
+                return { question: `Convert ${num}/${den} to a percent (round to ${Math.max(0, precision - 2)} decimal places)`, answer: roundedPercent, type: 'Fraction to Percent', explanation: `${num}/${den} = ${decimalValue} ≈ ${roundedPercent}%`, inputType: 'number' };
+            }
+            case 'percToFrac': {
+                const simplified = simplifyFraction(num, den);
+                const places = Math.min(4, Math.max(2, precision));
+                const questionPercent = parseFloat(percentValue.toFixed(places));
+                return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
+            }
+            case 'decToPerc': { 
+                const d = parseFloat(decimalValue.toFixed(2));
+                return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(0)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; 
+            }
+            case 'percToDec': {
+                const places = Math.max(2, Math.min(4, precision));
+                const questionPercent = parseFloat(percentValue.toFixed(places));
+                const question = `Convert ${questionPercent}% to a decimal (round to ${places} places)`;
+                const answer = parseFloat(decimalValue.toFixed(places));
+                const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
+                return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
+            }
+        }
+    }
+    
+    let divisor: number;
+    let testNum: number;
+    let min = 100, max = 999;
+    
+    const easyDivisors = [3, 4, 5, 6, 9];
+    const mediumDivisors = [3, 4, 6, 8, 9];
+    const hardDivisors = [7, 8, 9, 11, 12];
 
-        return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility Rules', explanation, inputType: 'buttons', options: ['yes', 'no'] };
+    if (difficulty === 'Easy') {
+        divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
+        min = 100;
+        max = 999;
+        if (divisor === 5) { min = 10; max = 99; }
+    } else if (difficulty === 'Medium') {
+        divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
+        min = 1000; max = 9999;
+    } else { // Hard
+        if (history.length % 2 === 0) return generateLevel1Problem(difficulty, hardModeBonus, history); // Only ask divisibility on hard sometimes
+        divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
+        min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
+    }
+
+    const evenOnlyDivisors = [4, 6, 8, 12];
+    testNum = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
+        testNum += 1;
+    }
+    
+    if (divisor === 5 && testNum % 5 === 0) {
+        testNum += (Math.random() < 0.5 ? 1 : -1);
+    }
+
+    const isDivisible = testNum % divisor === 0;
+    const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
+
+    return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility Rules', explanation, inputType: 'buttons', options: ['yes', 'no'] };
+};
+
+const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+    const problemTypes = ['multiplication', 'rootEstimation'] as const;
+    let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+    
+    if (type === 'rootEstimation') {
+        const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
+        const table = isCubeRoot ? perfectCubes : perfectSquares;
+        const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
+        
+        let base: number;
+        let nextBase: number;
+        let questionWord = 'consecutive integers';
+        
+        if (isCubeRoot) { // Cube roots (Hard)
+             const validBases = bases.filter(b => b <= 10 && b > 0);
+             base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+             nextBase = base + 1;
+        } else { // Square roots
+            if (difficulty === 'Easy') {
+                const validBases = bases.filter(b => b > 0 && b < 10);
+                base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+                nextBase = base + 1;
+            } else if (difficulty === 'Medium') {
+                const validBases = bases.filter(b => b > 0 && b < 20);
+                base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+                nextBase = base + 1;
+            } else { // Hard
+                const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
+                base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
+                nextBase = base + 10;
+                questionWord = 'multiples of ten';
+            }
+        }
+
+        const lowerBound = table[base];
+        const upperBound = table[nextBase];
+        if (lowerBound === undefined || upperBound === undefined) {
+             // This case should not happen with the corrected logic, but as a failsafe:
+             return generateLevel2Problem(difficulty, hardModeBonus, history);
+        }
+
+        const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
+        
+        const midPoint = (lowerBound + upperBound) / 2;
+        const closerInt = num < midPoint ? base : nextBase;
+        
+        const questionTextParts = [`${isCubeRoot ? '∛' : '√'}${num} is between the ${questionWord}`, `and`, `, and is closer to`];
+        const answerText = `${base},${nextBase},${closerInt}`;
+        const explanation = isCubeRoot 
+            ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${nextBase} (${nextBase}³=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`
+            : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${nextBase} (${nextBase}²=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
+        
+        return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
+    }
+    
+    // Fallback to Multiplication if root estimation fails or is not chosen
+    let aMin = 11, aMax = 29, bMin = 11, bMax = 29;
+    if (difficulty === 'Medium') { aMin=21; aMax=69; bMin=11; bMax=39; }
+    if (difficulty === 'Hard') { aMin=51 + (hardModeBonus*10); aMax=149 + (hardModeBonus*10); bMin=21; bMax=79; }
+    
+    const generateNonMultipleOf10 = (min: number, max: number) => {
+        let num;
+        do {
+            num = Math.floor(Math.random() * (max - min + 1)) + min;
+        } while (num % 10 === 0);
+        return num;
     };
 
-    const generateLevel2Problem = (): Problem => {
-        const problemTypes = ['multiplication', 'rootEstimation'] as const;
-        const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
-        
-        if (type === 'rootEstimation') {
-            const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
-            const table = isCubeRoot ? perfectCubes : perfectSquares;
-            const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
-            
-            let base: number, nextBase: number;
-            let questionWord = 'consecutive integers';
-            
-            if (isCubeRoot) { // Cube roots (Hard)
-                 const validBases = bases.filter(b => b <= 10 && b > 0);
-                 base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-                 nextBase = base + 1;
-            } else { // Square roots
-                if (difficulty === 'Easy') {
-                    const validBases = bases.filter(b => b > 0 && b < 10);
-                    base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-                    nextBase = base + 1;
-                } else if (difficulty === 'Medium') {
-                    const validBases = bases.filter(b => b > 0 && b < 20);
-                    base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-                    nextBase = base + 1;
-                } else { // Hard
-                    const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
-                    base = validBases[Math.floor(Math.random() * (validBases.length - 1))];
-                    nextBase = base + 10;
-                    questionWord = 'multiples of ten';
-                }
-            }
+    const a = generateNonMultipleOf10(aMin, aMax);
+    const b = generateNonMultipleOf10(bMin, bMax);
 
-            const lowerBound = table[base];
-            const upperBound = table[nextBase];
-            const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
-            
-            const midPoint = (lowerBound + upperBound) / 2;
-            const closerInt = num < midPoint ? base : nextBase;
-            
-            const questionTextParts = [`${isCubeRoot ? '∛' : '√'}${num} is between the ${questionWord}`, `and`, `, and is closer to`];
-            const answerText = `${base},${nextBase},${closerInt}`;
-            const explanation = isCubeRoot 
-                ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${nextBase} (${nextBase}³=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`
-                : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${nextBase} (${nextBase}²=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
-            
-            return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
-        }
-        
-        let aMin = 11, aMax = 29, bMin = 11, bMax = 29;
-        if (difficulty === 'Medium') { aMin=21; aMax=69; bMin=11; bMax=39; }
-        if (difficulty === 'Hard') { aMin=51 + (hardModeBonus*10); aMax=149 + (hardModeBonus*10); bMin=21; bMax=79; }
-        
-        const generateNonMultipleOf10 = (min: number, max: number) => {
-            let num;
-            do {
-                num = Math.floor(Math.random() * (max - min + 1)) + min;
-            } while (num % 10 === 0);
-            return num;
-        };
+    const roundDownA = Math.floor(a / 10) * 10;
+    const roundDownB = Math.floor(b / 10) * 10;
+    const roundUpA = Math.ceil(a / 10) * 10;
+    const roundUpB = Math.ceil(b / 10) * 10;
+    const bestEstimateA = Math.round(a / 10) * 10;
+    const bestEstimateB = Math.round(b / 10) * 10;
+    const lowerBound = roundDownA * roundDownB;
+    const upperBound = roundUpA * roundUpB;
+    const bestEstimate = bestEstimateA * bestEstimateB;
 
-        const a = generateNonMultipleOf10(aMin, aMax);
-        const b = generateNonMultipleOf10(bMin, bMax);
-
-        const roundDownA = Math.floor(a / 10) * 10;
-        const roundDownB = Math.floor(b / 10) * 10;
-        const roundUpA = Math.ceil(a / 10) * 10;
-        const roundUpB = Math.ceil(b / 10) * 10;
-        const bestEstimateA = Math.round(a / 10) * 10;
-        const bestEstimateB = Math.round(b / 10) * 10;
-        const lowerBound = roundDownA * roundDownB;
-        const upperBound = roundUpA * roundUpB;
-        const bestEstimate = bestEstimateA * bestEstimateB;
-
-        const explanation = `A good way to estimate is to find the bounds. 
+    const explanation = `A good way to estimate is to find the bounds. 
 Lower bound: ${roundDownA} × ${roundDownB} = ${lowerBound}. 
 Upper bound: ${roundUpA} × ${roundUpB} = ${upperBound}. 
 A solid estimate is ${bestEstimateA} × ${bestEstimateB} = ${bestEstimate}. 
 Your answer should be between ${lowerBound} and ${upperBound}. The exact answer is ${a*b}.`;
-        
-        return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number', tolerance: 0.20 };
-    };
+    
+    return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number', tolerance: 0.20 };
+};
 
-    const generateLevel3Problem = (): Problem => {
-        let type;
-        
-        const easyOps = ['mul_4', 'div_4'];
-        const mediumOps = ['mul_8', 'mul_12_15', 'adv_div'];
-        const hardOps = ['mul_9_11_19_99', 'adv_div'];
+const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+    let type;
+    
+    const easyOps = ['mul_4', 'div_4'];
+    const mediumOps = ['mul_8', 'mul_12_15', 'adv_div'];
+    const hardOps = ['mul_9_11_19_99', 'adv_div'];
 
-        if (difficulty === 'Easy') {
-            type = easyOps[Math.floor(Math.random() * easyOps.length)];
-        } else if (difficulty === 'Medium') {
-            type = mediumOps[Math.floor(Math.random() * mediumOps.length)];
+    if (difficulty === 'Easy') {
+        type = easyOps[Math.floor(Math.random() * easyOps.length)];
+    } else if (difficulty === 'Medium') {
+        type = mediumOps[Math.floor(Math.random() * mediumOps.length)];
+    } else { // Hard
+        type = hardOps[Math.floor(Math.random() * hardOps.length)];
+    }
+
+    if (type === 'adv_div') {
+        const divisors = (difficulty === 'Medium') ? [7, 11, 12] : [7, 11, 12];
+        const divisor = divisors[Math.floor(Math.random() * divisors.length)];
+        let min, max;
+        if (difficulty === 'Medium') {
+            min = 100; max = 2000;
         } else { // Hard
-            type = hardOps[Math.floor(Math.random() * hardOps.length)];
+            min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
         }
+        const testNum = Math.floor(Math.random() * (max - min + 1)) + min;
+        const isDivisible = testNum % divisor === 0;
+        const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
+        return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Advanced Divisibility', explanation, inputType: 'buttons', options: ['yes', 'no'] };
+    }
 
-        if (type === 'adv_div') {
-            const divisors = (difficulty === 'Medium') ? [7, 11, 12] : [7, 11, 12];
-            const divisor = divisors[Math.floor(Math.random() * divisors.length)];
-            let min, max;
-            if (difficulty === 'Medium') {
-                min = 100; max = 2000;
-            } else { // Hard
-                min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
-            }
-            const testNum = Math.floor(Math.random() * (max - min + 1)) + min;
-            const isDivisible = testNum % divisor === 0;
-            const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
-            return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Advanced Divisibility', explanation, inputType: 'buttons', options: ['yes', 'no'] };
-        }
+    // --- Strategic Multiplication & Division ---
+    let num: number;
+    
+    if (type === 'mul_4') {
+        num = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
+        const answer = num * 4;
+        const explanation = `${num} × 4 = ${num}×2×2 = ${num*2}×2 = ${answer}`;
+        return { question: `${num} × 4 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+    }
+    if (type === 'div_4') {
+        num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 4; // Ensure it's divisible
+        const answer = num / 4;
+        const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
+        return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+    }
+    if (type === 'mul_8') { 
+        const numDigits = 2; // Medium only
+        const min = Math.pow(10, numDigits - 1);
+        const max = Math.pow(10, numDigits) - 1;
+        num = Math.floor(Math.random() * (max - min + 1)) + min;
+        const answer = num * 8;
+        const explanation = `${num} × 8 = ${num}×2×2×2 = ${num*2}×2×2 = ${num*4}×2 = ${answer}`;
+        return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+    }
 
-        // --- Strategic Multiplication & Division ---
-        let num: number;
-        
-        if (type === 'mul_4') {
-            num = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
-            const answer = num * 4;
-            const explanation = `${num} × 4 = ${num}×2×2 = ${num*2}×2 = ${answer}`;
-            return { question: `${num} × 4 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
-        }
-        if (type === 'div_4') {
-            num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 4; // Ensure it's divisible
-            const answer = num / 4;
-            const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
-            return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
-        }
-        if (type === 'mul_8') { 
-            const numDigits = 2; // Medium only
-            const min = Math.pow(10, numDigits - 1);
-            const max = Math.pow(10, numDigits) - 1;
-            num = Math.floor(Math.random() * (max - min + 1)) + min;
-            const answer = num * 8;
-            const explanation = `${num} × 8 = ${num}×2×2×2 = ${num*2}×2×2 = ${num*4}×2 = ${answer}`;
-            return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
-        }
+    let multiplier: number;
+    if (type === 'mul_12_15') { // Medium
+        multiplier = [12, 15][Math.floor(Math.random()*2)];
+        num = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
+    } else { // Hard (mul_9_11_19_99)
+        multiplier = [9, 11, 19, 99][Math.floor(Math.random()*4)];
+        const numMin = 50 + (hardModeBonus*5);
+        const numMax = 100 + (hardModeBonus*5);
+        num = Math.floor(Math.random() * (numMax-numMin+1)) + numMin;
+    }
+    
+    const answer = num * multiplier;
+    let explanation = `${num} × ${multiplier} = ${answer}`;
+    if (multiplier === 9) explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
+    if (multiplier === 11) explanation = `${num} × 11 = ${num*10} + ${num} = ${answer}`;
+    if (multiplier === 12) explanation = `${num} × 12 = ${num} × (10 + 2) = ${num*10} + ${num*2} = ${answer}`;
+    if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
+    if (multiplier === 19) explanation = `${num} × 19 = ${num} × (20 - 1) = ${num*20} - ${num} = ${answer}`;
+    if (multiplier === 99) explanation = `${num} × 99 = ${num} × (100 - 1) = ${num*100} - ${num} = ${answer}`;
+    
+    return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+};
 
-        let multiplier: number;
-        if (type === 'mul_12_15') { // Medium
-            multiplier = [12, 15][Math.floor(Math.random()*2)];
-            num = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
-        } else { // Hard (mul_9_11_19_99)
-            multiplier = [9, 11, 19, 99][Math.floor(Math.random()*4)];
-            const numMin = 50 + (hardModeBonus*5);
-            const numMax = 100 + (hardModeBonus*5);
-            num = Math.floor(Math.random() * (numMax-numMin+1)) + numMin;
-        }
-        
-        const answer = num * multiplier;
-        let explanation = `${num} × ${multiplier} = ${answer}`;
-        if (multiplier === 9) explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
-        if (multiplier === 11) explanation = `${num} × 11 = ${num*10} + ${num} = ${answer}`;
-        if (multiplier === 12) explanation = `${num} × 12 = ${num} × (10 + 2) = ${num*10} + ${num*2} = ${answer}`;
-        if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
-        if (multiplier === 19) explanation = `${num} × 19 = ${num} × (20 - 1) = ${num*20} - ${num} = ${answer}`;
-        if (multiplier === 99) explanation = `${num} × 99 = ${num} × (100 - 1) = ${num*100} - ${num} = ${answer}`;
-        
-        return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
-    };
-
+export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+    
     let generator: () => Problem;
-    if (level === 1) {
-        generator = generateLevel1Problem;
-    } else if (level === 2) {
-        generator = generateLevel2Problem;
-    } else if (level === 3) {
-        generator = generateLevel3Problem;
-    } else {
-        generator = generateLevel1Problem;
+    switch (level) {
+        case 1:
+            generator = () => generateLevel1Problem(difficulty, hardModeBonus, history);
+            break;
+        case 2:
+            generator = () => generateLevel2Problem(difficulty, hardModeBonus, history);
+            break;
+        case 3:
+            generator = () => generateLevel3Problem(difficulty, hardModeBonus, history);
+            break;
+        default:
+            generator = () => generateLevel1Problem(difficulty, hardModeBonus, history);
+            break;
     }
     
     return createUniqueProblem(generator, history);
 };
-
-
-
-
