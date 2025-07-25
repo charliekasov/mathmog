@@ -98,7 +98,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     const isDark = document.documentElement.classList.contains('dark');
     setDarkMode(isDark);
     handleNewProblem(1, 'Medium');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -179,13 +178,13 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         const deviation = Math.abs((userValue - exactAnswer) / exactAnswer) * 100;
         
         if (deviation <= 2) {
-          setFeedback(`🔮 Are you psychic?! You were within 2% of the exact answer!`);
+          setFeedback(`✅ 👁️ Are you, like, psychic?! You were within 2% of the exact answer!`);
           isCorrect = true;
         } else if (deviation <= 10) {
           setFeedback(`✅ Correct! You were within ${deviation.toFixed(0)}% of the exact answer.`);
           isCorrect = true;
         } else if (deviation <= 20) {
-          setFeedback(`😬 Close! You were within ${deviation.toFixed(0)}% of the exact answer.`);
+          setFeedback(`✅ Close! You were within ${deviation.toFixed(0)}% of the exact answer.`);
           isCorrect = true; // Still counts as correct
         } else {
           setFeedback(`❌ Not quite. You were off by ${deviation.toFixed(0)}%.`);

@@ -102,6 +102,12 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
         const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
         
+        // Prevent fraction questions on hard mode
+        if (difficulty === 'Hard' && type === 'fraction') {
+            const alternateTypes = ['square', 'cube', 'divisibility'];
+            type = alternateTypes[Math.floor(Math.random() * alternateTypes.length)];
+        }
+
         if (type === 'square') {
             let num: number;
             if (difficulty === 'Easy') {
@@ -251,9 +257,14 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
     const generateLevel2Problem = (): Problem => {
         const problemTypes = ['multiplication', 'rootEstimation'];
-        const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+        let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
         
-        if (type === 'rootEstimation' && difficulty !== 'Easy') {
+        // Don't ask root estimation on easy mode.
+        if (difficulty === 'Easy') {
+            type = 'multiplication';
+        }
+
+        if (type === 'rootEstimation') {
             const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
             const table = isCubeRoot ? perfectCubes : perfectSquares;
             const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
