@@ -61,6 +61,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialMount = useRef(true);
 
   const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
     let problemGenerated = false;
@@ -95,11 +96,13 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory, toast]);
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setDarkMode(isDark);
-    // Generate initial problem on client side only to avoid hydration errors
-    handleNewProblem(1, 'Medium');
-  }, []);
+    if (isInitialMount.current) {
+        const isDark = document.documentElement.classList.contains('dark');
+        setDarkMode(isDark);
+        handleNewProblem(1, 'Medium');
+        isInitialMount.current = false;
+    }
+  }, [handleNewProblem]);
 
   useEffect(() => {
     if (darkMode) {
@@ -319,4 +322,5 @@ export const useMathTrainer = () => {
   return context;
 };
 
+    
     
