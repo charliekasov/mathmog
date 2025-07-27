@@ -519,11 +519,12 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             return { question: `${num}² = ?`, answer, type: 'Strategic Squaring', explanation, inputType: 'number' };
         }
         case 'comp_mul': { // Hard
+            const midpoint = (Math.floor(Math.random() * 8) + 2) * 10 + 5; // 25, 35, ... 95
             const diff = Math.floor(Math.random() * 4) + 1; // 1 to 4
-            const num1 = 25 - diff;
-            const num2 = 25 + diff;
+            const num1 = midpoint - diff;
+            const num2 = midpoint + diff;
             const answer = num1 * num2;
-            const explanation = `${num1} × ${num2} is a complementary multiplication problem. It's (25 - ${diff}) × (25 + ${diff}), which simplifies to 25² - ${diff}². That is 625 - ${diff * diff} = ${answer}.`;
+            const explanation = `${num1} × ${num2} is a complementary multiplication problem. It's (${midpoint} - ${diff}) × (${midpoint} + ${diff}), which simplifies to ${midpoint}² - ${diff}². That is ${midpoint*midpoint} - ${diff * diff} = ${answer}.`;
              return { question: `${num1} × ${num2} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         default:
@@ -533,7 +534,6 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 };
 
 export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
-    console.log(`Generating problem for Level: ${level}, Difficulty: ${difficulty}`);
     let generatorFunction: (difficulty: Difficulty, hardModeBonus: number, history: string[]) => Problem;
 
     switch (level) {
