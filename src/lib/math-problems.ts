@@ -367,7 +367,13 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 
     const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9'];
     const mediumOps = ['mul_8', 'div_8', 'mul_12_15', 'div_12', 'div_4_rem', 'div_5_rem'];
-    const hardOps = ['mul_9_11_19_99', 'adv_div'];
+    
+    let hardOps: string[];
+    if (hardModeBonus > 0) {
+      hardOps = ['adv_div', 'mul_9_11_19_99', 'div_8_rem', 'div_12_rem', 'mul_25', 'square_ending_5', 'comp_mul'];
+    } else {
+      hardOps = ['div_8_rem', 'div_12_rem', 'mul_25', 'square_ending_5', 'comp_mul'];
+    }
 
     if (difficulty === 'Easy') {
         type = easyOps[Math.floor(Math.random() * easyOps.length)];
@@ -379,15 +385,10 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 
     switch (type) {
         case 'adv_div': {
-            const divisors = (difficulty === 'Hard') ? [7, 11, 12] : [];
+            const divisors = [7, 11];
             const divisor = divisors[Math.floor(Math.random() * divisors.length)];
-             if (!divisor) return generateLevel3Problem(difficulty, hardModeBonus, history); // Failsafe
             let min, max;
-            if (difficulty === 'Medium') { // This block is now unused but kept for structure
-                min = 100; max = 2000;
-            } else { // Hard
-                min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
-            }
+            min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
             const testNum = Math.floor(Math.random() * (max - min + 1)) + min;
             const isDivisible = testNum % divisor === 0;
             const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
@@ -457,6 +458,15 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const explanation = `${num} ÷ 8 = ${num}÷2÷2÷2 = ${num/2}÷2÷2 = ${num/4}÷2 = ${answer}`;
             return { question: `${num} ÷ 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
+        case 'div_8_rem': { // Hard
+             let num;
+            do {
+                num = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+            } while (num % 8 === 0);
+            const answer = num / 8;
+            const explanation = `${num} ÷ 8 = ${num} ÷ 2 ÷ 2 ÷ 2 = ${num/2} ÷ 2 ÷ 2 = ${num/4} ÷ 2 = ${answer}`;
+            return { question: `${num} ÷ 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
         case 'mul_12_15': {
             const multiplier = [12, 15][Math.floor(Math.random() * 2)];
             const num = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
@@ -473,6 +483,15 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const explanation = `${num} ÷ 12 = ${num} ÷ 3 ÷ 4 = ${num/3} ÷ 4 = ${answer}`;
             return { question: `${num} ÷ 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
+         case 'div_12_rem': { // Hard
+             let num;
+            do {
+                num = Math.floor(Math.random() * (600 - 150 + 1)) + 150;
+            } while (num % 12 === 0);
+            const answer = num / 12;
+            const explanation = `${num} ÷ 12 = ${num} ÷ 3 ÷ 4 = ${num/3} ÷ 4 = ${answer}`;
+            return { question: `${num} ÷ 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
         case 'mul_9_11_19_99': {
             const multiplier = [9, 11, 19, 99][Math.floor(Math.random() * 4)];
             const numMin = 50 + (hardModeBonus * 5);
@@ -485,6 +504,27 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             if (multiplier === 19) explanation = `${num} × 19 = ${num} × (20 - 1) = ${num*20} - ${num} = ${answer}`;
             if (multiplier === 99) explanation = `${num} × 99 = ${num} × (100 - 1) = ${num*100} - ${num} = ${answer}`;
             return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'mul_25': { // Hard
+            const num = (Math.floor(Math.random() * (40 - 12 + 1)) + 12) * 4; // Ensure it's a multiple of 4
+            const answer = num * 25;
+            const explanation = `${num} × 25 = ${num} × 100 ÷ 4 = ${num * 100} ÷ 4 = ${answer}`;
+            return { question: `${num} × 25 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'square_ending_5': { // Hard
+            const tens = Math.floor(Math.random() * 8) + 2; // 2 to 9
+            const num = tens * 10 + 5; // 25, 35, ..., 95
+            const answer = num * num;
+            const explanation = `${num}²: Take the tens digit (${tens}), multiply by the next one (${tens+1}), which is ${tens * (tens + 1)}. Then append 25. Result: ${answer}`;
+            return { question: `${num}² = ?`, answer, type: 'Strategic Squaring', explanation, inputType: 'number' };
+        }
+        case 'comp_mul': { // Hard
+            const diff = Math.floor(Math.random() * 4) + 1; // 1 to 4
+            const num1 = 25 - diff;
+            const num2 = 25 + diff;
+            const answer = num1 * num2;
+            const explanation = `${num1} × ${num2} is a complementary multiplication problem. It's (25 - ${diff}) × (25 + ${diff}), which simplifies to 25² - ${diff}². That is 625 - ${diff * diff} = ${answer}.`;
+             return { question: `${num1} × ${num2} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         default:
              // Fallback to a known good state
@@ -513,6 +553,3 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
-
-
-    

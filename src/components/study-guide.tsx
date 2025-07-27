@@ -116,7 +116,10 @@ const CraftyContent = () => (
             <li><strong>Multiplying by 12:</strong> Multiply by 10, then add double the original number.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 35 × 12 → 35×10 + 35×2 = 350 + 70 = 420</span></li>
             <li><strong>Dividing by 12:</strong> If a number is divisible by both 3 and 4, you can divide by 12. Halve it, then divide by 6, or divide by 2, then 2, then 3.<br/><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 552 ÷ 12 → 552÷6 = 92 → 92÷2 = 46</span></li>
              <li><strong>Multiplying by 15:</strong> Multiply by 10, then add half of that result.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 42 × 15 → 42×10 + (420/2) = 420 + 210 = 630</span></li>
+            <li><strong>Multiplying by 25:</strong> Multiply by 100, then divide by 4.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 36 × 25 → 36×100 ÷ 4 = 3600 ÷ 4 = 900</span></li>
              <li><strong>Multiplying by 19 / 99:</strong> Multiply by the next round number (20 / 100), then subtract the original number.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 16 × 19 → 16×20 - 16 = 320 - 16 = 304</span><br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 18 × 99 → 18×100 - 18 = 1782</span></li>
+             <li><strong>Squaring numbers ending in 5:</strong> Take the tens digit (T), calculate T × (T+1), then append "25".<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 35² → 3×(3+1) & 25 → 12 & 25 → 1225</span><br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 85² → 8×(8+1) & 25 → 72 & 25 → 7225</span></li>
+            <li><strong>Complementary Multiplication (sum to 50):</strong> (25-d)(25+d) = 25² - d²<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 23 × 27 → (25-2)×(25+2) = 25² - 2² = 625 - 4 = 621</span></li>
           </ul>
         </StudySection>
          <StudySection title="🔢 Advanced Divisibility Rules">
@@ -157,8 +160,3 @@ export default function StudyGuide() {
     </div>
   );
 }
-
-    
-
-    
-
