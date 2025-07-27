@@ -402,8 +402,8 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         case 'div_4': {
             const num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 4; // Ensure it's divisible
             const answer = num / 4;
-            const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
-            return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+            const explanation = `${num} ÷ 4 = ${num}÷2÷2 = ${num/2}÷2 = ${answer}`;
+            return { question: `${num} ÷ 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'div_4_rem': { // Medium
             let num;
@@ -411,20 +411,20 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 num = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
             } while (num % 4 === 0);
             const answer = num / 4;
-            const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
-            return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+            const explanation = `${num} ÷ 4 = ${num}÷2÷2 = ${num/2}÷2 = ${answer}`;
+            return { question: `${num} ÷ 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'mul_5': {
             const num = (Math.floor(Math.random() * (100 - 20 + 1)) + 20) * 2; // Ensure num is even for simpler division
             const answer = num * 5;
-            const explanation = `${num} × 5 = ${num} × 10 / 2 = ${num * 10} / 2 = ${answer}`;
+            const explanation = `${num} × 5 = ${num} × 10 ÷ 2 = ${num * 10} ÷ 2 = ${answer}`;
             return { question: `${num} × 5 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         case 'div_5': {
             const num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 10; // Ensure it ends in 0
             const answer = num / 5;
-            const explanation = `${num} / 5 = (${num} / 10) × 2 = ${num / 10} × 2 = ${answer}`;
-            return { question: `${num} / 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+            const explanation = `${num} ÷ 5 = (${num} ÷ 10) × 2 = ${num / 10} × 2 = ${answer}`;
+            return { question: `${num} ÷ 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'div_5_rem': { // Medium
             let num;
@@ -432,8 +432,8 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 num = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
             } while (num % 5 === 0);
             const answer = num / 5;
-            const explanation = `${num} / 5 = (${num} * 2) / 10 = ${num*2} / 10 = ${answer}`;
-            return { question: `${num} / 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+            const explanation = `${num} ÷ 5 = (${num} * 2) ÷ 10 = ${num*2} ÷ 10 = ${answer}`;
+            return { question: `${num} ÷ 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'mul_9': {
             const num = Math.floor(Math.random() * (99 - 10 + 1)) + 10; // Two-digit number for Easy
@@ -454,8 +454,8 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const factor = Math.floor(Math.random() * (max/8 - min/8 + 1)) + min/8;
             const num = factor * 8;
             const answer = num / 8;
-            const explanation = `${num} / 8 = ${num}/2/2/2 = ${num/2}/2/2 = ${num/4}/2 = ${answer}`;
-            return { question: `${num} / 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+            const explanation = `${num} ÷ 8 = ${num}÷2÷2÷2 = ${num/2}÷2÷2 = ${num/4}÷2 = ${answer}`;
+            return { question: `${num} ÷ 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'mul_12_15': {
             const multiplier = [12, 15][Math.floor(Math.random() * 2)];
@@ -470,8 +470,8 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const factor = Math.floor(Math.random() * (50 - 10 + 1)) + 10;
             const num = factor * 12;
             const answer = num / 12;
-            const explanation = `${num} / 12 = ${num} / 3 / 4 = ${num/3} / 4 = ${answer}`;
-            return { question: `${num} / 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+            const explanation = `${num} ÷ 12 = ${num} ÷ 3 ÷ 4 = ${num/3} ÷ 4 = ${answer}`;
+            return { question: `${num} ÷ 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'mul_9_11_19_99': {
             const multiplier = [9, 11, 19, 99][Math.floor(Math.random() * 4)];
