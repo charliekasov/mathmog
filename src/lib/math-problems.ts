@@ -365,7 +365,7 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     let type: string;
 
-    const easyOps = ['mul_4', 'div_4'];
+    const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5'];
     const mediumOps = ['mul_8', 'mul_12_15', 'adv_div'];
     const hardOps = ['mul_9_11_19_99', 'adv_div'];
 
@@ -403,6 +403,18 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const answer = num / 4;
             const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
             return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'mul_5': {
+            const num = (Math.floor(Math.random() * (100 - 20 + 1)) + 20) * 2; // Ensure num is even for simpler division
+            const answer = num * 5;
+            const explanation = `${num} × 5 = ${num} × 10 / 2 = ${num * 10} / 2 = ${answer}`;
+            return { question: `${num} × 5 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_5': {
+            const num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 10; // Ensure it ends in 0
+            const answer = num / 5;
+            const explanation = `${num} / 5 = (${num} / 10) × 2 = ${num / 10} × 2 = ${answer}`;
+            return { question: `${num} / 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'mul_8': {
             const numDigits = 2; // Medium only
@@ -462,3 +474,4 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
+
