@@ -366,7 +366,7 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     let type: string;
 
     const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9'];
-    const mediumOps = ['mul_8', 'mul_12_15', 'adv_div'];
+    const mediumOps = ['mul_8', 'div_8', 'mul_12_15', 'div_12', 'div_4_rem', 'div_5_rem'];
     const hardOps = ['mul_9_11_19_99', 'adv_div'];
 
     if (difficulty === 'Easy') {
@@ -379,10 +379,11 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 
     switch (type) {
         case 'adv_div': {
-            const divisors = (difficulty === 'Medium') ? [7, 11, 12] : [7, 11, 12];
+            const divisors = (difficulty === 'Hard') ? [7, 11, 12] : [];
             const divisor = divisors[Math.floor(Math.random() * divisors.length)];
+             if (!divisor) return generateLevel3Problem(difficulty, hardModeBonus, history); // Failsafe
             let min, max;
-            if (difficulty === 'Medium') {
+            if (difficulty === 'Medium') { // This block is now unused but kept for structure
                 min = 100; max = 2000;
             } else { // Hard
                 min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
@@ -404,6 +405,15 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
             return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
+        case 'div_4_rem': { // Medium
+            let num;
+            do {
+                num = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
+            } while (num % 4 === 0);
+            const answer = num / 4;
+            const explanation = `${num} / 4 = ${num}/2/2 = ${num/2}/2 = ${answer}`;
+            return { question: `${num} / 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
         case 'mul_5': {
             const num = (Math.floor(Math.random() * (100 - 20 + 1)) + 20) * 2; // Ensure num is even for simpler division
             const answer = num * 5;
@@ -416,20 +426,36 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const explanation = `${num} / 5 = (${num} / 10) × 2 = ${num / 10} × 2 = ${answer}`;
             return { question: `${num} / 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
+        case 'div_5_rem': { // Medium
+            let num;
+            do {
+                num = Math.floor(Math.random() * (200 - 50 + 1)) + 50;
+            } while (num % 5 === 0);
+            const answer = num / 5;
+            const explanation = `${num} / 5 = (${num} * 2) / 10 = ${num*2} / 10 = ${answer}`;
+            return { question: `${num} / 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
         case 'mul_9': {
             const num = Math.floor(Math.random() * (99 - 10 + 1)) + 10; // Two-digit number for Easy
             const answer = num * 9;
             const explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
             return { question: `${num} × 9 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
-        case 'mul_8': {
-            const numDigits = 2; // Medium only
-            const min = Math.pow(10, numDigits - 1);
-            const max = Math.pow(10, numDigits) - 1;
-            const num = Math.floor(Math.random() * (max - min + 1)) + min;
+        case 'mul_8': { // Medium
+            const num = Math.floor(Math.random() * (99 - 13 + 1)) + 13;
             const answer = num * 8;
             const explanation = `${num} × 8 = ${num}×2×2×2 = ${num*2}×2×2 = ${num*4}×2 = ${answer}`;
             return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_8': { // Medium
+            const numDigits = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4 digits
+            const min = Math.pow(10, numDigits -1);
+            const max = Math.pow(10, numDigits) -1;
+            const factor = Math.floor(Math.random() * (max/8 - min/8 + 1)) + min/8;
+            const num = factor * 8;
+            const answer = num / 8;
+            const explanation = `${num} / 8 = ${num}/2/2/2 = ${num/2}/2/2 = ${num/4}/2 = ${answer}`;
+            return { question: `${num} / 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'mul_12_15': {
             const multiplier = [12, 15][Math.floor(Math.random() * 2)];
@@ -439,6 +465,13 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             if (multiplier === 12) explanation = `${num} × 12 = ${num} × (10 + 2) = ${num*10} + ${num*2} = ${answer}`;
             if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
             return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_12': { // Medium
+            const factor = Math.floor(Math.random() * (50 - 10 + 1)) + 10;
+            const num = factor * 12;
+            const answer = num / 12;
+            const explanation = `${num} / 12 = ${num} / 3 / 4 = ${num/3} / 4 = ${answer}`;
+            return { question: `${num} / 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
         case 'mul_9_11_19_99': {
             const multiplier = [9, 11, 19, 99][Math.floor(Math.random() * 4)];
