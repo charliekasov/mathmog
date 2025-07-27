@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode, type Dispatch, type SetStateAction } from 'react';
@@ -319,3 +318,5 @@ export const useMathTrainer = () => {
   }
   return context;
 };
+
+    
