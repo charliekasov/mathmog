@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +107,8 @@ const CraftyContent = () => (
           <ul className="space-y-4 list-disc list-inside text-sm">
             <li><strong>Multiplying by 4:</strong> Double the number twice.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 35 × 4 → 35×2=70 → 70×2=140</span></li>
             <li><strong>Dividing by 4:</strong> Halve the number twice.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 180 / 4 → 180/2=90 → 90/2=45</span></li>
+            <li><strong>Multiplying by 5:</strong> Multiply by 10, then divide by 2.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 84 × 5 → 84×10 / 2 = 840 / 2 = 420</span></li>
+            <li><strong>Dividing by 5:</strong> Divide by 10, then multiply by 2.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 420 / 5 → 420/10 × 2 = 42 × 2 = 84</span></li>
             <li><strong>Multiplying by 8:</strong> Double the number three times.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 15 × 8 → 15×2=30 → 30×2=60 → 60×2=120</span></li>
             <li><strong>Dividing by 8:</strong> Halve the number three times.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 240 / 8 → 240/2=120 → 120/2=60 → 60/2=30</span></li>
             <li><strong>Multiplying by 9:</strong> Multiply by 10, then subtract the original number.<br /><span className="text-xs ml-4 font-mono text-muted-foreground">e.g., 23 × 9 → 23×10 - 23 = 230 - 23 = 207</span></li>
@@ -153,5 +156,7 @@ export default function StudyGuide() {
     </div>
   );
 }
+
+    
 
     

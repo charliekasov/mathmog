@@ -365,7 +365,7 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     let type: string;
 
-    const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5'];
+    const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9'];
     const mediumOps = ['mul_8', 'mul_12_15', 'adv_div'];
     const hardOps = ['mul_9_11_19_99', 'adv_div'];
 
@@ -415,6 +415,12 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const answer = num / 5;
             const explanation = `${num} / 5 = (${num} / 10) × 2 = ${num / 10} × 2 = ${answer}`;
             return { question: `${num} / 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'mul_9': {
+            const num = Math.floor(Math.random() * (99 - 10 + 1)) + 10; // Two-digit number for Easy
+            const answer = num * 9;
+            const explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
+            return { question: `${num} × 9 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         case 'mul_8': {
             const numDigits = 2; // Medium only
@@ -475,3 +481,5 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     return createUniqueProblem(generator, history);
 };
 
+
+    
