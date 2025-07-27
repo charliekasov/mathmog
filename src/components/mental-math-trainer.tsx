@@ -16,10 +16,10 @@ import ScoreDisplay from '@/components/score-display';
 const HowToPractice = () => (
     <div className="mb-6">
         <Accordion type="single" collapsible>
-            <AccordionItem value="item-1">
-                <AccordionTrigger>How Do I Practice?</AccordionTrigger>
-                <AccordionContent>
-                    <ul className="space-y-3 mt-3 list-disc list-inside pl-2">
+            <AccordionItem value="item-1" className="border-b-0">
+                <AccordionTrigger className="bg-secondary hover:bg-muted rounded-md px-4 no-underline">How Do I Practice?</AccordionTrigger>
+                <AccordionContent className="pt-4">
+                    <ul className="space-y-3 list-disc list-inside pl-2">
                         <li><strong>Choose a Mode</strong> - Start with <strong>Memorize</strong> to build a foundation, then move to <strong>Estimate</strong> to develop intuition, and finally <strong>Get Crafty</strong> to learn advanced strategies.</li>
                         <li><strong>Start with Medium</strong> - If it's too hard, drop to Easy. If it's too easy, the app will suggest moving to Hard.</li>
                         <li><strong>Build speed before advancing</strong> - Use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, not just correctly.</li>
@@ -34,9 +34,9 @@ const HowToPractice = () => (
 const HowToStudy = () => (
     <div className="mb-6">
         <Accordion type="single" collapsible>
-            <AccordionItem value="item-1">
-                <AccordionTrigger>How Do I Study?</AccordionTrigger>
-                <AccordionContent>
+            <AccordionItem value="item-1" className="border-b-0">
+                <AccordionTrigger className="bg-secondary hover:bg-muted rounded-md px-4 no-underline">How Do I Study?</AccordionTrigger>
+                <AccordionContent className="pt-4">
                     <ul className="space-y-4 mt-3 list-disc list-inside pl-2">
                         <li><strong>Chunk information</strong> - Break complex topics into smaller pieces. Master 1²-5² before adding 6²-10².</li>
                         <li><strong>Practice active recall</strong> - Close the study guide and test yourself. Can you recite all perfect squares 1²-10² from memory?</li>
