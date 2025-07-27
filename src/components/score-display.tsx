@@ -7,7 +7,11 @@ import { RotateCcw, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function ScoreDisplay() {
-  const { score, speedChallenge, handleReset } = useMathTrainer();
+  const { isLoading, score, speedChallenge, handleReset } = useMathTrainer();
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">

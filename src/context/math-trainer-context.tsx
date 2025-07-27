@@ -7,6 +7,7 @@ import type { Mode, Difficulty, Problem, SpeedChallengeState, AdaptiveData, Pend
 import { useToast } from '@/hooks/use-toast';
 
 interface MathTrainerContextType {
+  isLoading: boolean;
   mode: Mode;
   setMode: Dispatch<SetStateAction<Mode>>;
   currentLevel: number;
@@ -35,6 +36,7 @@ const MathTrainerContext = createContext<MathTrainerContextType | undefined>(und
 const HISTORY_LIMIT = 10;
 
 export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [mode, setMode] = useState<Mode>('practice');
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('Medium');
@@ -61,7 +63,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const isInitialMount = useRef(true);
 
   const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
     let problemGenerated = false;
@@ -93,16 +94,14 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setUserAnswer('');
     setFeedback('');
     setShowAnswer(false);
+    setIsLoading(false);
   }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory, toast]);
 
   useEffect(() => {
-    if (isInitialMount.current) {
-        const isDark = document.documentElement.classList.contains('dark');
-        setDarkMode(isDark);
-        handleNewProblem(1, 'Medium');
-        isInitialMount.current = false;
-    }
-  }, [handleNewProblem]);
+    const isDark = document.documentElement.classList.contains('dark');
+    setDarkMode(isDark);
+    handleNewProblem(1, 'Medium');
+  }, []);
 
   useEffect(() => {
     if (darkMode) {
@@ -255,6 +254,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
 
 
   const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty) => {
+    setIsLoading(true);
     setCurrentLevel(level);
     setCurrentDifficulty(difficulty);
     setProblemHistory([]);
@@ -275,6 +275,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [adaptiveData.pendingLevelUp, toast, handleLevelDifficultyChange, currentLevel]);
 
   const handleStartSpeedChallenge = useCallback(() => {
+    setIsLoading(true);
     setSpeedChallenge(prev => ({ ...prev, isActive: true, timeLeft: prev.duration * 60, results: null }));
     setProblemHistory([]);
     setScore({ correct: 0, total: 0 });
@@ -284,6 +285,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [handleNewProblem]);
   
   const handleReset = useCallback(() => {
+    setIsLoading(true);
     setScore({ correct: 0, total: 0 });
     setProblemHistory([]);
     setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
@@ -306,7 +308,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [speedChallenge.isActive, speedChallenge.timeLeft, score.correct, score.total]);
 
   const value = {
-    mode, setMode, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
+    isLoading, mode, setMode, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
     feedback, score, showAnswer, darkMode, setDarkMode, adaptiveData, speedChallenge, setSpeedChallenge,
     handleCheckAnswer, handleNewProblem, handleLevelDifficultyChange, handleStartSpeedChallenge, handleReset, handleLevelUp,
   };
@@ -321,6 +323,3 @@ export const useMathTrainer = () => {
   }
   return context;
 };
-
-    
-    

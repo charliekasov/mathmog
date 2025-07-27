@@ -114,7 +114,7 @@ const MultiTextInput = ({ questionParts, onComplete, onCheck }: { questionParts:
 };
 
 export default function ProblemDisplay() {
-  const { currentProblem, userAnswer, setUserAnswer, feedback, showAnswer, speedChallenge, handleCheckAnswer, handleNewProblem } = useMathTrainer();
+  const { isLoading, currentProblem, userAnswer, setUserAnswer, feedback, showAnswer, speedChallenge, handleCheckAnswer, handleNewProblem } = useMathTrainer();
   
   const onCheckAnswer = () => handleCheckAnswer(userAnswer);
 
@@ -144,6 +144,22 @@ export default function ProblemDisplay() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [currentProblem, feedback, handleCheckAnswer, handleNewProblem]);
+
+  if (isLoading) {
+    return (
+      <Card className="transition-all duration-500">
+        <CardHeader className="text-center">
+          <div className="mx-auto">
+            <Badge variant="secondary">Loading...</Badge>
+          </div>
+          <CardTitle className="text-2xl md:text-3xl font-bold pt-2">Generating problem...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-24" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!currentProblem) {
     if (speedChallenge.enabled && !speedChallenge.isActive && speedChallenge.results) {
