@@ -32,12 +32,21 @@ export const perfectCubes: Record<number, number> = {
     20: 8000, 30: 27000, 40: 64000, 50: 125000, 60: 216000, 70: 343000, 80: 512000, 90: 729000, 100: 1000000
 };
 
-export const commonFractionConversions = Object.entries(fractionBasesByDenominator).flatMap(([den, { numerators, precision }]) => 
-    numerators.map(num => ({ 
-        frac: `${num}/${den}`, 
-        decimal: (num/parseInt(den)).toFixed(precision) 
-    }))
-);
+export const commonFractionConversions = Object.entries(fractionBasesByDenominator).flatMap(([denStr, { numerators, precision }]) => {
+    const den = parseInt(denStr, 10);
+    return numerators.map(num => {
+        const decimalValue = num / den;
+        const percentValue = decimalValue * 100;
+        const percentPrecision = Math.max(0, precision - 2);
+
+        return {
+            frac: `${num}/${den}`,
+            decimal: decimalValue.toFixed(precision),
+            percent: `${percentValue.toFixed(percentPrecision)}%`,
+        };
+    });
+});
+
 
 const createUniqueProblem = (generator: () => Problem, history: string[]): Problem => {
     let problem: Problem;
