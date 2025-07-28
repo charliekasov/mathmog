@@ -1,6 +1,26 @@
-// This file is intentionally blank.
-// It prevents 404 errors from browsers requesting a favicon.
-// See https://nextjs.org/docs/app/api-reference/file-conventions/metadata/icon
+import { ImageResponse } from 'next/og'
+
+// Route segment config
+export const runtime = 'edge'
+
+// Image generation
 export default function Icon() {
-  return null;
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'transparent',
+        }}
+      />
+    ),
+    {
+      width: 1,
+      height: 1,
+    }
+  )
 }
