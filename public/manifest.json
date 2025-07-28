@@ -1,0 +1,21 @@
+{
+  "name": "MathMog",
+  "short_name": "MathMog",
+  "description": "Flex your mental math muscle",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EEEEEE",
+  "theme_color": "#7395AE",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
