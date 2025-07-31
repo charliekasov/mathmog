@@ -59,7 +59,7 @@ const ChallengeResults = () => {
     )
 }
 
-const MultiTextInput = ({ questionParts, onComplete, onCheck }: { questionParts: string[], onComplete: (val: string) => void, onCheck: () => void }) => {
+const MultiTextInput = ({ questionParts, onComplete, onCheck, disabled }: { questionParts: string[], onComplete: (val: string) => void, onCheck: () => void, disabled: boolean }) => {
     const [answers, setAnswers] = useState<string[]>(['', '', '']);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -105,6 +105,7 @@ const MultiTextInput = ({ questionParts, onComplete, onCheck }: { questionParts:
                             onChange={(e) => handleChange(i, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, i)}
                             className="w-20 text-center text-xl h-12"
+                            disabled={disabled}
                          />
                     )}
                 </div>
@@ -187,7 +188,12 @@ export default function ProblemDisplay() {
               ))}
             </div>
           ) : currentProblem.inputType === 'multi-text' && Array.isArray(currentProblem.question) ? (
-              <MultiTextInput questionParts={currentProblem.question} onComplete={setUserAnswer} onCheck={onCheckAnswer} />
+              <MultiTextInput 
+                questionParts={currentProblem.question} 
+                onComplete={setUserAnswer} 
+                onCheck={onCheckAnswer}
+                disabled={feedback !== ''}
+              />
           ) : (
             <Input 
                 type={currentProblem.inputType} 
@@ -196,7 +202,7 @@ export default function ProblemDisplay() {
                 onKeyPress={(e) => { if (e.key === 'Enter') { if (feedback) { handleNewProblem(); } else { onCheckAnswer(); } } }}
                 placeholder={currentProblem.placeholder || "Your answer..."}
                 className="p-4 text-xl text-center h-14"
-                disabled={speedChallenge.isActive && feedback !== ''}
+                disabled={feedback !== ''}
                 autoFocus
             />
           )}
@@ -206,11 +212,11 @@ export default function ProblemDisplay() {
               <Button onClick={onCheckAnswer} disabled={userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} size="lg" className="flex-1 text-lg">
                   <Check className="w-5 h-5 mr-2" /> Check Answer
               </Button>
-            ) : !speedChallenge.isActive && (
+            ) : !speedChallenge.isActive ? (
               <Button onClick={() => handleNewProblem()} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700">
                   Next Problem <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-            )}
+            ) : null}
           </div>
           
         </div>
