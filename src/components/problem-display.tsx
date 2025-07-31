@@ -202,14 +202,15 @@ export default function ProblemDisplay() {
           )}
           
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
-              <Button onClick={onCheckAnswer} disabled={(speedChallenge.isActive ? false : feedback !== '') || userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} size="lg" className="flex-1 text-lg">
+            {!feedback ? (
+              <Button onClick={onCheckAnswer} disabled={userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} size="lg" className="flex-1 text-lg">
                   <Check className="w-5 h-5 mr-2" /> Check Answer
               </Button>
-              {!speedChallenge.isActive && feedback && (
-                  <Button onClick={() => handleNewProblem()} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700">
-                      Next Problem <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-              )}
+            ) : !speedChallenge.isActive && (
+              <Button onClick={() => handleNewProblem()} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700">
+                  Next Problem <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            )}
           </div>
           
         </div>
