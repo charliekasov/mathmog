@@ -32,7 +32,7 @@ const LevelUpDialog = () => {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="sm:justify-center gap-2 mt-4">
-          <Button type="button" onClick={() => handleLevelUp(false)} variant="secondary" className="text-muted-foreground">
+          <Button type="button" onClick={() => handleLevelUp(false)} className="bg-gray-500 hover:bg-gray-600 text-white">
             {pendingLevelUp.options.no}
           </Button>
           <Button type="button" onClick={() => handleLevelUp(true)} className="bg-green-600 hover:bg-green-700">
