@@ -65,7 +65,7 @@ const levelToTab = (level: number) => {
 }
 
 export default function MentalMathTrainer() {
-    const { mode, setMode, darkMode, setDarkMode, currentLevel, studyTab, setStudyTab } = useMathTrainer();
+    const { mode, setMode, darkMode, setDarkMode, currentLevel, setStudyTab } = useMathTrainer();
 
     useEffect(() => {
         setStudyTab(levelToTab(currentLevel));
