@@ -116,8 +116,15 @@ const MultiTextInput = ({ questionParts, onComplete, onCheck, disabled }: { ques
 
 export default function ProblemDisplay() {
   const { isLoading, currentProblem, userAnswer, setUserAnswer, feedback, showAnswer, speedChallenge, handleCheckAnswer, handleNewProblem } = useMathTrainer();
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const onCheckAnswer = () => handleCheckAnswer(userAnswer);
+
+  useEffect(() => {
+    if (currentProblem && (currentProblem.inputType === 'text' || currentProblem.inputType === 'number')) {
+      inputRef.current?.focus();
+    }
+  }, [currentProblem]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -196,6 +203,7 @@ export default function ProblemDisplay() {
               />
           ) : (
             <Input 
+                ref={inputRef}
                 type={currentProblem.inputType} 
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
@@ -203,7 +211,6 @@ export default function ProblemDisplay() {
                 placeholder={currentProblem.placeholder || "Your answer..."}
                 className="p-4 text-xl text-center h-14"
                 disabled={feedback !== ''}
-                autoFocus
             />
           )}
           
