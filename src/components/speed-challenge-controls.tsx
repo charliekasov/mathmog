@@ -1,8 +1,9 @@
+
 "use client";
 
 import { useMathTrainer } from '@/context/math-trainer-context';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
@@ -16,14 +17,14 @@ export default function SpeedChallengeControls() {
 
   if (!speedChallenge.enabled && !speedChallenge.isActive) {
     return (
-        <div className="mb-4 flex items-center space-x-2">
-            <Checkbox
-              id="speedChallenge"
+        <div className="mb-4 flex items-center space-x-3">
+            <Switch
+              id="speedChallenge-toggle"
               checked={speedChallenge.enabled}
               onCheckedChange={(checked) => setSpeedChallenge(prev => ({ ...prev, enabled: !!checked }))}
               disabled={speedChallenge.isActive}
             />
-            <Label htmlFor="speedChallenge" className="text-lg font-medium flex items-center gap-2 cursor-pointer">
+            <Label htmlFor="speedChallenge-toggle" className="text-lg font-medium flex items-center gap-2 cursor-pointer">
               <Zap className="w-5 h-5 text-yellow-500" /> Speed Challenge
             </Label>
         </div>
@@ -34,14 +35,14 @@ export default function SpeedChallengeControls() {
     <Card className="mb-6 bg-secondary">
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-              <Checkbox
-                id="speedChallenge"
+          <div className="flex items-center space-x-3">
+              <Switch
+                id="speedChallenge-card-toggle"
                 checked={speedChallenge.enabled || speedChallenge.isActive}
                 onCheckedChange={(checked) => setSpeedChallenge(prev => ({ ...prev, enabled: !!checked }))}
                 disabled={speedChallenge.isActive}
               />
-              <Label htmlFor="speedChallenge" className="text-lg font-medium flex items-center gap-2 cursor-pointer">
+              <Label htmlFor="speedChallenge-card-toggle" className="text-lg font-medium flex items-center gap-2 cursor-pointer">
                 <Zap className="w-5 h-5 text-yellow-500" /> Speed Challenge
               </Label>
           </div>
