@@ -10,6 +10,8 @@ interface MathTrainerContextType {
   isLoading: boolean;
   mode: Mode;
   setMode: Dispatch<SetStateAction<Mode>>;
+  studyTab: string;
+  setStudyTab: Dispatch<SetStateAction<string>>;
   currentLevel: number;
   currentDifficulty: Difficulty;
   currentProblem: Problem | null;
@@ -38,6 +40,7 @@ const HISTORY_LIMIT = 10;
 export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [mode, setMode] = useState<Mode>('practice');
+  const [studyTab, setStudyTab] = useState('memorize');
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('Medium');
   const [currentProblem, setCurrentProblem] = useState<Problem | null>(null);
@@ -65,6 +68,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
+    setIsLoading(true);
     let problemGenerated = false;
     let attempt = 0;
     const levelToUse = level || currentLevel;
@@ -308,7 +312,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [speedChallenge.isActive, speedChallenge.timeLeft, score.correct, score.total]);
 
   const value = {
-    isLoading, mode, setMode, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
+    isLoading, mode, setMode, studyTab, setStudyTab, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
     feedback, score, showAnswer, darkMode, setDarkMode, adaptiveData, speedChallenge, setSpeedChallenge,
     handleCheckAnswer, handleNewProblem, handleLevelDifficultyChange, handleStartSpeedChallenge, handleReset, handleLevelUp,
   };

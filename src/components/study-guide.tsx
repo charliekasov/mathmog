@@ -4,6 +4,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { perfectSquares, perfectCubes, commonFractionConversions } from "@/lib/math-problems";
+import { useMathTrainer } from '@/context/math-trainer-context';
 
 const StudySection = ({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) => (
   <Card className={className}>
@@ -134,6 +135,7 @@ const CraftyContent = () => (
 
 
 export default function StudyGuide() {
+  const { studyTab, setStudyTab } = useMathTrainer();
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -141,7 +143,7 @@ export default function StudyGuide() {
         <p className="text-muted-foreground">Essential facts and strategies for mental math mastery</p>
       </div>
       
-      <Tabs defaultValue="memorize" className="w-full">
+      <Tabs value={studyTab} onValueChange={(value) => setStudyTab(value)} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="memorize">🧠 Memorize</TabsTrigger>
           <TabsTrigger value="estimate">📊 Estimate</TabsTrigger>

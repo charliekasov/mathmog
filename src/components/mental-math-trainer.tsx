@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMathTrainer } from '@/context/math-trainer-context';
 import { Brain, Moon, Sun, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,8 +55,21 @@ const HowToStudy = () => (
     </div>
 );
 
+const levelToTab = (level: number) => {
+    switch (level) {
+        case 1: return 'memorize';
+        case 2: return 'estimate';
+        case 3: return 'crafty';
+        default: return 'memorize';
+    }
+}
+
 export default function MentalMathTrainer() {
-    const { mode, setMode, darkMode, setDarkMode } = useMathTrainer();
+    const { mode, setMode, darkMode, setDarkMode, currentLevel, studyTab, setStudyTab } = useMathTrainer();
+
+    useEffect(() => {
+        setStudyTab(levelToTab(currentLevel));
+    }, [currentLevel, setStudyTab]);
 
     return (
         <main className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'} font-body`}>
