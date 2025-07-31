@@ -67,9 +67,12 @@ const levelToTab = (level: number) => {
 export default function MentalMathTrainer() {
     const { mode, setMode, darkMode, setDarkMode, currentLevel, setStudyTab } = useMathTrainer();
 
-    useEffect(() => {
-        setStudyTab(levelToTab(currentLevel));
-    }, [currentLevel, setStudyTab]);
+    const handleModeChange = (newMode: 'practice' | 'study') => {
+        if (newMode === 'study') {
+            setStudyTab(levelToTab(currentLevel));
+        }
+        setMode(newMode);
+    }
 
     return (
         <main className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'} font-body`}>
@@ -94,7 +97,7 @@ export default function MentalMathTrainer() {
 
                 <Card className="shadow-xl">
                     <CardContent className="p-4 sm:p-6">
-                        <Tabs value={mode} onValueChange={(value) => setMode(value as 'practice' | 'study')} className="w-full">
+                        <Tabs value={mode} onValueChange={(value) => handleModeChange(value as 'practice' | 'study')} className="w-full">
                             <TabsList className="grid w-full grid-cols-2">
                                 <TabsTrigger value="practice">🎯 Practice</TabsTrigger>
                                 <TabsTrigger value="study">📚 Study Guide</TabsTrigger>
