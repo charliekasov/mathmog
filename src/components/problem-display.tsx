@@ -216,11 +216,11 @@ export default function ProblemDisplay() {
           
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             {!feedback ? (
-              <Button onClick={onCheckAnswer} disabled={userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} size="lg" className="flex-1 text-lg">
+              <Button onClick={onCheckAnswer} disabled={userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} size="lg" className="flex-1 text-lg h-16 sm:h-11">
                   <Check className="w-5 h-5 mr-2" /> Check Answer
               </Button>
             ) : !speedChallenge.isActive ? (
-              <Button onClick={() => handleNewProblem()} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700">
+              <Button onClick={() => handleNewProblem()} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700 h-16 sm:h-11">
                   Next Problem <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             ) : null}
