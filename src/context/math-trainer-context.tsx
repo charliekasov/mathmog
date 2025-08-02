@@ -187,7 +187,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         setFeedback(`❌ Incorrect. Please enter a valid number.`);
         setShowAnswer(true);
       } else {
-        const exactAnswer = currentProblem.answer;
+        const exactAnswer = currentProblem.answer as number;
         const deviation = Math.abs((userValue - exactAnswer) / exactAnswer) * 100;
         
         if (deviation <= 2) {
@@ -233,9 +233,14 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         const userValue = parseFloat(answerToCheck);
         if (!isNaN(userValue)) {
             const tolerance = currentProblem.tolerance || 0.001;
-            isCorrect = Math.abs(userValue - currentProblem.answer) <= tolerance;
+            if (Array.isArray(currentProblem.answer)) {
+                isCorrect = currentProblem.answer.some(ans => Math.abs(userValue - ans) <= tolerance);
+            } else {
+                isCorrect = Math.abs(userValue - currentProblem.answer) <= tolerance;
+            }
         }
-        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
+        const correctAnswerText = Array.isArray(currentProblem.answer) ? currentProblem.answer.join(' or ') : currentProblem.answer;
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${correctAnswerText}`);
         if(!isCorrect) setShowAnswer(true);
     }
 
