@@ -44,12 +44,19 @@ const MemorizeContent = () => (
         </StudySection>
         <StudySection title="🔢 Basic Divisibility Rules">
             <ul className="space-y-3 list-disc list-inside text-sm">
-             <li><strong>Divisibility by 3:</strong> If the sum of the digits is divisible by 3, the number is too. <span className="font-mono text-xs text-muted-foreground">(e.g., 462 → 4+6+2=12)</span></li>
-             <li><strong>Divisibility by 4:</strong> If the last two digits are divisible by 4, the number is too. <span className="font-mono text-xs text-muted-foreground">(e.g., 1,236 → 36 is divisible by 4)</span></li>
-             <li><strong>Divisibility by 5:</strong> If the number ends in a 0 or 5.</li>
-             <li><strong>Divisibility by 6:</strong> If the number is divisible by both 2 (is even) and 3.</li>
-             <li><strong>Divisibility by 8:</strong> If the last three digits are divisible by 8. This is tough, so often it's easier to halve the number three times.</li>
-             <li><strong>Divisibility by 9:</strong> If the sum of the digits is divisible by 9. <span className="font-mono text-xs text-muted-foreground">(e.g., 1,782 → 1+7+8+2=18)</span></li>
+                <li><strong>Divisibility by 3:</strong> If the sum of the digits is divisible by 3, the number is too. <span className="font-mono text-xs text-muted-foreground">(e.g., 462 → 4+6+2=12)</span></li>
+                <li>
+                    <strong>Divisibility by 4:</strong> Since 20 is divisible by 4, every multiple of 20 is too. Because 100 is a multiple of 20, we only need to check the last two digits.
+                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 1,236 → 1200 + 36. Both 1200 and 36 are divisible by 4, so 1,236 is too.</span>
+                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 1,262 → 1200 + 62. 1200 is divisible by 4, but 62 is not. So 1,262 is not.</span>
+                </li>
+                <li><strong>Divisibility by 5:</strong> If the number ends in a 0 or 5.</li>
+                <li><strong>Divisibility by 6:</strong> If the number is divisible by both 2 (is even) and 3.</li>
+                <li>
+                    <strong>Divisibility by 8:</strong> Since 40 is divisible by 8, every multiple of 40 is too. Because 200 is a multiple of 40, we only need to check the last three digits.
+                    <br /><span className="font-mono text-xs text-muted-foreground">Alternatively, it's often easier to just halve the number three times. If you get a whole number, it's divisible.</span>
+                </li>
+                <li><strong>Divisibility by 9:</strong> If the sum of the digits is divisible by 9. <span className="font-mono text-xs text-muted-foreground">(e.g., 1,782 → 1+7+8+2=18)</span></li>
            </ul>
         </StudySection>
     </div>
