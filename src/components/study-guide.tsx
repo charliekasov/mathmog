@@ -55,7 +55,7 @@ const MemorizeContent = () => (
                 <li>
                     <strong>Divisibility by 8:</strong> Since 40 is divisible by 8, every multiple of 40 is too. Because 200 is a multiple of 40, we only need to check the last three digits.
                     <br /><span className="font-mono text-xs text-muted-foreground">e.g., 136 → 120 + 16. Since 120 (3x40) and 16 are divisible by 8, 136 is too.</span>
-                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 12,336 → 200 + 136. Since 200 and 136 are divisible by 8, 336 is too, so 12,336 is too.</span>
+                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 12,336 → We check the last three digits: 336. Since 336 = 200 + 136, and both 200 and 136 are divisible by 8, then 336 is divisible by 8, so 12,336 is too.</span>
                     <br /><span className="font-mono text-xs text-muted-foreground">Alternatively, it's often easier to just halve the number three times. If you get a whole number, it's divisible.</span>
                 </li>
                 <li><strong>Divisibility by 9:</strong> If the sum of the digits is divisible by 9. <span className="font-mono text-xs text-muted-foreground">(e.g., 1,782 → 1+7+8+2=18)</span></li>
@@ -281,5 +281,7 @@ export default function StudyGuide() {
     </div>
   );
 }
+
+    
 
     
