@@ -32,17 +32,33 @@ export const perfectCubes: Record<number, number> = {
     20: 8000, 30: 27000, 40: 64000, 50: 125000, 60: 216000, 70: 343000, 80: 512000, 90: 729000, 100: 1000000
 };
 
-export const commonFractionConversions = Object.entries(fractionBasesByDenominator).flatMap(([denStr, { numerators, precision }]) => {
+export const commonFractionConversions = Object.entries(fractionBasesByDenominator).flatMap(([denStr, { numerators, precision, repeating }]) => {
     const den = parseInt(denStr, 10);
     return numerators.map(num => {
         const decimalValue = num / den;
         const percentValue = decimalValue * 100;
         const percentPrecision = Math.max(0, precision - 2);
 
+        let decimalStr: string;
+        let percentStr: string;
+
+        if (repeating) {
+            const truncatedDecimal = decimalValue.toString().substring(0, 2 + precision);
+            const roundedDecimal = decimalValue.toFixed(precision);
+            decimalStr = `${truncatedDecimal} or ${roundedDecimal}`;
+
+            const truncatedPercent = percentValue.toString().substring(0, 2 + percentPrecision);
+            const roundedPercent = percentValue.toFixed(percentPrecision);
+            percentStr = `${truncatedPercent}% or ${roundedPercent}%`;
+        } else {
+            decimalStr = decimalValue.toFixed(precision);
+            percentStr = `${percentValue.toFixed(percentPrecision)}%`;
+        }
+
         return {
             frac: `${num}/${den}`,
-            decimal: decimalValue.toFixed(precision),
-            percent: `${percentValue.toFixed(percentPrecision)}%`,
+            decimal: decimalStr,
+            percent: percentStr,
         };
     });
 });
@@ -221,8 +237,8 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 
                 if (repeating) {
                     const rounded = parseFloat(percentValue.toFixed(percentPrecision));
-                    const truncated = parseFloat(percentValue.toString().slice(0, (percentPrecision > 0 ? 3 : 2) + percentPrecision));
-                    answer = [rounded, truncated].filter((v, i, a) => a.indexOf(v) === i); // Unique values
+                    const truncatedNum = parseFloat(percentValue.toString().slice(0, (percentPrecision > 0 ? 3 : 2) + percentPrecision));
+                    answer = [rounded, truncatedNum].filter((v, i, a) => a.indexOf(v) === i);
                 } else {
                     answer = parseFloat(percentValue.toFixed(percentPrecision));
                 }
