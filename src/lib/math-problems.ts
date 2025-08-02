@@ -196,7 +196,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 
         switch (conversionType) {
             case 'fracToDec': {
-                const question = `Convert ${num}/${den} to a decimal (${precision} decimal places)`;
+                const questionText = `Convert ${num}/${den} to a decimal (${precision} decimal places)`;
                 const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`;
                 let answer: number | number[];
                 if (repeating) {
@@ -206,7 +206,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 } else {
                     answer = parseFloat(decimalValue.toFixed(precision));
                 }
-                return { question, answer, type: 'Fraction to Decimal', explanation, inputType: 'number' };
+                return { question: questionText, answer, type: 'Fraction to Decimal', explanation, inputType: 'number' };
             }
             case 'decToFrac': {
                 const simplified = simplifyFraction(num, den);
@@ -215,18 +215,18 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             }
             case 'fracToPerc': {
                 const percentPrecision = Math.max(0, precision - 2);
-                const question = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
+                const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
                 const explanation = `${num}/${den} = ${decimalValue} ≈ ${(percentValue).toFixed(percentPrecision)}%`;
                 let answer: number | number[];
 
                 if (repeating) {
                     const rounded = parseFloat(percentValue.toFixed(percentPrecision));
-                    const truncated = parseFloat(percentValue.toString().slice(0, 2 + percentPrecision));
+                    const truncated = parseFloat(percentValue.toString().slice(0, (percentPrecision > 0 ? 3 : 2) + percentPrecision));
                     answer = [rounded, truncated].filter((v, i, a) => a.indexOf(v) === i); // Unique values
                 } else {
                     answer = parseFloat(percentValue.toFixed(percentPrecision));
                 }
-                return { question, answer, type: 'Fraction to Percent', explanation, inputType: 'number' };
+                return { question: questionText, answer, type: 'Fraction to Percent', explanation, inputType: 'number' };
             }
             case 'percToFrac': {
                 const simplified = simplifyFraction(num, den);
@@ -585,3 +585,5 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
+
+    
