@@ -121,10 +121,15 @@ export default function ProblemDisplay() {
   const onCheckAnswer = () => handleCheckAnswer(userAnswer);
 
   useEffect(() => {
-    if (currentProblem && (currentProblem.inputType === 'text' || currentProblem.inputType === 'number')) {
-      inputRef.current?.focus();
+    if (feedback) return;
+    if (currentProblem && (currentProblem.inputType === 'text' || currentProblem.inputType === 'number' || currentProblem.inputType === 'multi-text')) {
+      const firstInput = inputRef.current;
+      if (firstInput) {
+        // Delay focus slightly to help mobile browsers trigger the keyboard
+        setTimeout(() => firstInput.focus(), 100);
+      }
     }
-  }, [currentProblem]);
+  }, [currentProblem, feedback]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -216,11 +221,11 @@ export default function ProblemDisplay() {
           
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             {!feedback ? (
-              <Button onClick={onCheckAnswer} disabled={userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} size="lg" className="flex-1 text-lg h-16 sm:h-11">
+              <Button onClick={onCheckAnswer} disabled={userAnswer.trim() === '' || currentProblem.inputType === 'buttons'} className="flex-1 text-lg h-14 sm:h-11 px-8">
                   <Check className="w-5 h-5 mr-2" /> Check Answer
               </Button>
             ) : !speedChallenge.isActive ? (
-              <Button onClick={() => handleNewProblem()} size="lg" className="flex-1 text-lg bg-green-600 hover:bg-green-700 h-16 sm:h-11">
+              <Button onClick={() => handleNewProblem()} className="flex-1 text-lg bg-green-600 hover:bg-green-700 h-14 sm:h-11 px-8">
                   Next Problem <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             ) : null}
