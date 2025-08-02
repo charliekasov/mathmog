@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { perfectSquares, perfectCubes, commonFractionConversions } from "@/lib/math-problems";
 import { useMathTrainer } from '@/context/math-trainer-context';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const StudySection = ({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) => (
   <Card className={className}>
@@ -133,6 +134,111 @@ const CraftyContent = () => (
     </div>
 );
 
+const scalingData = {
+    memorize: {
+        title: "Level 1: Memorize",
+        difficulties: {
+            Easy: [
+                "Perfect Squares (1-12)",
+                "Perfect Cubes (1-5)",
+                "Fraction Conversions (denominators: 4, 5)",
+                "Divisibility Rules (3, 4, 5, 6, 9)"
+            ],
+            Medium: [
+                "Perfect Squares (11-20)",
+                "Perfect Cubes (4-10)",
+                "Fraction Conversions (denominators: 3, 6, 8, 9)",
+                "Divisibility Rules (3, 4, 6, 8, 9; larger numbers)"
+            ],
+            Hard: [
+                "Perfect Squares (20-100, tens)",
+                "Perfect Cubes (20-100, tens)",
+                "Divisibility Rules (8, 9; very large numbers)"
+            ]
+        }
+    },
+    estimate: {
+        title: "Level 2: Estimate",
+        difficulties: {
+            Easy: [
+                "Multiplication Estimation (11-29 × 11-29)",
+                "Square Root Estimation (bases 1-9)"
+            ],
+            Medium: [
+                "Multiplication Estimation (21-69 × 11-39)",
+                "Square Root Estimation (bases 1-19)"
+            ],
+            Hard: [
+                "Multiplication Estimation (51+ × 21-79, with bonus)",
+                "Square Root Estimation (bases 20-90, tens)",
+                "Cube Root Estimation (bases 1-10)"
+            ]
+        }
+    },
+    crafty: {
+        title: "Level 3: Get Crafty",
+        difficulties: {
+            Easy: [
+                "Multiply by 4",
+                "Divide by 4 (no remainder)",
+                "Multiply by 5",
+                "Divide by 5 (no remainder)",
+                "Multiply by 9"
+            ],
+            Medium: [
+                "Multiply by 8",
+                "Divide by 8 (no remainder)",
+                "Multiply by 12 or 15",
+                "Divide by 12 (no remainder)",
+                "Divide by 4 (with remainder)",
+                "Divide by 5 (with remainder)"
+            ],
+            Hard: [
+                "Divide by 8 or 12 (with remainder)",
+                "Multiply by 25",
+                "Square numbers ending in 5",
+                "Complementary Multiplication",
+                "Advanced Divisibility (7, 11) (bonus only)",
+                "Multiply by 9, 11, 19, 99 (bonus only)"
+            ]
+        }
+    }
+};
+
+const DifficultyScalingContent = () => (
+    <div className="space-y-6">
+        {Object.values(scalingData).map(level => (
+            <Card key={level.title}>
+                <CardHeader>
+                    <CardTitle className="text-xl text-primary">{level.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[100px]">Difficulty</TableHead>
+                                <TableHead>Problem Types</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Object.entries(level.difficulties).map(([difficulty, types]) => (
+                                <TableRow key={difficulty}>
+                                    <TableCell className="font-medium">{difficulty}</TableCell>
+                                    <TableCell>
+                                        <ul className="list-disc list-inside">
+                                            {types.map(type => <li key={type}>{type}</li>)}
+                                        </ul>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        ))}
+    </div>
+);
+
 
 export default function StudyGuide() {
   const { studyTab, setStudyTab } = useMathTrainer();
@@ -144,10 +250,11 @@ export default function StudyGuide() {
       </div>
       
       <Tabs value={studyTab} onValueChange={(value) => setStudyTab(value)} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="memorize">🧠 Memorize</TabsTrigger>
           <TabsTrigger value="estimate">📊 Estimate</TabsTrigger>
           <TabsTrigger value="crafty">😈 Get Crafty</TabsTrigger>
+          <TabsTrigger value="scaling">⚙️ Scaling</TabsTrigger>
         </TabsList>
         <TabsContent value="memorize" className="mt-6">
             <MemorizeContent />
@@ -157,6 +264,9 @@ export default function StudyGuide() {
         </TabsContent>
         <TabsContent value="crafty" className="mt-6">
             <CraftyContent />
+        </TabsContent>
+         <TabsContent value="scaling" className="mt-6">
+            <DifficultyScalingContent />
         </TabsContent>
       </Tabs>
     </div>
