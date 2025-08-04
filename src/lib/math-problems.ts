@@ -32,39 +32,34 @@ export const perfectCubes: Record<number, number> = {
     20: 8000, 30: 27000, 40: 64000, 50: 125000, 60: 216000, 70: 343000, 80: 512000, 90: 729000, 100: 1000000
 };
 
-export const commonFractionConversions = Object.entries(fractionBasesByDenominator).flatMap(([denStr, { numerators, precision, repeating }]) => {
-    const den = parseInt(denStr, 10);
-    return numerators.map(num => {
-        const decimalValue = num / den;
-        const percentValue = decimalValue * 100;
-        
-        let decimalStr: string;
-        let percentStr: string;
-        
-        const percentPrecision = Math.max(0, precision - 2) + 1;
-
-        if (repeating) {
-            const roundedDecimal = decimalValue.toFixed(precision);
-            const truncatedDecimal = decimalValue.toString().substring(0, 2 + precision);
-            
-            const roundedPercent = percentValue.toFixed(percentPrecision -1);
-            const truncatedPercent = percentValue.toString().substring(0, 2 + percentPrecision-1);
-
-            decimalStr = roundedDecimal === truncatedDecimal ? roundedDecimal : `${truncatedDecimal} or ${roundedDecimal}`;
-            percentStr = roundedPercent === truncatedPercent ? `${roundedPercent}%` : `${truncatedPercent}% or ${roundedPercent}%`;
-
-        } else {
-            decimalStr = decimalValue.toFixed(precision);
-            percentStr = `${percentValue.toFixed(precision-1)}%`;
-        }
-
-        return {
-            frac: `${num}/${den}`,
-            decimal: decimalStr,
-            percent: percentStr,
-        };
-    });
-});
+export const commonFractionConversions = [
+    { frac: '1/3', decimal: '0.33', percent: '33%' },
+    { frac: '2/3', decimal: '0.66 or 0.67', percent: '66% or 67%' },
+    { frac: '1/4', decimal: '0.25', percent: '25%' },
+    { frac: '3/4', decimal: '0.75', percent: '75%' },
+    { frac: '1/5', decimal: '0.2', percent: '20%' },
+    { frac: '2/5', decimal: '0.4', percent: '40%' },
+    { frac: '3/5', decimal: '0.6', percent: '60%' },
+    { frac: '4/5', decimal: '0.8', percent: '80%' },
+    { frac: '1/6', decimal: '0.16 or 0.17', percent: '16.6% or 16.7%' },
+    { frac: '5/6', decimal: '0.83', percent: '83%' },
+    { frac: '1/7', decimal: '0.14', percent: '14.2% or 14.3%' },
+    { frac: '2/7', decimal: '0.28 or 0.29', percent: '28.5% or 28.6%' },
+    { frac: '3/7', decimal: '0.42 or 0.43', percent: '42.8% or 42.9%' },
+    { frac: '4/7', decimal: '0.57', percent: '57.1% or 57.2%' },
+    { frac: '5/7', decimal: '0.71', percent: '71.4% or 71.5%' },
+    { frac: '6/7', decimal: '0.85 or 0.86', percent: '85.7%' },
+    { frac: '1/8', decimal: '0.125', percent: '12.5%' },
+    { frac: '3/8', decimal: '0.375', percent: '37.5%' },
+    { frac: '5/8', decimal: '0.625', percent: '62.5%' },
+    { frac: '7/8', decimal: '0.875', percent: '87.5%' },
+    { frac: '1/9', decimal: '0.11', percent: '11%' },
+    { frac: '2/9', decimal: '0.22', percent: '22%' },
+    { frac: '4/9', decimal: '0.44', percent: '44%' },
+    { frac: '5/9', decimal: '0.55 or 0.56', percent: '55% or 56%' },
+    { frac: '7/9', decimal: '0.77 or 0.78', percent: '77% or 78%' },
+    { frac: '8/9', decimal: '0.88 or 0.89', percent: '88% or 89%' }
+];
 
 
 const createUniqueProblem = (generator: () => Problem, history: string[]): Problem => {
@@ -606,4 +601,3 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 };
 
     
-
