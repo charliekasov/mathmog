@@ -37,6 +37,7 @@ const MemorizeContent = () => (
             </div>
             
             <h4 className="font-bold text-lg mb-2">Common Fraction Conversions</h4>
+            <p className="text-sm text-muted-foreground -mt-2 mb-4">Note: For repeating decimals, rounded or truncated answers are often accepted in practice mode.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 font-mono text-sm">
                  {commonFractionConversions.map(({ frac, decimal, percent }) => (
                     <div key={frac}><span className="font-semibold">{frac}</span> = {decimal} = {percent}</div>
@@ -286,5 +287,6 @@ export default function StudyGuide() {
     
 
     
+
 
 

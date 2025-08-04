@@ -42,13 +42,13 @@ export const commonFractionConversions = [
     { frac: '3/5', decimal: '0.6', percent: '60%' },
     { frac: '4/5', decimal: '0.8', percent: '80%' },
     { frac: '1/6', decimal: '0.16 or 0.17', percent: '16.6% or 16.7%' },
-    { frac: '5/6', decimal: '0.83', percent: '83%' },
-    { frac: '1/7', decimal: '0.14', percent: '14.2% or 14.3%' },
-    { frac: '2/7', decimal: '0.28 or 0.29', percent: '28.5% or 28.6%' },
-    { frac: '3/7', decimal: '0.42 or 0.43', percent: '42.8% or 42.9%' },
-    { frac: '4/7', decimal: '0.57', percent: '57.1% or 57.2%' },
-    { frac: '5/7', decimal: '0.71', percent: '71.4% or 71.5%' },
-    { frac: '6/7', decimal: '0.85 or 0.86', percent: '85.7%' },
+    { frac: '5/6', decimal: '0.83', percent: '83.3%' },
+    { frac: '1/7', decimal: '0.14 or 0.142', percent: '14.2% or 14.3%' },
+    { frac: '2/7', decimal: '0.28 or 0.285', percent: '28.5% or 28.6%' },
+    { frac: '3/7', decimal: '0.42 or 0.428', percent: '42.8% or 42.9%' },
+    { frac: '4/7', decimal: '0.57 or 0.571', percent: '57.1% or 57.2%' },
+    { frac: '5/7', decimal: '0.71 or 0.714', percent: '71.4% or 71.5%' },
+    { frac: '6/7', decimal: '0.85 or 0.857', percent: '85.7% or 85.8%' },
     { frac: '1/8', decimal: '0.125', percent: '12.5%' },
     { frac: '3/8', decimal: '0.375', percent: '37.5%' },
     { frac: '5/8', decimal: '0.625', percent: '62.5%' },
@@ -601,3 +601,4 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 };
 
     
+
