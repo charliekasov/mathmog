@@ -30,7 +30,14 @@ const fractionBasesByDenominator: Record<number, { numerators: number[], precisi
         }
     },
     8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
-    9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true },
+    9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true,
+        answers: {
+            // For percentages, to allow truncated values
+            5: [0.55, 0.56], // 5/9
+            7: [0.77, 0.78], // 7/9
+            8: [0.88, 0.89], // 8/9
+        }
+     },
 };
 
 // Reference data
@@ -133,21 +140,22 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
 }
 
 const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
-    const problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
-    let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+    let problemTypes: string[];
+
+    if (difficulty === 'Easy') {
+        problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
+    } else if (difficulty === 'Medium') {
+        // Weight fractions more heavily in Medium
+        if (Math.random() < 0.5) {
+            problemTypes = ['fraction'];
+        } else {
+            problemTypes = ['square', 'cube', 'divisibility'];
+        }
+    } else { // Hard
+        problemTypes = ['square', 'cube', 'divisibility'];
+    }
     
-    // Prevent fraction questions on hard mode
-    if (difficulty === 'Hard' && type === 'fraction') {
-        const alternateTypes = ['square', 'cube', 'divisibility'];
-        type = alternateTypes[Math.floor(Math.random() * alternateTypes.length)];
-    }
-
-    // Make divisibility questions less common and non-recursive on Hard difficulty
-    if (difficulty === 'Hard' && type === 'divisibility' && Math.random() < 0.5) {
-        const alternateTypes = ['square', 'cube']; // Re-roll to something else
-        type = alternateTypes[Math.floor(Math.random() * alternateTypes.length)];
-    }
-
+    let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
 
     if (type === 'square') {
         let num: number;
@@ -191,12 +199,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         const easyDenominators = [4, 5];
         const mediumDenominators = [3, 6, 8, 9, 7];
         
-        let denominators: number[];
-        if (difficulty === 'Easy') {
-            denominators = easyDenominators;
-        } else { // Medium and Hard
-            denominators = mediumDenominators;
-        }
+        const denominators = difficulty === 'Easy' ? easyDenominators : mediumDenominators;
         
         let num: number, den: number;
         
@@ -206,12 +209,14 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         
         const { precision, repeating, answers: specificAnswers } = fractionBasesByDenominator[den];
         
-        const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
+        const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToDec'];
+        const mediumConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
+
+        const conversionTypes = difficulty === 'Easy' ? easyConversionTypes : mediumConversionTypes;
         let conversionType: string;
         
         do {
-            conversionType = allConversionTypes[Math.floor(Math.random() * allConversionTypes.length)];
-         // Exclude DecToFrac/PercToFrac for repeating decimals, as it's ambiguous
+            conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
         } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
 
         const decimalValue = num / den;
@@ -223,9 +228,9 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 
         switch (conversionType) {
             case 'fracToDec': {
-                const questionPrecision = den === 7 ? 3 : precision;
-                const questionText = `Convert ${num}/${den} to a decimal (${questionPrecision} decimal places)`;
-                const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(questionPrecision)}`;
+                const places = den === 7 ? 3 : precision;
+                const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
+                const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(places)}`;
                 let answer: number | number[];
 
                 if (specificAnswers && specificAnswers[num]) {
@@ -245,12 +250,12 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 return { question: `Convert ${questionDecimal} to a fraction`, answer: simplified, type: 'Decimal to Fraction', explanation: `${questionDecimal} is the decimal for ${simplified}`, inputType: 'text' };
             }
             case 'fracToPerc': {
-                const percentPrecision = den === 7 ? 1 : Math.max(0, precision - 2);
+                const percentPrecision = den === 7 || den === 6 ? 1 : Math.max(0, precision - 2);
                 const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
                 const explanation = `${num}/${den} = ${decimalValue} ≈ ${(percentValue).toFixed(percentPrecision)}%`;
                 let answer: number | number[];
                 
-                if (specificAnswers && specificAnswers[num]) {
+                if (den === 7 && specificAnswers && specificAnswers[num]) {
                     answer = specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)));
                 } else if (repeating) {
                     const rounded = parseFloat(percentValue.toFixed(percentPrecision));
@@ -267,16 +272,12 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 const questionPercent = parseFloat(percentValue.toFixed(places));
                 return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
             }
-            case 'decToPerc': { 
-                const d = parseFloat(decimalValue.toFixed(2));
-                return { question: `Convert the decimal ${d} to a percent`, answer: parseFloat((d * 100).toFixed(0)), type: 'Decimal to Percent', explanation: `${d} × 100 = ${d * 100}%`, inputType: 'number' }; 
-            }
             case 'percToDec': {
-                const places = Math.max(2, Math.min(4, precision));
-                const questionPercent = parseFloat(percentValue.toFixed(places));
-                const question = `Convert ${questionPercent}% to a decimal (${places} decimal places)`;
-                const answer = parseFloat(decimalValue.toFixed(places));
-                const explanation = `${questionPercent}% ÷ 100 = ${answer}`;
+                const d = parseFloat(decimalValue.toFixed(precision));
+                const p = parseFloat((d*100).toPrecision(2));
+                const question = `Convert ${p}% to a decimal (${precision} decimal places)`;
+                const answer = parseFloat(d.toFixed(precision));
+                const explanation = `${p}% ÷ 100 = ${answer}`;
                 return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
             }
             default:
@@ -620,5 +621,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 };
 
     
+
 
 
