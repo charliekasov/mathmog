@@ -37,22 +37,25 @@ export const commonFractionConversions = Object.entries(fractionBasesByDenominat
     return numerators.map(num => {
         const decimalValue = num / den;
         const percentValue = decimalValue * 100;
-        const percentPrecision = Math.max(0, precision - 2);
-
+        
         let decimalStr: string;
         let percentStr: string;
+        
+        const percentPrecision = Math.max(0, precision - 2) + 1;
 
         if (repeating) {
-            const truncatedDecimal = decimalValue.toString().substring(0, 2 + precision);
             const roundedDecimal = decimalValue.toFixed(precision);
-            decimalStr = `${truncatedDecimal} or ${roundedDecimal}`;
+            const truncatedDecimal = decimalValue.toString().substring(0, 2 + precision);
+            
+            const roundedPercent = percentValue.toFixed(percentPrecision -1);
+            const truncatedPercent = percentValue.toString().substring(0, 2 + percentPrecision-1);
 
-            const truncatedPercent = percentValue.toString().substring(0, 2 + percentPrecision);
-            const roundedPercent = percentValue.toFixed(percentPrecision);
-            percentStr = `${truncatedPercent}% or ${roundedPercent}%`;
+            decimalStr = roundedDecimal === truncatedDecimal ? roundedDecimal : `${truncatedDecimal} or ${roundedDecimal}`;
+            percentStr = roundedPercent === truncatedPercent ? `${roundedPercent}%` : `${truncatedPercent}% or ${roundedPercent}%`;
+
         } else {
             decimalStr = decimalValue.toFixed(precision);
-            percentStr = `${percentValue.toFixed(percentPrecision)}%`;
+            percentStr = `${percentValue.toFixed(precision-1)}%`;
         }
 
         return {
@@ -603,3 +606,4 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 };
 
     
+
