@@ -70,32 +70,32 @@ export const perfectCubes: Record<number, number> = {
 };
 
 export const commonFractionConversions = [
-    { frac: '1/3', decimal: '0.33', percent: '33%' },
-    { frac: '2/3', decimal: '0.66 or 0.67', percent: '66% or 67%' },
-    { frac: '1/4', decimal: '0.25', percent: '25%' },
-    { frac: '3/4', decimal: '0.75', percent: '75%' },
-    { frac: '1/5', decimal: '0.2', percent: '20%' },
-    { frac: '2/5', decimal: '0.4', percent: '40%' },
-    { frac: '3/5', decimal: '0.6', percent: '60%' },
-    { frac: '4/5', decimal: '0.8', percent: '80%' },
-    { frac: '1/6', decimal: '0.166 or 0.167', percent: '16.6% or 16.7%' },
-    { frac: '5/6', decimal: '0.833', percent: '83.3%' },
-    { frac: '1/7', decimal: '0.14, 0.142, or 0.143', percent: '14.2% or 14.3%' },
-    { frac: '2/7', decimal: '0.28, 0.285 or 0.286', percent: '28.5% or 28.6%' },
-    { frac: '3/7', decimal: '0.42, 0.428 or 0.429', percent: '42.8% or 42.9%' },
-    { frac: '4/7', decimal: '0.57, 0.571 or 0.572', percent: '57.1% or 57.2%' },
-    { frac: '5/7', decimal: '0.71, 0.714 or 0.715', percent: '71.4% or 71.5%' },
-    { frac: '6/7', decimal: '0.85, 0.857 or 0.858', percent: '85.7% or 85.8%' },
-    { frac: '1/8', decimal: '0.125', percent: '12.5%' },
-    { frac: '3/8', decimal: '0.375', percent: '37.5%' },
-    { frac: '5/8', decimal: '0.625', percent: '62.5%' },
-    { frac: '7/8', decimal: '0.875', percent: '87.5%' },
-    { frac: '1/9', decimal: '0.11', percent: '11%' },
-    { frac: '2/9', decimal: '0.22', percent: '22%' },
-    { frac: '4/9', decimal: '0.44', percent: '44%' },
-    { frac: '5/9', decimal: '0.55 or 0.56', percent: '55.5% or 55.6%' },
-    { frac: '7/9', decimal: '0.77 or 0.78', percent: '77.7% or 77.8%' },
-    { frac: '8/9', decimal: '0.88 or 0.89', percent: '88.8% or 88.9%' }
+  { frac: '1/3', decimal: '0.33', percent: '33%' },
+  { frac: '2/3', decimal: '0.66 or 0.67', percent: '66% or 67%' },
+  { frac: '1/4', decimal: '0.25', percent: '25%' },
+  { frac: '3/4', decimal: '0.75', percent: '75%' },
+  { frac: '1/5', decimal: '0.2', percent: '20%' },
+  { frac: '2/5', decimal: '0.4', percent: '40%' },
+  { frac: '3/5', decimal: '0.6', percent: '60%' },
+  { frac: '4/5', decimal: '0.8', percent: '80%' },
+  { frac: '1/6', decimal: '0.166 or 0.167', percent: '16.6% or 16.7%' },
+  { frac: '5/6', decimal: '0.833', percent: '83.3%' },
+  { frac: '1/7', decimal: '0.14 or 0.142 or 0.143', percent: '14.2% or 14.3%' },
+  { frac: '2/7', decimal: '0.28 or 0.285 or 0.286', percent: '28.5% or 28.6%' },
+  { frac: '3/7', decimal: '0.42 or 0.428 or 0.429', percent: '42.8% or 42.9%' },
+  { frac: '4/7', decimal: '0.57 or 0.571 or 0.572', percent: '57.1% or 57.2%' },
+  { frac: '5/7', decimal: '0.71 or 0.714 or 0.715', percent: '71.4% or 71.5%' },
+  { frac: '6/7', decimal: '0.85 or 0.857 or 0.858', percent: '85.7% or 85.8%' },
+  { frac: '1/8', decimal: '0.125', percent: '12.5%' },
+  { frac: '3/8', decimal: '0.375', percent: '37.5%' },
+  { frac: '5/8', decimal: '0.625', percent: '62.5%' },
+  { frac: '7/8', decimal: '0.875', percent: '87.5%' },
+  { frac: '1/9', decimal: '0.11', percent: '11%' },
+  { frac: '2/9', decimal: '0.22', percent: '22%' },
+  { frac: '4/9', decimal: '0.44', percent: '44%' },
+  { frac: '5/9', decimal: '0.55 or 0.56', percent: '55.5% or 55.6%' },
+  { frac: '7/9', decimal: '0.77 or 0.78', percent: '77.7% or 77.8%' },
+  { frac: '8/9', decimal: '0.88 or 0.89', percent: '88.8% or 88.9%' }
 ];
 
 
@@ -117,7 +117,7 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
             return `${num} → ${digits.join(' + ')} = ${sum}. Since ${sum} is ${sum % 3 === 0 ? '' : 'not '}divisible by 3, ${num} is ${isDivisible ? '' : 'not '}divisible by 3.`;
         case 4:
             const lastTwo = num % 100;
-            return `${num} → The last two digits are ${lastTwo}. Since ${lastTwo} is ${lastTwo % 4 === 0 ? '' : 'not '}divisible by 4, ${num} is ${isDivisible ? '' : 'not '}divisible by 4.`;
+            return `For ${num}, we only need to check the last two digits: ${lastTwo}. Since ${lastTwo} is ${lastTwo % 4 === 0 ? '' : 'not '}divisible by 4, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 4.`;
         case 5:
             return `${num} → The number ends in ${num % 10}, so it is ${isDivisible ? '' : 'not '}divisible by 5.`;
         case 6:
@@ -139,7 +139,7 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
             return `${num} → ${steps.join(' → ')}. Since ${finalResult} is ${finalResult % 7 === 0 ? '' : 'not '}divisible by 7, the original number is ${isDivisible ? '' : 'not '}divisible by 7.`;
         case 8:
             const lastThree = num % 1000;
-            return `${num} → The last three digits are ${lastThree}. Since ${lastThree} is ${lastThree % 8 === 0 ? '' : 'not '}divisible by 8, ${num} is ${isDivisible ? '' : 'not '}divisible by 8.`;
+            return `For ${num}, we only need to check the last three digits: ${lastThree}. Since ${lastThree} is ${lastThree % 8 === 0 ? '' : 'not '}divisible by 8, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 8. (You can also check by halving the number three times; if you get a whole number, it's divisible by 8.)`;
         case 9:
             const sumFor9 = digits.reduce((a, b) => a + b, 0);
             return `${num} → ${digits.join(' + ')} = ${sumFor9}. Since ${sumFor9} is ${sumFor9 % 9 === 0 ? '' : 'not '}divisible by 9, ${num} is ${isDivisible ? '' : 'not '}divisible by 9.`;
@@ -162,7 +162,6 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     if (difficulty === 'Easy') {
         problemTypes = ['square', 'cube', 'fraction'];
     } else if (difficulty === 'Medium') {
-        // Weight fractions more heavily in Medium
         if (Math.random() < 0.6) {
             problemTypes = ['fraction'];
         } else {
@@ -232,17 +231,25 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         
         const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToDec'];
         const mediumConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
-
+        
         const conversionTypes = difficulty === 'Easy' ? easyConversionTypes : mediumConversionTypes;
         let conversionType: string;
-        
-        do {
-            conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
-        } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
+
+        if (difficulty === 'Easy') {
+            do {
+                conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
+            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
+        } else { // Medium
+            // Don't ask percToDec or decToPerc
+             const mediumTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
+             do {
+                conversionType = mediumTypes[Math.floor(Math.random() * mediumTypes.length)];
+            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
+        }
 
         const decimalValue = num / den;
         const percentValue = decimalValue * 100;
-
+        
         if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
           return generateLevel1Problem(difficulty, hardModeBonus, history);
         }
@@ -296,7 +303,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             case 'percToDec': {
                 const d = parseFloat(decimalValue.toFixed(precision));
                 const p = parseFloat((d*100).toPrecision(2));
-                const question = `Convert ${p}% to a decimal (${precision} decimal places)`;
+                const question = `Convert ${p}% to a decimal`;
                 const answer = parseFloat(d.toFixed(precision));
                 const explanation = `${p}% ÷ 100 = ${answer}`;
                 return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
@@ -417,13 +424,13 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     let type: string;
 
     const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9', 'divisibility'];
-    const mediumOps = ['mul_8', 'div_8', 'mul_12_15', 'div_12', 'div_4_rem', 'div_5_rem', 'divisibility'];
+    const mediumOps = ['mul_8', 'div_8', 'mul_12_15', 'div_4_rem', 'div_5_rem', 'divisibility'];
     
     let hardOps: string[];
     if (hardModeBonus > 0) {
-      hardOps = ['adv_div', 'mul_9_11_19_99', 'div_8_rem', 'div_12_rem', 'mul_25', 'square_ending_5', 'comp_mul'];
+      hardOps = ['adv_div', 'mul_9_11_19_99', 'div_8_rem', 'div_12', 'mul_25', 'square_ending_5', 'comp_mul'];
     } else {
-      hardOps = ['div_8_rem', 'div_12_rem', 'mul_25', 'square_ending_5', 'comp_mul'];
+      hardOps = ['div_8_rem', 'div_12', 'mul_25', 'square_ending_5', 'comp_mul'];
     }
 
     if (difficulty === 'Easy') {
@@ -561,18 +568,9 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
             return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
-        case 'div_12': { // Medium
+        case 'div_12': { // Hard
             const factor = Math.floor(Math.random() * (50 - 10 + 1)) + 10;
             const num = factor * 12;
-            const answer = num / 12;
-            const explanation = `${num} ÷ 12 = ${num} ÷ 3 ÷ 4 = ${num/3} ÷ 4 = ${answer}`;
-            return { question: `${num} ÷ 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
-        }
-         case 'div_12_rem': { // Hard
-             let num;
-            do {
-                num = Math.floor(Math.random() * (600 - 150 + 1)) + 150;
-            } while (num % 12 === 0);
             const answer = num / 12;
             const explanation = `${num} ÷ 12 = ${num} ÷ 3 ÷ 4 = ${num/3} ÷ 4 = ${answer}`;
             return { question: `${num} ÷ 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
@@ -646,3 +644,4 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
 
     
+

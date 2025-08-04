@@ -4,7 +4,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { perfectSquares, perfectCubes, commonFractionConversions } from "@/lib/math-problems";
+import { commonFractionConversions, perfectCubes, perfectSquares } from "@/lib/math-problems";
 import { useMathTrainer } from '@/context/math-trainer-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -153,6 +153,7 @@ const scalingData = {
                 "Perfect Squares (1-12)",
                 "Perfect Cubes (1-5)",
                 "Fraction Conversions (denominators: 4, 5)",
+                "Percent/Decimal Conversions"
             ],
             Medium: [
                 "Perfect Squares (11-20)",
@@ -198,13 +199,13 @@ const scalingData = {
                 "Multiply by 8",
                 "Divide by 8 (no remainder)",
                 "Multiply by 12 or 15",
-                "Divide by 12 (no remainder)",
                 "Divide by 4 (with remainder)",
                 "Divide by 5 (with remainder)",
                 "Divisibility Rules (3, 4, 6, 8, 9; larger numbers)"
             ],
             Hard: [
-                "Divide by 8 or 12 (with remainder)",
+                "Divide by 8 (with remainder)",
+                "Divide by 12 (no remainder)",
                 "Multiply by 25",
                 "Square numbers ending in 5",
                 "Complementary Multiplication",
@@ -286,6 +287,7 @@ export default function StudyGuide() {
     
 
     
+
 
 
 
