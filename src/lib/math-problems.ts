@@ -70,32 +70,32 @@ export const perfectCubes: Record<number, number> = {
 };
 
 export const commonFractionConversions = [
-  { frac: '1/3', decimal: '0.33', percent: '33%' },
-  { frac: '2/3', decimal: '0.66 or 0.67', percent: '66% or 67%' },
-  { frac: '1/4', decimal: '0.25', percent: '25%' },
-  { frac: '3/4', decimal: '0.75', percent: '75%' },
-  { frac: '1/5', decimal: '0.2', percent: '20%' },
-  { frac: '2/5', decimal: '0.4', percent: '40%' },
-  { frac: '3/5', decimal: '0.6', percent: '60%' },
-  { frac: '4/5', decimal: '0.8', percent: '80%' },
-  { frac: '1/6', decimal: '0.166 or 0.167', percent: '16.6% or 16.7%' },
-  { frac: '5/6', decimal: '0.833', percent: '83.3%' },
-  { frac: '1/7', decimal: '0.14 or 0.142 or 0.143', percent: '14.2% or 14.3%' },
-  { frac: '2/7', decimal: '0.28 or 0.285 or 0.286', percent: '28.5% or 28.6%' },
-  { frac: '3/7', decimal: '0.42 or 0.428 or 0.429', percent: '42.8% or 42.9%' },
-  { frac: '4/7', decimal: '0.57 or 0.571 or 0.572', percent: '57.1% or 57.2%' },
-  { frac: '5/7', decimal: '0.71 or 0.714 or 0.715', percent: '71.4% or 71.5%' },
-  { frac: '6/7', decimal: '0.85 or 0.857 or 0.858', percent: '85.7% or 85.8%' },
-  { frac: '1/8', decimal: '0.125', percent: '12.5%' },
-  { frac: '3/8', decimal: '0.375', percent: '37.5%' },
-  { frac: '5/8', decimal: '0.625', percent: '62.5%' },
-  { frac: '7/8', decimal: '0.875', percent: '87.5%' },
-  { frac: '1/9', decimal: '0.11', percent: '11%' },
-  { frac: '2/9', decimal: '0.22', percent: '22%' },
-  { frac: '4/9', decimal: '0.44', percent: '44%' },
-  { frac: '5/9', decimal: '0.55 or 0.56', percent: '55.5% or 55.6%' },
-  { frac: '7/9', decimal: '0.77 or 0.78', percent: '77.7% or 77.8%' },
-  { frac: '8/9', decimal: '0.88 or 0.89', percent: '88.8% or 88.9%' }
+    { frac: '1/3', decimal: '0.33', percent: '33%' },
+    { frac: '2/3', decimal: '0.66 or 0.67', percent: '66% or 67%' },
+    { frac: '1/4', decimal: '0.25', percent: '25%' },
+    { frac: '3/4', decimal: '0.75', percent: '75%' },
+    { frac: '1/5', decimal: '0.2', percent: '20%' },
+    { frac: '2/5', decimal: '0.4', percent: '40%' },
+    { frac: '3/5', decimal: '0.6', percent: '60%' },
+    { frac: '4/5', decimal: '0.8', percent: '80%' },
+    { frac: '1/6', decimal: '0.166 or 0.167', percent: '16.6% or 16.7%' },
+    { frac: '5/6', decimal: '0.833', percent: '83.3%' },
+    { frac: '1/7', decimal: '0.14 or 0.142 or 0.143', percent: '14.2% or 14.3%' },
+    { frac: '2/7', decimal: '0.28 or 0.285 or 0.286', percent: '28.5% or 28.6%' },
+    { frac: '3/7', decimal: '0.42 or 0.428 or 0.429', percent: '42.8% or 42.9%' },
+    { frac: '4/7', decimal: '0.57 or 0.571 or 0.572', percent: '57.1% or 57.2%' },
+    { frac: '5/7', decimal: '0.71 or 0.714 or 0.715', percent: '71.4% or 71.5%' },
+    { frac: '6/7', decimal: '0.85 or 0.857 or 0.858', percent: '85.7% or 85.8%' },
+    { frac: '1/8', decimal: '0.125', percent: '12.5%' },
+    { frac: '3/8', decimal: '0.375', percent: '37.5%' },
+    { frac: '5/8', decimal: '0.625', percent: '62.5%' },
+    { frac: '7/8', decimal: '0.875', percent: '87.5%' },
+    { frac: '1/9', decimal: '0.11', percent: '11%' },
+    { frac: '2/9', decimal: '0.22', percent: '22%' },
+    { frac: '4/9', decimal: '0.44', percent: '44%' },
+    { frac: '5/9', decimal: '0.55 or 0.56', percent: '55.5% or 55.6%' },
+    { frac: '7/9', decimal: '0.77 or 0.78', percent: '77.7% or 77.8%' },
+    { frac: '8/9', decimal: '0.88 or 0.89', percent: '88.8% or 88.9%' }
 ];
 
 
@@ -229,7 +229,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         
         const { precision, repeating, answers: specificAnswers } = fractionBasesByDenominator[den];
         
-        const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToDec'];
+        const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac'];
         const mediumConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
         
         const conversionTypes = difficulty === 'Easy' ? easyConversionTypes : mediumConversionTypes;
@@ -299,14 +299,6 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 const places = Math.min(4, Math.max(2, precision));
                 const questionPercent = parseFloat(percentValue.toFixed(places));
                 return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
-            }
-            case 'percToDec': {
-                const d = parseFloat(decimalValue.toFixed(precision));
-                const p = parseFloat((d*100).toPrecision(2));
-                const question = `Convert ${p}% to a decimal`;
-                const answer = parseFloat(d.toFixed(precision));
-                const explanation = `${p}% ÷ 100 = ${answer}`;
-                return { question, answer, type: 'Percent to Decimal', explanation, inputType: 'number' };
             }
             default:
                 // Fallback in case of an unexpected conversionType
@@ -541,10 +533,10 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         case 'div_8': { // Medium
-            const numDigits = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4 digits
-            const min = Math.pow(10, numDigits -1);
-            const max = Math.pow(10, numDigits) -1;
-            const factor = Math.floor(Math.random() * (max/8 - min/8 + 1)) + min/8;
+            const numDigits = Math.floor(Math.random() * 2) + 2; // 2 or 3 digits
+            const min = Math.pow(10, numDigits - 1);
+            const max = Math.pow(10, numDigits) - 1;
+            const factor = Math.floor(Math.random() * (max / 8 - min / 8 + 1)) + min / 8;
             const num = factor * 8;
             const answer = num / 8;
             const explanation = `${num} ÷ 8 = ${num}÷2÷2÷2 = ${num/2}÷2÷2 = ${num/4}÷2 = ${answer}`;
@@ -569,7 +561,7 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         case 'div_12': { // Hard
-            const factor = Math.floor(Math.random() * (50 - 10 + 1)) + 10;
+            const factor = Math.floor(Math.random() * (999 / 12 - 100 / 12 + 1)) + 100 / 12;
             const num = factor * 12;
             const answer = num / 12;
             const explanation = `${num} ÷ 12 = ${num} ÷ 3 ÷ 4 = ${num/3} ÷ 4 = ${answer}`;
@@ -644,4 +636,5 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
 
     
+
 
