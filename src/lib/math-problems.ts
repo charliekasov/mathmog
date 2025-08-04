@@ -232,7 +232,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         
         const { precision, repeating, answers: specificAnswers } = fractionBasesByDenominator[den];
         
-        const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac'];
+        const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToDec'];
         const mediumConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
         
         // In Easy, don't ask for fraction from a repeating decimal
@@ -280,6 +280,11 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 const simplified = simplifyFraction(num, den);
                 const questionDecimal = parseFloat(decimalValue.toFixed(precision));
                 return { question: `Convert ${questionDecimal} to a fraction`, answer: simplified, type: 'Decimal to Fraction', explanation: `${questionDecimal} is the decimal for ${simplified}`, inputType: 'text' };
+            }
+            case 'percToDec': {
+                const percent = Math.floor(Math.random() * 90) + 10;
+                const answer = percent / 100;
+                return { question: `Convert ${percent}% to a decimal`, answer, type: 'Percent to Decimal', explanation: `${percent}% is ${percent}/100, which is ${answer}.`, inputType: 'number' };
             }
             case 'fracToPerc': {
                 const percentPrecision = den === 7 || den === 6 ? 1 : Math.max(0, precision - 2);
@@ -350,20 +355,20 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
     let percent: number;
     let base: number;
     let type: string;
-    let exactAnswer = false;
+    let questionText: string;
 
     if (difficulty === 'Easy') {
-        percent = [10, 15, 20, 25, 30, 40, 50, 60, 75, 80, 90][Math.floor(Math.random() * 11)];
+        percent = [10, 15, 20, 25, 30, 40, 50, 60, 65, 75, 80, 90][Math.floor(Math.random() * 12)];
         base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
-        type = "Percentage Calculation (simple % of round numbers)";
-        exactAnswer = true;
+        type = "Percentage Estimation (simple % of round numbers)";
+        questionText = `What is ${percent}% of ${base}?`;
     } else if (difficulty === 'Medium') {
         do {
             percent = Math.floor(Math.random() * 89) + 11; // 11-99
         } while (percent % 10 === 0 || percent % 5 === 0);
         base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
-        type = "Percentage Calculation (complex % of round numbers)";
-        exactAnswer = true;
+        type = "Percentage Estimation (complex % of round numbers)";
+        questionText = `What is ${percent}% of ${base}?`;
     } else { // Hard
          do {
             percent = Math.floor(Math.random() * 89) + 11; // 11-99
@@ -371,6 +376,7 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
         base = Math.floor(Math.random() * 900) + 100; // 100-999
         if (base % 100 === 0) base += 1;
         type = "Percentage Estimation (complex % of any 3-digit number)";
+        questionText = `Estimate: ${percent}% of ${base}`;
     }
 
     const answer = (base * percent) / 100;
@@ -384,10 +390,7 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
 1% of ${base} is ${onePercent.toFixed(2)}. 
 So, ${percent}% = (${tens} × 10%) + (${ones} × 1%) = (${tens} × ${tenPercent.toFixed(2)}) + (${ones} × ${onePercent.toFixed(2)}) = ${tens*tenPercent} + ${ones*onePercent} = ${answer}.`;
 
-    if (exactAnswer) {
-        return { question: `What is ${percent}% of ${base}?`, answer, type, explanation, inputType: 'number' };
-    }
-    return { question: `Estimate: ${percent}% of ${base}`, answer, type, explanation, inputType: 'number', tolerance: 0.20 };
+    return { question: questionText, answer, type, explanation, inputType: 'number', tolerance: 0.20 };
 };
 
 

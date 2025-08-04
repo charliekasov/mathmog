@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode, type Dispatch, type SetStateAction } from 'react';
@@ -175,13 +176,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
 
     let isCorrect = false;
 
-    if (currentProblem.type.includes('Root Estimation')) {
-        const cleanedAnswer = answerToCheck.replace(/\s/g, '');
-        isCorrect = cleanedAnswer === currentProblem.answer;
-        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
-        if(!isCorrect) setShowAnswer(true);
-
-    } else if (currentProblem.type.includes('Estimation')) {
+    if (currentProblem.type.includes('Estimation')) {
       const userValue = parseFloat(answerToCheck);
       if (isNaN(userValue)) {
         setFeedback(`❌ Incorrect. Please enter a valid number.`);
@@ -190,20 +185,25 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         const exactAnswer = currentProblem.answer as number;
         const deviation = Math.abs((userValue - exactAnswer) / exactAnswer) * 100;
         
-        if (deviation <= 2) {
-          setFeedback(`✅ 👁️ Are you, like, psychic?! You were within 2% of the exact answer!`);
+        if (deviation <= 5) {
+          setFeedback(`✅ Excellent! You were within ${deviation.toFixed(0)}% of the exact answer.`);
           isCorrect = true;
-        } else if (deviation <= 10) {
-          setFeedback(`✅ Correct! You were within ${deviation.toFixed(0)}% of the exact answer.`);
+        } else if (deviation <= 15) {
+          setFeedback(`✅ Nice one! You were within ${deviation.toFixed(0)}% of the exact answer.`);
           isCorrect = true;
-        } else if (deviation <= 20) {
-          setFeedback(`✅ Close! You were within ${deviation.toFixed(0)}% of the exact answer.`);
+        } else if (deviation <= 25) {
+          setFeedback(`✅ Close enough! You were within ${deviation.toFixed(0)}% of the exact answer.`);
           isCorrect = true; // Still counts as correct
         } else {
-          setFeedback(`❌ Not quite. You were off by ${deviation.toFixed(0)}%.`);
+          setFeedback(`❌ Not quite. You were off by ${deviation.toFixed(0)}%. The exact answer is ${currentProblem.answer}.`);
         }
-        setShowAnswer(true);
+        if(!isCorrect) setShowAnswer(true);
       }
+    } else if (currentProblem.type.includes('Root Estimation')) {
+        const cleanedAnswer = answerToCheck.replace(/\s/g, '');
+        isCorrect = cleanedAnswer === currentProblem.answer;
+        setFeedback(isCorrect ? '✅ Correct!' : `❌ Incorrect. The correct answer is ${currentProblem.answer}`);
+        if(!isCorrect) setShowAnswer(true);
 
     } else if (currentProblem.inputType === 'multi-text') {
         const cleanedAnswer = answerToCheck.replace(/\s/g, '');
