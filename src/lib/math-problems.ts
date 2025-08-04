@@ -70,8 +70,8 @@ export const perfectCubes: Record<number, number> = {
 };
 
 export const commonFractionConversions = [
-    { frac: '1/3', decimal: '0.33', percent: '33%' },
-    { frac: '2/3', decimal: '0.66 or 0.67', percent: '66% or 67%' },
+    { frac: '1/3', decimal: '0.33', percent: '33.3%' },
+    { frac: '2/3', decimal: '0.66 or 0.67', percent: '66.6% or 66.7%' },
     { frac: '1/4', decimal: '0.25', percent: '25%' },
     { frac: '3/4', decimal: '0.75', percent: '75%' },
     { frac: '1/5', decimal: '0.2', percent: '20%' },
@@ -90,9 +90,9 @@ export const commonFractionConversions = [
     { frac: '3/8', decimal: '0.375', percent: '37.5%' },
     { frac: '5/8', decimal: '0.625', percent: '62.5%' },
     { frac: '7/8', decimal: '0.875', percent: '87.5%' },
-    { frac: '1/9', decimal: '0.11', percent: '11%' },
-    { frac: '2/9', decimal: '0.22', percent: '22%' },
-    { frac: '4/9', decimal: '0.44', percent: '44%' },
+    { frac: '1/9', decimal: '0.11', percent: '11.1%' },
+    { frac: '2/9', decimal: '0.22', percent: '22.2%' },
+    { frac: '4/9', decimal: '0.44', percent: '44.4%' },
     { frac: '5/9', decimal: '0.55 or 0.56', percent: '55.5% or 55.6%' },
     { frac: '7/9', decimal: '0.77 or 0.78', percent: '77.7% or 77.8%' },
     { frac: '8/9', decimal: '0.88 or 0.89', percent: '88.8% or 88.9%' }
@@ -160,18 +160,19 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     let problemTypes: string[];
 
     if (difficulty === 'Easy') {
-        problemTypes = ['square', 'cube', 'fraction'];
+        problemTypes = ['square', 'cube', 'fraction', 'percToDec'];
     } else if (difficulty === 'Medium') {
-        if (Math.random() < 0.6) {
-            problemTypes = ['fraction'];
-        } else {
-            problemTypes = ['square', 'cube'];
-        }
+        problemTypes = ['fraction', 'square', 'cube'];
     } else { // Hard
         problemTypes = ['square', 'cube'];
     }
     
     let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+
+     if (difficulty === 'Medium' && Math.random() < 0.7) {
+        type = 'fraction';
+    }
+
 
     if (type === 'square') {
         let num: number;
@@ -211,6 +212,10 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             explanation = `(${num})³ = (${base}×10)³ = ${base}³×10³ = ${base*base*base}×1000 = ${answer}`;
         }
         return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
+    } else if (type === 'percToDec') {
+        const percent = (Math.floor(Math.random() * 19) + 1) * 5; // 5, 10, ... 95
+        const answer = percent / 100;
+        return { question: `Convert ${percent}% to a decimal`, answer, type: 'Percent to Decimal', explanation: `To convert a percent to a decimal, divide by 100. ${percent}% = ${answer}`, inputType: 'number'};
     } else { // fraction
         const easyDenominators = [4, 5];
         let mediumDenominators = [3, 6, 8, 9, 7];
@@ -232,20 +237,12 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac'];
         const mediumConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
         
-        const conversionTypes = difficulty === 'Easy' ? easyConversionTypes : mediumConversionTypes;
-        let conversionType: string;
-
-        if (difficulty === 'Easy') {
-            do {
-                conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
-            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
-        } else { // Medium
-            // Don't ask percToDec or decToPerc
-             const mediumTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
-             do {
-                conversionType = mediumTypes[Math.floor(Math.random() * mediumTypes.length)];
-            } while ( (conversionType === 'percToFrac' || conversionType === 'decToFrac') && repeating );
+        let conversionTypes = difficulty === 'Easy' ? easyConversionTypes : mediumConversionTypes;
+        if (difficulty === 'Easy' && repeating) {
+            conversionTypes = ['fracToDec', 'fracToPerc'];
         }
+        
+        let conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
 
         const decimalValue = num / den;
         const percentValue = decimalValue * 100;
@@ -342,10 +339,47 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
     return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number', tolerance: 0.20 };
 }
 
+const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+    let percent: number;
+    let base: number;
+    let type: string;
+
+    if (difficulty === 'Easy') {
+        percent = (Math.floor(Math.random() * 19) + 1) * 5; // 5, 10, 15... 95
+        base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
+        type = "Percentage Calculation (simple % of round numbers)";
+    } else if (difficulty === 'Medium') {
+        do {
+            percent = Math.floor(Math.random() * 89) + 11; // 11-99
+        } while (percent % 10 === 0 || percent % 5 === 0);
+        base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
+        type = "Percentage Calculation (complex % of round numbers)";
+    } else { // Hard
+         do {
+            percent = Math.floor(Math.random() * 89) + 11; // 11-99
+        } while (percent % 10 === 0);
+        base = Math.floor(Math.random() * 900) + 100; // 100-999
+        type = "Percentage Calculation (complex % of any 3-digit number)";
+    }
+
+    const answer = (base * percent) / 100;
+    const tenPercent = base / 10;
+    const onePercent = base / 100;
+    const tens = Math.floor(percent / 10);
+    const ones = percent % 10;
+    
+    const explanation = `To find ${percent}% of ${base}, break it down. 
+10% of ${base} is ${tenPercent}. 
+1% of ${base} is ${onePercent}. 
+So, ${percent}% = (${tens} × 10%) + (${ones} × 1%) = (${tens} × ${tenPercent}) + (${ones} × ${onePercent}) = ${tens*tenPercent} + ${ones*onePercent} = ${answer}.`;
+
+    return { question: `Estimate: ${percent}% of ${base}`, answer, type, explanation, inputType: 'number', tolerance: 0.20 };
+};
+
 
 const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     try {
-        const problemTypes = (difficulty === 'Easy') ? ['multiplication'] : ['multiplication', 'rootEstimation'];
+        const problemTypes = ['multiplication', 'rootEstimation', 'percentage'];
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
 
         if (type === 'rootEstimation') {
@@ -401,6 +435,8 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${nextBase} (${nextBase}²=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
             
             return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
+        } else if (type === 'percentage') {
+            return generatePercentageProblem(difficulty, hardModeBonus);
         }
         
         // Fallback to Multiplication if root estimation fails or is not chosen
@@ -533,10 +569,7 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         case 'div_8': { // Medium
-            const numDigits = Math.floor(Math.random() * 2) + 2; // 2 or 3 digits
-            const min = Math.pow(10, numDigits - 1);
-            const max = Math.pow(10, numDigits) - 1;
-            const factor = Math.floor(Math.random() * (max / 8 - min / 8 + 1)) + min / 8;
+            const factor = Math.floor(Math.random() * (999 / 8 - 100 / 8 + 1)) + 100 / 8;
             const num = factor * 8;
             const answer = num / 8;
             const explanation = `${num} ÷ 8 = ${num}÷2÷2÷2 = ${num/2}÷2÷2 = ${num/4}÷2 = ${answer}`;
@@ -545,7 +578,7 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
          case 'div_8_rem': { // Hard
              let num;
             do {
-                num = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+                num = Math.floor(Math.random() * (999 - 100 + 1)) + 100;
             } while (num % 8 === 0);
             const answer = num / 8;
             const explanation = `${num} ÷ 8 = ${num} ÷ 2 ÷ 2 ÷ 2 = ${num/2} ÷ 2 ÷ 2 = ${num/4} ÷ 2 = ${answer}`;
@@ -628,13 +661,3 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
-
-    
-
-
-
-
-
-    
-
-

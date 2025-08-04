@@ -48,37 +48,34 @@ const MemorizeContent = () => (
 );
 
 const EstimateContent = () => (
-    <StudySection title="📊 Smart Estimation Strategies">
-        <h4 className="font-bold text-lg mb-2">Multiplication Estimation</h4>
-        <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-md text-sm mb-6">
-            <p className="font-semibold">Round to friendly numbers, check your bounds:</p>
-            <p className="mb-2"><strong>Example:</strong> 82 x 37</p>
-            <ul className="list-disc list-inside space-y-1">
-                <li>Round down: 80 x 30 = 2,400</li>
-                <li>Round up: 90 x 40 = 3,600</li>
-                <li>Answer should be between 2,400 and 3,600</li>
-                <li>Best estimate: 80 x 40 = 3,200 (actual: 3,034)</li>
-            </ul>
-            <p className="text-xs text-amber-800 dark:text-amber-400 mt-3">Strategy: Use "friendly" numbers (multiples of 10) to create upper and lower bounds, then pick the best estimate</p>
-        </div>
-
-        <h4 className="font-bold text-lg mb-2">Square Root Estimation</h4>
-        <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-md text-sm">
-            <p className="font-semibold">Use perfect squares as anchors:</p>
-            <p className="mb-2"><strong>Example:</strong> √151</p>
-            <ul className="list-disc list-inside space-y-1">
-                <li>Know that 12² = 144 and 13² = 169</li>
-                <li>Since 151 is between 144 and 169, √151 is between 12 and 13</li>
-                <li>151 is closer to 144, so √151 ≈ 12.2</li>
-            </ul>
-             <p className="text-xs text-amber-800 dark:text-amber-400 mt-3">Pro Tip: 13² - 12² = 25, so each 0.1 from 12 ≈ 2.5 units</p>
-        </div>
-    </StudySection>
-);
-
-const CraftyContent = () => (
     <div className="space-y-6">
-        <StudySection title="😈 Lightning-Fast Percentage Calculations">
+        <StudySection title="📊 Smart Estimation Strategies">
+            <h4 className="font-bold text-lg mb-2">Multiplication Estimation</h4>
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-md text-sm mb-6">
+                <p className="font-semibold">Round to friendly numbers, check your bounds:</p>
+                <p className="mb-2"><strong>Example:</strong> 82 x 37</p>
+                <ul className="list-disc list-inside space-y-1">
+                    <li>Round down: 80 x 30 = 2,400</li>
+                    <li>Round up: 90 x 40 = 3,600</li>
+                    <li>Answer should be between 2,400 and 3,600</li>
+                    <li>Best estimate: 80 x 40 = 3,200 (actual: 3,034)</li>
+                </ul>
+                <p className="text-xs text-amber-800 dark:text-amber-400 mt-3">Strategy: Use "friendly" numbers (multiples of 10) to create upper and lower bounds, then pick the best estimate</p>
+            </div>
+
+            <h4 className="font-bold text-lg mb-2">Square Root Estimation</h4>
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-md text-sm">
+                <p className="font-semibold">Use perfect squares as anchors:</p>
+                <p className="mb-2"><strong>Example:</strong> √151</p>
+                <ul className="list-disc list-inside space-y-1">
+                    <li>Know that 12² = 144 and 13² = 169</li>
+                    <li>Since 151 is between 144 and 169, √151 is between 12 and 13</li>
+                    <li>151 is closer to 144, so √151 ≈ 12.2</li>
+                </ul>
+                 <p className="text-xs text-amber-800 dark:text-amber-400 mt-3">Pro Tip: 13² - 12² = 25, so each 0.1 from 12 ≈ 2.5 units</p>
+            </div>
+        </StudySection>
+         <StudySection title="😈 Lightning-Fast Percentage Calculations">
             <h4 className="font-bold text-lg mb-2">The 23% Method (and variations):</h4>
             <div className="bg-sky-50 dark:bg-sky-900/20 p-4 rounded-md mb-6">
                 <p className="font-semibold">For 23% of 400:</p>
@@ -96,6 +93,11 @@ const CraftyContent = () => (
                 <li><strong>45%:</strong> 50% - 5%</li>
              </ul>
         </StudySection>
+    </div>
+);
+
+const CraftyContent = () => (
+    <div className="space-y-6">
         <StudySection title="💡 Pro Tips & Strategies">
           <h4 className="font-bold text-lg mb-2">Strategic Multiplication & Division</h4>
           <ul className="space-y-4 list-disc list-inside">
@@ -171,16 +173,19 @@ const scalingData = {
         difficulties: {
             Easy: [
                 "Multiplication Estimation (11-29 × 11-29)",
-                "Square Root Estimation (bases 1-9)"
+                "Square Root Estimation (bases 1-9)",
+                "Percentage Calculation (simple % of round numbers)"
             ],
             Medium: [
                 "Multiplication Estimation (21-69 × 11-39)",
-                "Square Root Estimation (bases 1-19)"
+                "Square Root Estimation (bases 1-19)",
+                "Percentage Calculation (complex % of round numbers)"
             ],
             Hard: [
                 "Multiplication Estimation (51+ × 21-79, with bonus)",
                 "Square Root Estimation (bases 20-90, tens)",
-                "Cube Root Estimation (bases 1-10)"
+                "Cube Root Estimation (bases 1-10)",
+                "Percentage Calculation (complex % of any 3-digit number)"
             ]
         }
     },
@@ -283,12 +288,3 @@ export default function StudyGuide() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-
-
