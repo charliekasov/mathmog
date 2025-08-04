@@ -75,10 +75,10 @@ const EstimateContent = () => (
                  <p className="text-xs text-amber-800 dark:text-amber-400 mt-3">Pro Tip: 13² - 12² = 25, so each 0.1 from 12 ≈ 2.5 units</p>
             </div>
         </StudySection>
-         <StudySection title="😈 Lightning-Fast Percentage Calculations">
-            <h4 className="font-bold text-lg mb-2">The 23% Method (and variations):</h4>
+        <StudySection title="😈 Lightning-Fast Percentage Calculations">
+            <h4 className="font-bold text-lg mb-2">The 10% + 1% Method:</h4>
             <div className="bg-sky-50 dark:bg-sky-900/20 p-4 rounded-md mb-6">
-                <p className="font-semibold">For 23% of 400:</p>
+                <p className="font-semibold">Example: 23% of 400</p>
                 <ol className="list-decimal list-inside space-y-1">
                     <li>Find 10%: 400 → 40</li>
                     <li>Find 1%: 400 → 4</li>
@@ -89,8 +89,9 @@ const EstimateContent = () => (
              <ul className="list-disc list-inside space-y-2">
                 <li><strong>15%:</strong> 10% + 5% (half of 10%)</li>
                 <li><strong>25%:</strong> Divide by 4</li>
-                <li><strong>30%:</strong> 10% x 3</li>
                 <li><strong>45%:</strong> 50% - 5%</li>
+                <li><strong>50%:</strong> Divide by 2</li>
+                <li><strong>75%:</strong> 25% x 3 (or 50% + 25%)</li>
              </ul>
         </StudySection>
     </div>
@@ -154,13 +155,12 @@ const scalingData = {
             Easy: [
                 "Perfect Squares (1-12)",
                 "Perfect Cubes (1-5)",
-                "Fraction Conversions (denominators: 4, 5)",
-                "Percent/Decimal Conversions"
+                "Fraction/Decimal/Percent Conversions (denominators: 4, 5)",
             ],
             Medium: [
                 "Perfect Squares (11-20)",
                 "Perfect Cubes (4-10)",
-                "Fraction Conversions (denominators: 3, 6, 8, 9, 7)",
+                "Fraction/Decimal/Percent Conversions (denominators: 3, 6, 8, 9, 7)",
             ],
             Hard: [
                 "Perfect Squares (20-100, tens)",
@@ -185,7 +185,7 @@ const scalingData = {
                 "Multiplication Estimation (51+ × 21-79, with bonus)",
                 "Square Root Estimation (bases 20-90, tens)",
                 "Cube Root Estimation (bases 1-10)",
-                "Percentage Calculation (complex % of any 3-digit number)"
+                "Percentage Estimation (complex % of any 3-digit number)"
             ]
         }
     },
