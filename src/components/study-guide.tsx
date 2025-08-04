@@ -44,25 +44,6 @@ const MemorizeContent = () => (
                 ))}
             </div>
         </StudySection>
-        <StudySection title="🔢 Basic Divisibility Rules">
-            <ul className="space-y-3 list-disc list-inside text-sm">
-                <li><strong>Divisibility by 3:</strong> If the sum of the digits is divisible by 3, the number is too. <span className="font-mono text-xs text-muted-foreground">(e.g., 462 → 4+6+2=12)</span></li>
-                <li>
-                    <strong>Divisibility by 4:</strong> Since 20 is divisible by 4, every multiple of 20 is too. Because 100 is a multiple of 20, we only need to check the last two digits.
-                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 1,236 → 1200 + 36. Both 1200 and 36 are divisible by 4, so 1,236 is too.</span>
-                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 1,262 → 1200 + 62. 1200 is divisible by 4, but 62 is not. So 1,262 is not.</span>
-                </li>
-                <li><strong>Divisibility by 5:</strong> If the number ends in a 0 or 5.</li>
-                <li><strong>Divisibility by 6:</strong> If the number is divisible by both 2 (is even) and 3.</li>
-                <li>
-                    <strong>Divisibility by 8:</strong> Since 40 is divisible by 8, every multiple of 40 is too. Because 200 is a multiple of 40, we only need to check the last three digits.
-                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 136 → 120 + 16. Since 120 (3x40) and 16 are divisible by 8, 136 is too.</span>
-                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 12,336 → We check the last three digits: 336. Since 336 = 200 + 136, and both 200 and 136 are divisible by 8, then 336 is divisible by 8, so 12,336 is too.</span>
-                    <br /><span className="font-mono text-xs text-muted-foreground">Alternatively, it's often easier to just halve the number three times. If you get a whole number, it's divisible.</span>
-                </li>
-                <li><strong>Divisibility by 9:</strong> If the sum of the digits is divisible by 9. <span className="font-mono text-xs text-muted-foreground">(e.g., 1,782 → 1+7+8+2=18)</span></li>
-           </ul>
-        </StudySection>
     </div>
 );
 
@@ -135,6 +116,25 @@ const CraftyContent = () => (
             <li><strong>Complementary Multiplication (Difference of Squares):</strong> For two numbers that are equally distant from a round number (like a multiple of 10 or 5), you can use the formula (x-d)(x+d) = x² - d².<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 23 × 27 → (25-2)×(25+2) = 25² - 2² = 625 - 4 = 621</span><br/><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 72 × 78 → (75-3)×(75+3) = 75² - 3² = 5625 - 9 = 5616</span></li>
           </ul>
         </StudySection>
+         <StudySection title="🔢 Basic Divisibility Rules">
+            <ul className="space-y-3 list-disc list-inside text-sm">
+                <li><strong>Divisibility by 3:</strong> If the sum of the digits is divisible by 3, the number is too. <span className="font-mono text-xs text-muted-foreground">(e.g., 462 → 4+6+2=12)</span></li>
+                <li>
+                    <strong>Divisibility by 4:</strong> Since 20 is divisible by 4, every multiple of 20 is too. Because 100 is a multiple of 20, we only need to check the last two digits.
+                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 1,236 → 1200 + 36. Both 1200 and 36 are divisible by 4, so 1,236 is too.</span>
+                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 1,262 → 1200 + 62. 1200 is divisible by 4, but 62 is not. So 1,262 is not.</span>
+                </li>
+                <li><strong>Divisibility by 5:</strong> If the number ends in a 0 or 5.</li>
+                <li><strong>Divisibility by 6:</strong> If the number is divisible by both 2 (is even) and 3.</li>
+                <li>
+                    <strong>Divisibility by 8:</strong> Since 40 is divisible by 8, every multiple of 40 is too. Because 200 is a multiple of 40, we only need to check the last three digits.
+                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 136 → 120 + 16. Since 120 (3x40) and 16 are divisible by 8, 136 is too.</span>
+                    <br /><span className="font-mono text-xs text-muted-foreground">e.g., 12,336 → We check the last three digits: 336. Since 336 = 200 + 136, and both 200 and 136 are divisible by 8, then 336 is divisible by 8, so 12,336 is too.</span>
+                    <br /><span className="font-mono text-xs text-muted-foreground">Alternatively, it's often easier to just halve the number three times. If you get a whole number, it's divisible.</span>
+                </li>
+                <li><strong>Divisibility by 9:</strong> If the sum of the digits is divisible by 9. <span className="font-mono text-xs text-muted-foreground">(e.g., 1,782 → 1+7+8+2=18)</span></li>
+           </ul>
+        </StudySection>
          <StudySection title="🔢 Advanced Divisibility Rules">
            <ul className="space-y-4 list-disc list-inside">
              <li><strong>Divisibility by 7:</strong> Double the last digit and subtract it from the rest of the number. If the result is 0 or divisible by 7, the original number is too. Repeat if necessary.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 343 → 34 - (3×2) = 28. Since 28 is divisible by 7, so is 343.</span><br/><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 672 → 67 - (2×2) = 63. Since 63 is divisible by 7, so is 672.</span></li>
@@ -153,18 +153,15 @@ const scalingData = {
                 "Perfect Squares (1-12)",
                 "Perfect Cubes (1-5)",
                 "Fraction Conversions (denominators: 4, 5)",
-                "Divisibility Rules (3, 4, 5, 6, 9)"
             ],
             Medium: [
                 "Perfect Squares (11-20)",
                 "Perfect Cubes (4-10)",
-                "Fraction Conversions (denominators: 3, 6, 8, 9)",
-                "Divisibility Rules (3, 4, 6, 8, 9; larger numbers)"
+                "Fraction Conversions (denominators: 3, 6, 8, 9, 7)",
             ],
             Hard: [
                 "Perfect Squares (20-100, tens)",
                 "Perfect Cubes (20-100, tens)",
-                "Divisibility Rules (8, 9; very large numbers)"
             ]
         }
     },
@@ -194,7 +191,8 @@ const scalingData = {
                 "Divide by 4 (no remainder)",
                 "Multiply by 5",
                 "Divide by 5 (no remainder)",
-                "Multiply by 9"
+                "Multiply by 9",
+                "Divisibility Rules (3, 4, 5, 6, 9)"
             ],
             Medium: [
                 "Multiply by 8",
@@ -202,7 +200,8 @@ const scalingData = {
                 "Multiply by 12 or 15",
                 "Divide by 12 (no remainder)",
                 "Divide by 4 (with remainder)",
-                "Divide by 5 (with remainder)"
+                "Divide by 5 (with remainder)",
+                "Divisibility Rules (3, 4, 6, 8, 9; larger numbers)"
             ],
             Hard: [
                 "Divide by 8 or 12 (with remainder)",
@@ -287,6 +286,7 @@ export default function StudyGuide() {
     
 
     
+
 
 
 

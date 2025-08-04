@@ -27,8 +27,8 @@ const fractionBasesByDenominator: Record<number, { numerators: number[], precisi
         precision: 3, 
         repeating: true,
         answers: {
-            1: [0.16, 0.17],
-            5: [0.83]
+            1: [0.166, 0.167],
+            5: [0.833]
         }
     },
     7: { 
@@ -78,8 +78,8 @@ export const commonFractionConversions = [
     { frac: '2/5', decimal: '0.4', percent: '40%' },
     { frac: '3/5', decimal: '0.6', percent: '60%' },
     { frac: '4/5', decimal: '0.8', percent: '80%' },
-    { frac: '1/6', decimal: '0.16 or 0.17', percent: '16.6% or 16.7%' },
-    { frac: '5/6', decimal: '0.83', percent: '83.3%' },
+    { frac: '1/6', decimal: '0.166 or 0.167', percent: '16.6% or 16.7%' },
+    { frac: '5/6', decimal: '0.833', percent: '83.3%' },
     { frac: '1/7', decimal: '0.14, 0.142, or 0.143', percent: '14.2% or 14.3%' },
     { frac: '2/7', decimal: '0.28, 0.285 or 0.286', percent: '28.5% or 28.6%' },
     { frac: '3/7', decimal: '0.42, 0.428 or 0.429', percent: '42.8% or 42.9%' },
@@ -93,9 +93,9 @@ export const commonFractionConversions = [
     { frac: '1/9', decimal: '0.11', percent: '11%' },
     { frac: '2/9', decimal: '0.22', percent: '22%' },
     { frac: '4/9', decimal: '0.44', percent: '44%' },
-    { frac: '5/9', decimal: '0.55 or 0.56', percent: '55% or 56%' },
-    { frac: '7/9', decimal: '0.77 or 0.78', percent: '77% or 78%' },
-    { frac: '8/9', decimal: '0.88 or 0.89', percent: '88% or 89%' }
+    { frac: '5/9', decimal: '0.55 or 0.56', percent: '55.5% or 55.6%' },
+    { frac: '7/9', decimal: '0.77 or 0.78', percent: '77.7% or 77.8%' },
+    { frac: '8/9', decimal: '0.88 or 0.89', percent: '88.8% or 88.9%' }
 ];
 
 
@@ -160,16 +160,16 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     let problemTypes: string[];
 
     if (difficulty === 'Easy') {
-        problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
+        problemTypes = ['square', 'cube', 'fraction'];
     } else if (difficulty === 'Medium') {
         // Weight fractions more heavily in Medium
         if (Math.random() < 0.6) {
             problemTypes = ['fraction'];
         } else {
-            problemTypes = ['square', 'cube', 'divisibility'];
+            problemTypes = ['square', 'cube'];
         }
     } else { // Hard
-        problemTypes = ['square', 'cube', 'divisibility'];
+        problemTypes = ['square', 'cube'];
     }
     
     let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
@@ -212,11 +212,11 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             explanation = `(${num})³ = (${base}×10)³ = ${base}³×10³ = ${base*base*base}×1000 = ${answer}`;
         }
         return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
-    } else if (type === 'fraction') {
+    } else { // fraction
         const easyDenominators = [4, 5];
         let mediumDenominators = [3, 6, 8, 9, 7];
 
-        if (Math.random() > 0.3) { // 70% of the time, pick from non-3 denominators
+        if (Math.random() < 0.3) { // Underweight thirds
             mediumDenominators = [6, 8, 9, 7];
         }
         
@@ -305,42 +305,6 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 // Fallback in case of an unexpected conversionType
                 return generateLevel1Problem(difficulty, hardModeBonus, history);
         }
-    } else { // divisibility
-        let divisor: number;
-        let testNum: number;
-        let min = 100, max = 999;
-        
-        const easyDivisors = [3, 4, 5, 6, 9];
-        const mediumDivisors = [3, 4, 6, 8, 9];
-        const hardDivisors = [8, 9]; // NOTE: Removed 7, 11, 12 from here.
-
-        if (difficulty === 'Easy') {
-            divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
-            min = 100;
-            max = 999;
-            if (divisor === 5) { min = 10; max = 99; }
-        } else if (difficulty === 'Medium') {
-            divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
-            min = 1000; max = 9999;
-        } else { // Hard
-            divisor = hardDivisors[Math.floor(Math.random() * hardDivisors.length)];
-            min = 10000 + (hardModeBonus * 1000); max = 99999 + (hardModeBonus * 10000);
-        }
-
-        const evenOnlyDivisors = [4, 6, 8, 12];
-        testNum = Math.floor(Math.random() * (max - min + 1)) + min;
-        if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
-            testNum += 1;
-        }
-        
-        if (divisor === 5 && testNum % 5 === 0) {
-            testNum += (Math.random() < 0.5 ? 1 : -1);
-        }
-
-        const isDivisible = testNum % divisor === 0;
-        const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
-
-        return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility Rules', explanation, inputType: 'buttons', options: ['yes', 'no'] };
     }
 };
 
@@ -452,8 +416,8 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     let type: string;
 
-    const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9'];
-    const mediumOps = ['mul_8', 'div_8', 'mul_12_15', 'div_12', 'div_4_rem', 'div_5_rem'];
+    const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9', 'divisibility'];
+    const mediumOps = ['mul_8', 'div_8', 'mul_12_15', 'div_12', 'div_4_rem', 'div_5_rem', 'divisibility'];
     
     let hardOps: string[];
     if (hardModeBonus > 0) {
@@ -471,6 +435,40 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     }
 
     switch (type) {
+        case 'divisibility': {
+            let divisor: number;
+            let testNum: number;
+            let min = 100, max = 999;
+            
+            const easyDivisors = [3, 4, 5, 6, 9];
+            const mediumDivisors = [3, 4, 6, 8, 9];
+            
+            if (difficulty === 'Easy') {
+                divisor = easyDivisors[Math.floor(Math.random() * easyDivisors.length)];
+                min = 100;
+                max = 999;
+                if (divisor === 5) { min = 10; max = 99; }
+            } else { // Medium
+                divisor = mediumDivisors[Math.floor(Math.random() * mediumDivisors.length)];
+                min = 1000; max = 9999;
+            }
+
+            const evenOnlyDivisors = [4, 6, 8, 12];
+            testNum = Math.floor(Math.random() * (max - min + 1)) + min;
+            if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
+                testNum += 1;
+            }
+            
+            if (divisor === 5 && testNum % 5 === 0) {
+                testNum += (Math.random() < 0.5 ? 1 : -1);
+            }
+
+            const isDivisible = testNum % divisor === 0;
+            const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
+            const problemType = difficulty === 'Easy' ? 'Basic Divisibility' : 'Intermediate Divisibility';
+
+            return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: problemType, explanation, inputType: 'buttons', options: ['yes', 'no'] };
+        }
         case 'adv_div': {
             const divisors = [7, 11];
             const divisor = divisors[Math.floor(Math.random() * divisors.length)];
@@ -545,7 +543,7 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const explanation = `${num} ÷ 8 = ${num}÷2÷2÷2 = ${num/2}÷2÷2 = ${num/4}÷2 = ${answer}`;
             return { question: `${num} ÷ 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
         }
-        case 'div_8_rem': { // Hard
+         case 'div_8_rem': { // Hard
              let num;
             do {
                 num = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
