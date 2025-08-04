@@ -11,16 +11,31 @@ export const simplifyFraction = (num: number, den: number) => {
 
 // Helper data for the fraction generator
 const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean, answers?: Record<number, number[]> }> = {
-    3: { numerators: [1, 2], precision: 2, repeating: true },
+    3: { 
+        numerators: [1, 2], 
+        precision: 2, 
+        repeating: true,
+        answers: {
+            1: [0.33],
+            2: [0.66, 0.67]
+        }
+    },
     4: { numerators: [1, 3], precision: 2, repeating: false },
     5: { numerators: [1, 2, 3, 4], precision: 1, repeating: false },
-    6: { numerators: [1, 5], precision: 3, repeating: true },
+    6: { 
+        numerators: [1, 5], 
+        precision: 3, 
+        repeating: true,
+        answers: {
+            1: [0.16, 0.17],
+            5: [0.83]
+        }
+    },
     7: { 
         numerators: [1, 2, 3, 4, 5, 6], 
         precision: 3, 
         repeating: true,
         answers: {
-            // [numerator]: [acceptable_decimal_answers]
             1: [0.14, 0.142, 0.143],
             2: [0.28, 0.285, 0.286],
             3: [0.42, 0.428, 0.429],
@@ -32,10 +47,12 @@ const fractionBasesByDenominator: Record<number, { numerators: number[], precisi
     8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
     9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true,
         answers: {
-            // For percentages, to allow truncated values
-            5: [0.55, 0.56], // 5/9
-            7: [0.77, 0.78], // 7/9
-            8: [0.88, 0.89], // 8/9
+            1: [0.11],
+            2: [0.22],
+            4: [0.44],
+            5: [0.55, 0.56],
+            7: [0.77, 0.78],
+            8: [0.88, 0.89],
         }
      },
 };
@@ -63,12 +80,12 @@ export const commonFractionConversions = [
     { frac: '4/5', decimal: '0.8', percent: '80%' },
     { frac: '1/6', decimal: '0.16 or 0.17', percent: '16.6% or 16.7%' },
     { frac: '5/6', decimal: '0.83', percent: '83.3%' },
-    { frac: '1/7', decimal: '0.14 or 0.142', percent: '14.2% or 14.3%' },
-    { frac: '2/7', decimal: '0.28 or 0.285', percent: '28.5% or 28.6%' },
-    { frac: '3/7', decimal: '0.42 or 0.428', percent: '42.8% or 42.9%' },
-    { frac: '4/7', decimal: '0.57 or 0.571', percent: '57.1% or 57.2%' },
-    { frac: '5/7', decimal: '0.71 or 0.714', percent: '71.4% or 71.5%' },
-    { frac: '6/7', decimal: '0.85 or 0.857', percent: '85.7% or 85.8%' },
+    { frac: '1/7', decimal: '0.14, 0.142, or 0.143', percent: '14.2% or 14.3%' },
+    { frac: '2/7', decimal: '0.28, 0.285 or 0.286', percent: '28.5% or 28.6%' },
+    { frac: '3/7', decimal: '0.42, 0.428 or 0.429', percent: '42.8% or 42.9%' },
+    { frac: '4/7', decimal: '0.57, 0.571 or 0.572', percent: '57.1% or 57.2%' },
+    { frac: '5/7', decimal: '0.71, 0.714 or 0.715', percent: '71.4% or 71.5%' },
+    { frac: '6/7', decimal: '0.85, 0.857 or 0.858', percent: '85.7% or 85.8%' },
     { frac: '1/8', decimal: '0.125', percent: '12.5%' },
     { frac: '3/8', decimal: '0.375', percent: '37.5%' },
     { frac: '5/8', decimal: '0.625', percent: '62.5%' },
@@ -146,7 +163,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         problemTypes = ['square', 'cube', 'fraction', 'divisibility'];
     } else if (difficulty === 'Medium') {
         // Weight fractions more heavily in Medium
-        if (Math.random() < 0.5) {
+        if (Math.random() < 0.6) {
             problemTypes = ['fraction'];
         } else {
             problemTypes = ['square', 'cube', 'divisibility'];
@@ -197,7 +214,11 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
     } else if (type === 'fraction') {
         const easyDenominators = [4, 5];
-        const mediumDenominators = [3, 6, 8, 9, 7];
+        let mediumDenominators = [3, 6, 8, 9, 7];
+
+        if (Math.random() > 0.3) { // 70% of the time, pick from non-3 denominators
+            mediumDenominators = [6, 8, 9, 7];
+        }
         
         const denominators = difficulty === 'Easy' ? easyDenominators : mediumDenominators;
         
@@ -255,7 +276,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 const explanation = `${num}/${den} = ${decimalValue} ≈ ${(percentValue).toFixed(percentPrecision)}%`;
                 let answer: number | number[];
                 
-                if (den === 7 && specificAnswers && specificAnswers[num]) {
+                if (specificAnswers && specificAnswers[num]) {
                     answer = specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)));
                 } else if (repeating) {
                     const rounded = parseFloat(percentValue.toFixed(percentPrecision));
@@ -624,3 +645,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 
 
 
+
+
+    
