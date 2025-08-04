@@ -10,12 +10,25 @@ export const simplifyFraction = (num: number, den: number) => {
 };
 
 // Helper data for the fraction generator
-const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean }> = {
+const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean, answers?: Record<number, number[]> }> = {
     3: { numerators: [1, 2], precision: 2, repeating: true },
     4: { numerators: [1, 3], precision: 2, repeating: false },
     5: { numerators: [1, 2, 3, 4], precision: 1, repeating: false },
     6: { numerators: [1, 5], precision: 3, repeating: true },
-    7: { numerators: [1, 2, 3, 4, 5, 6], precision: 3, repeating: true },
+    7: { 
+        numerators: [1, 2, 3, 4, 5, 6], 
+        precision: 3, 
+        repeating: true,
+        answers: {
+            // [numerator]: [acceptable_decimal_answers]
+            1: [0.14, 0.142, 0.143],
+            2: [0.28, 0.285, 0.286],
+            3: [0.42, 0.428, 0.429],
+            4: [0.57, 0.571, 0.572],
+            5: [0.71, 0.714, 0.715],
+            6: [0.85, 0.857, 0.858],
+        }
+    },
     8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
     9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true },
 };
@@ -176,7 +189,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
     } else if (type === 'fraction') {
         const easyDenominators = [4, 5];
-        const mediumDenominators = [3, 6, 8, 9];
+        const mediumDenominators = [3, 6, 8, 9, 7];
         
         let denominators: number[];
         if (difficulty === 'Easy') {
@@ -191,7 +204,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         const availableNumerators = fractionBasesByDenominator[den].numerators;
         num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
         
-        const { precision, repeating } = fractionBasesByDenominator[den];
+        const { precision, repeating, answers: specificAnswers } = fractionBasesByDenominator[den];
         
         const allConversionTypes = ['fracToDec', 'decToFrac', 'fracToPerc', 'percToFrac', 'decToPerc', 'percToDec'];
         let conversionType: string;
@@ -210,10 +223,14 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
 
         switch (conversionType) {
             case 'fracToDec': {
-                const questionText = `Convert ${num}/${den} to a decimal (${precision} decimal places)`;
-                const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(precision)}`;
+                const questionPrecision = den === 7 ? 3 : precision;
+                const questionText = `Convert ${num}/${den} to a decimal (${questionPrecision} decimal places)`;
+                const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(questionPrecision)}`;
                 let answer: number | number[];
-                if (repeating) {
+
+                if (specificAnswers && specificAnswers[num]) {
+                    answer = specificAnswers[num];
+                } else if (repeating) {
                     const rounded = parseFloat(decimalValue.toFixed(precision));
                     const truncated = parseFloat(decimalValue.toString().substring(0, 2 + precision));
                     answer = [rounded, truncated].filter((v, i, a) => a.indexOf(v) === i); // Unique values
@@ -228,12 +245,14 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 return { question: `Convert ${questionDecimal} to a fraction`, answer: simplified, type: 'Decimal to Fraction', explanation: `${questionDecimal} is the decimal for ${simplified}`, inputType: 'text' };
             }
             case 'fracToPerc': {
-                const percentPrecision = Math.max(0, precision - 2);
+                const percentPrecision = den === 7 ? 1 : Math.max(0, precision - 2);
                 const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
                 const explanation = `${num}/${den} = ${decimalValue} ≈ ${(percentValue).toFixed(percentPrecision)}%`;
                 let answer: number | number[];
-
-                if (repeating) {
+                
+                if (specificAnswers && specificAnswers[num]) {
+                    answer = specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)));
+                } else if (repeating) {
                     const rounded = parseFloat(percentValue.toFixed(percentPrecision));
                     const truncatedNum = parseFloat(percentValue.toString().slice(0, (percentPrecision > 0 ? 3 : 2) + percentPrecision));
                     answer = [rounded, truncatedNum].filter((v, i, a) => a.indexOf(v) === i);
@@ -601,4 +620,5 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
 };
 
     
+
 
