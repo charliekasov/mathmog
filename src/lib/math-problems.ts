@@ -354,20 +354,17 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
 const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
     let percent: number;
     let base: number;
-    let type: string;
     let questionText: string;
 
     if (difficulty === 'Easy') {
         percent = [10, 15, 20, 25, 30, 40, 50, 60, 65, 75, 80, 90][Math.floor(Math.random() * 12)];
         base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
-        type = "Percentage Estimation (simple % of round numbers)";
         questionText = `What is ${percent}% of ${base}?`;
     } else if (difficulty === 'Medium') {
         do {
             percent = Math.floor(Math.random() * 89) + 11; // 11-99
         } while (percent % 10 === 0 || percent % 5 === 0);
         base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
-        type = "Percentage Estimation (complex % of round numbers)";
         questionText = `What is ${percent}% of ${base}?`;
     } else { // Hard
          do {
@@ -375,7 +372,6 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
         } while (percent % 10 === 0);
         base = Math.floor(Math.random() * 900) + 100; // 100-999
         if (base % 100 === 0) base += 1;
-        type = "Percentage Estimation (complex % of any 3-digit number)";
         questionText = `Estimate: ${percent}% of ${base}`;
     }
 
@@ -390,13 +386,61 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
 1% of ${base} is ${onePercent.toFixed(2)}. 
 So, ${percent}% = (${tens} × 10%) + (${ones} × 1%) = (${tens} × ${tenPercent.toFixed(2)}) + (${ones} × ${onePercent.toFixed(2)}) = ${tens*tenPercent} + ${ones*onePercent} = ${answer}.`;
 
-    return { question: questionText, answer, type, explanation, inputType: 'number', tolerance: 0.20 };
+    return { question: questionText, answer, type: 'Percentage Estimation', explanation, inputType: 'number', tolerance: 0.20 };
+};
+
+const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+    let num: number, den: number;
+
+    if (difficulty === 'Medium') {
+        const benchmarks = [1/4, 1/3, 1/2, 2/3, 3/4];
+        const benchmark = benchmarks[Math.floor(Math.random() * benchmarks.length)];
+        
+        const baseDen = Math.floor(Math.random() * 30) + 20; // 20-49
+        const baseNum = Math.round(baseDen * benchmark);
+        
+        const denOffset = Math.floor(Math.random() * 9) - 4; // -4 to 4
+        const numOffset = Math.floor(Math.random() * 9) - 4; // -4 to 4
+
+        den = baseDen + denOffset;
+        num = baseNum + numOffset;
+    } else { // Hard or Hard + Bonus
+        if (hardModeBonus > 0 && Math.random() > 0.5) { // Improper Fraction
+            num = Math.floor(Math.random() * 800) + 100; // 100-899
+            den = Math.floor(Math.random() * (num * 0.9 - 20)) + 20; // Ensure den < num
+        } else { // Proper Fraction
+             num = Math.floor(Math.random() * 90) + 10; // 10-99
+             den = Math.floor(Math.random() * 900) + 100; // 100-999
+        }
+    }
+    
+    // Ensure we don't get a simple fraction or an impossible one
+    if (gcd(num, den) > 5 || num <= 10 || den <= 10) {
+        return generateFractionEstimationProblem(difficulty, hardModeBonus);
+    }
+    
+    const answer = num / den;
+    const explanation = `To estimate ${num}/${den}, you can round to "friendly" numbers. For example, round ${num} to ${Math.round(num/10)*10} and ${den} to ${Math.round(den/10)*10}. Then ${Math.round(num/10)*10}/${Math.round(den/10)*10} gives you a simpler fraction to work with. The exact answer is ≈${answer.toFixed(3)}.`;
+
+    return {
+        question: `Estimate: ${num}/${den}`,
+        answer: answer,
+        type: 'Fraction Estimation',
+        explanation: explanation,
+        inputType: 'number',
+        placeholder: 'e.g., 0.25',
+        tolerance: 0.25,
+    };
 };
 
 
 const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     try {
-        const problemTypes = ['multiplication', 'rootEstimation', 'percentage'];
+        let problemTypes = ['multiplication', 'rootEstimation', 'percentage'];
+        if (difficulty !== 'Easy') {
+            problemTypes.push('fractionEstimation');
+        }
+
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
 
         if (type === 'rootEstimation') {
@@ -454,6 +498,8 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
         } else if (type === 'percentage') {
             return generatePercentageProblem(difficulty, hardModeBonus);
+        } else if (type === 'fractionEstimation') {
+            return generateFractionEstimationProblem(difficulty, hardModeBonus);
         }
         
         // Fallback to Multiplication if root estimation fails or is not chosen

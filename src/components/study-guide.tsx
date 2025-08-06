@@ -74,6 +74,18 @@ const EstimateContent = () => (
                 </ul>
                  <p className="text-xs text-amber-800 dark:text-amber-400 mt-3">Pro Tip: 13² - 12² = 25, so each 0.1 from 12 ≈ 2.5 units</p>
             </div>
+
+             <h4 className="font-bold text-lg mb-2">Fraction Estimation</h4>
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-md text-sm">
+                <p className="font-semibold">Round to a nearby "benchmark" fraction:</p>
+                <p className="mb-2"><strong>Example:</strong> 26/74</p>
+                <ul className="list-disc list-inside space-y-1">
+                    <li>Recognize that 26/74 is very close to 25/75.</li>
+                    <li>Simplify the benchmark: 25/75 = 1/3.</li>
+                    <li>So, 26/74 is approximately 0.33. (Actual: 0.35)</li>
+                </ul>
+                 <p className="text-xs text-amber-800 dark:text-amber-400 mt-3">Common benchmarks: 1/4, 1/3, 1/2, 2/3, 3/4</p>
+            </div>
         </StudySection>
         <StudySection title="😈 Lightning-Fast Percentage Calculations">
             <h4 className="font-bold text-lg mb-2">The 10% + 1% Method:</h4>
@@ -174,18 +186,20 @@ const scalingData = {
             Easy: [
                 "Multiplication Estimation (11-29 × 11-29)",
                 "Square Root Estimation (bases 1-9)",
-                "Percentage Calculation (simple % of round numbers)"
+                "Percentage Estimation (simple % of round numbers)"
             ],
             Medium: [
                 "Multiplication Estimation (21-69 × 11-39)",
                 "Square Root Estimation (bases 1-19)",
-                "Percentage Calculation (complex % of round numbers)"
+                "Percentage Estimation (complex % of round numbers)",
+                "Fraction Estimation (2-digit num/den)"
             ],
             Hard: [
                 "Multiplication Estimation (51+ × 21-79, with bonus)",
                 "Square Root Estimation (bases 20-90, tens)",
                 "Cube Root Estimation (bases 1-10)",
-                "Percentage Estimation (complex % of any 3-digit number)"
+                "Percentage Estimation (complex % of any 3-digit number)",
+                "Fraction Estimation (2-digit/3-digit or improper)"
             ]
         }
     },
