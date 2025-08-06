@@ -183,14 +183,15 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         setShowAnswer(true);
       } else {
         const exactAnswer = currentProblem.answer as number;
+        // Handle division by zero for exactAnswer if it can be 0
+        const deviation = exactAnswer === 0 ? Math.abs(userValue) : Math.abs((userValue - exactAnswer) / exactAnswer);
         const tolerance = currentProblem.tolerance || 0.2; // Default 20%
-        const deviation = Math.abs((userValue - exactAnswer) / exactAnswer);
         
         if (deviation <= 0.02) { // 2%
           setFeedback(`✅ Are you, like, psychic? 👁️ (You were within ${(deviation * 100).toFixed(0)}% of the exact answer)`);
           isCorrect = true;
         } else if (deviation <= tolerance) {
-          setFeedback(`✅ Close enough! (The exact answer is ${currentProblem.answer.toFixed(3)})`);
+          setFeedback(`😬 Close! (you were within ${(deviation * 100).toFixed(0)}% of the exact answer)`);
           isCorrect = true;
         } else {
           setFeedback(`❌ Not quite. (The exact answer is ${currentProblem.answer.toFixed(3)})`);
