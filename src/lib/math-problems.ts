@@ -163,13 +163,14 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
     if (difficulty === 'Easy') {
         pool = [
             { n1: [13, 14, 15, 16, 17, 18, 19], n2: [2, 3] },
-            { n1: [14, 16, 18], n2: [4, 5] }
+            { n1: [14, 16, 18], n2: [4, 5] },
+            { n1: Array.from({length: 31}, (_, i) => i + 20).filter(n => n % 10 !== 0), n2: [2] } // 20-50, not ending in 0
         ];
     } else if (difficulty === 'Medium') {
         pool = [
-            { n1: [13, 15, 17, 19], n2: [4, 5] },
-            { n1: [15, 24, 36], n2: [2, 3, 4, 5] },
-            { n1: Array.from({length: 31}, (_, i) => i + 20).filter(n => n % 10 !== 0), n2: [2] } // 20-50, not ending in 0
+            { n1: [13, 17, 19], n2: [4, 5] }, // 15 is now easy for x2,3
+            { n1: [15], n2: [4, 5]}, // 15x4, 15x5
+            { n1: [24, 36], n2: [2, 3, 4, 5] },
         ];
     } else { // Hard
         pool = [
@@ -397,6 +398,7 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
     let percent: number;
     let base: number;
     let questionText: string;
+    let problemType: string = 'Percentage Estimation';
 
     if (difficulty === 'Easy') {
         percent = [10, 15, 20, 25, 30, 40, 50, 60, 65, 75, 80, 90][Math.floor(Math.random() * 12)];
@@ -428,7 +430,6 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
 1% of ${base} is ${onePercent.toFixed(2)}. 
 So, ${percent}% = (${tens} × 10%) + (${ones} × 1%) = (${tens} × ${tenPercent.toFixed(2)}) + (${ones} × ${onePercent.toFixed(2)}) = ${tens*tenPercent} + ${ones*onePercent} = ${answer}.`;
     
-    const problemType = 'Percentage Estimation';
 
     return { question: questionText, answer, type: problemType, explanation, inputType: 'number', tolerance: 0.20 };
 };
@@ -768,3 +769,4 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
+
