@@ -169,12 +169,12 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
         pool = [
             { n1: [13, 15, 17, 19], n2: [4, 5] },
             { n1: [15, 24, 36], n2: [2, 3, 4, 5] },
-            { n1: Array.from({length: 31}, (_, i) => i + 20), n2: [2] } // 20-50
+            { n1: Array.from({length: 31}, (_, i) => i + 20).filter(n => n % 10 !== 0), n2: [2] } // 20-50, not ending in 0
         ];
     } else { // Hard
         pool = [
             { n1: [27, 32], n2: [2, 3, 4, 5] },
-            { n1: Array.from({length: 49}, (_, i) => i + 51), n2: [2] } // 51-99
+            { n1: Array.from({length: 49}, (_, i) => i + 51).filter(n => n % 10 !== 0), n2: [2] } // 51-99, not ending in 0
         ];
     }
 
@@ -427,8 +427,10 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
 10% of ${base} is ${tenPercent.toFixed(2)}. 
 1% of ${base} is ${onePercent.toFixed(2)}. 
 So, ${percent}% = (${tens} × 10%) + (${ones} × 1%) = (${tens} × ${tenPercent.toFixed(2)}) + (${ones} × ${onePercent.toFixed(2)}) = ${tens*tenPercent} + ${ones*onePercent} = ${answer}.`;
+    
+    const problemType = 'Percentage Estimation';
 
-    return { question: questionText, answer, type: 'Percentage Estimation', explanation, inputType: 'number', tolerance: 0.20 };
+    return { question: questionText, answer, type: problemType, explanation, inputType: 'number', tolerance: 0.20 };
 };
 
 const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
