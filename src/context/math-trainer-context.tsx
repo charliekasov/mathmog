@@ -183,21 +183,20 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         setShowAnswer(true);
       } else {
         const exactAnswer = currentProblem.answer as number;
-        const deviation = Math.abs((userValue - exactAnswer) / exactAnswer) * 100;
+        const tolerance = currentProblem.tolerance || 0.2; // Default 20%
+        const deviation = Math.abs((userValue - exactAnswer) / exactAnswer);
         
-        if (deviation <= 5) {
-          setFeedback(`✅ Excellent! You were within ${deviation.toFixed(0)}% of the exact answer. Are you, like, psychic?`);
+        if (deviation <= 0.02) { // 2%
+          setFeedback(`✅ Are you, like, psychic? 👁️ (You were within ${(deviation * 100).toFixed(0)}% of the exact answer)`);
           isCorrect = true;
-        } else if (deviation <= 15) {
-          setFeedback(`✅ Nice one! You were within ${deviation.toFixed(0)}% of the exact answer.`);
+        } else if (deviation <= tolerance) {
+          setFeedback(`✅ Close enough! (The exact answer is ${currentProblem.answer.toFixed(3)})`);
           isCorrect = true;
-        } else if (deviation <= 25) {
-          setFeedback(`✅ Close enough! You were within ${deviation.toFixed(0)}% of the exact answer.`);
-          isCorrect = true; // Still counts as correct
         } else {
-          setFeedback(`❌ Not quite. You were off by ${deviation.toFixed(0)}%. The exact answer is ${currentProblem.answer.toFixed(currentProblem.type.includes('Fraction') ? 3 : 2)}.`);
+          setFeedback(`❌ Not quite. (The exact answer is ${currentProblem.answer.toFixed(3)})`);
         }
-        if(!isCorrect) setShowAnswer(true);
+        
+        if (!isCorrect) setShowAnswer(true);
       }
     } else if (currentProblem.type.includes('Root Estimation')) {
         const cleanedAnswer = answerToCheck.replace(/\s/g, '');
