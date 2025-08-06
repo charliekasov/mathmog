@@ -194,7 +194,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
           setFeedback(`😬 Close! (you were within ${(deviation * 100).toFixed(0)}% of the exact answer)`);
           isCorrect = true;
         } else {
-          setFeedback(`❌ Not quite. (The exact answer is ${currentProblem.answer.toFixed(3)})`);
+          setFeedback(`❌ Not quite. (The exact answer is ${typeof currentProblem.answer === 'number' ? currentProblem.answer.toFixed(3) : currentProblem.answer})`);
         }
         
         if (!isCorrect) setShowAnswer(true);
