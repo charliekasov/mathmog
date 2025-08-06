@@ -156,26 +156,68 @@ const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: b
     }
 }
 
+const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+    let num1: number, num2: number;
+    let pool: {n1: number[], n2: number[]}[] = [];
+
+    if (difficulty === 'Easy') {
+        pool = [
+            { n1: [13, 14, 15, 16, 17, 18, 19], n2: [2, 3] },
+            { n1: [14, 16, 18], n2: [4, 5] }
+        ];
+    } else if (difficulty === 'Medium') {
+        pool = [
+            { n1: [13, 15, 17, 19], n2: [4, 5] },
+            { n1: [15, 24, 36], n2: [2, 3, 4, 5] },
+            { n1: Array.from({length: 31}, (_, i) => i + 20), n2: [2] } // 20-50
+        ];
+    } else { // Hard
+        pool = [
+            { n1: [27, 32], n2: [2, 3, 4, 5] },
+            { n1: Array.from({length: 49}, (_, i) => i + 51), n2: [2] } // 51-99
+        ];
+    }
+
+    const selectedPool = pool[Math.floor(Math.random() * pool.length)];
+    num1 = selectedPool.n1[Math.floor(Math.random() * selectedPool.n1.length)];
+    num2 = selectedPool.n2[Math.floor(Math.random() * selectedPool.n2.length)];
+    
+    // Ensure num1 is the larger number for consistency in question format
+    if (num1 < num2) {
+      [num1, num2] = [num2, num1];
+    }
+
+    const answer = num1 * num2;
+    const explanation = `${num1} × ${num2} = ${answer}. This is a useful multiplication to have memorized.`;
+    return { question: `${num1} × ${num2} = ?`, answer, type: 'Memorized Multiplication', explanation, inputType: 'number' };
+};
+
+
 const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     let problemTypes: string[];
     let type: string;
 
     if (difficulty === 'Easy') {
-        problemTypes = ['square', 'cube', 'fraction'];
+        problemTypes = ['square', 'cube', 'fraction', 'memorizedMultiplication'];
     } else if (difficulty === 'Medium') {
-        problemTypes = ['fraction', 'square', 'cube'];
+        problemTypes = ['fraction', 'square', 'cube', 'memorizedMultiplication'];
     } else { // Hard
-        problemTypes = ['square', 'cube'];
+        problemTypes = ['square', 'cube', 'memorizedMultiplication'];
     }
     
-    // In Medium, make fractions appear ~70% of the time
-    if (difficulty === 'Medium' && Math.random() < 0.7) {
+    // In Medium, make fractions appear ~50% of the time, and multiplication 20%
+    if (difficulty === 'Medium' && Math.random() < 0.5) {
         type = 'fraction';
-    } else {
+    } else if (difficulty === 'Medium' && Math.random() < 0.7) {
+        type = 'memorizedMultiplication';
+    }
+    else {
         type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
     }
 
-    if (type === 'square') {
+    if (type === 'memorizedMultiplication') {
+        return generateMemorizedMultiplicationProblem(difficulty, hardModeBonus);
+    } else if (type === 'square') {
         let num: number;
         if (difficulty === 'Easy') {
             const isUnderweighted = Math.random() < 0.1;
@@ -436,9 +478,9 @@ const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus
 
 const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     try {
-        let problemTypes = ['multiplication', 'rootEstimation', 'percentage'];
-        if (difficulty !== 'Easy') {
-            problemTypes.push('fractionEstimation');
+        let problemTypes = ['multiplication', 'rootEstimation', 'percentage', 'fractionEstimation'];
+        if (difficulty === 'Easy') {
+            problemTypes = ['multiplication', 'rootEstimation', 'percentage'];
         }
 
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
