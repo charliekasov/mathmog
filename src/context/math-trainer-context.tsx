@@ -186,7 +186,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         const deviation = Math.abs((userValue - exactAnswer) / exactAnswer) * 100;
         
         if (deviation <= 5) {
-          setFeedback(`✅ Excellent! You were within ${deviation.toFixed(0)}% of the exact answer.`);
+          setFeedback(`✅ Excellent! You were within ${deviation.toFixed(0)}% of the exact answer. Are you, like, psychic?`);
           isCorrect = true;
         } else if (deviation <= 15) {
           setFeedback(`✅ Nice one! You were within ${deviation.toFixed(0)}% of the exact answer.`);
@@ -195,7 +195,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
           setFeedback(`✅ Close enough! You were within ${deviation.toFixed(0)}% of the exact answer.`);
           isCorrect = true; // Still counts as correct
         } else {
-          setFeedback(`❌ Not quite. You were off by ${deviation.toFixed(0)}%. The exact answer is ${currentProblem.answer}.`);
+          setFeedback(`❌ Not quite. You were off by ${deviation.toFixed(0)}%. The exact answer is ${currentProblem.answer.toFixed(currentProblem.type.includes('Fraction') ? 3 : 2)}.`);
         }
         if(!isCorrect) setShowAnswer(true);
       }
@@ -236,7 +236,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
             if (Array.isArray(currentProblem.answer)) {
                 isCorrect = currentProblem.answer.some(ans => Math.abs(userValue - ans) <= tolerance);
             } else {
-                isCorrect = Math.abs(userValue - currentProblem.answer) <= tolerance;
+                isCorrect = Math.abs(userValue - (currentProblem.answer as number)) <= tolerance;
             }
         }
         const correctAnswerText = Array.isArray(currentProblem.answer) ? currentProblem.answer.join(' or ') : currentProblem.answer;
