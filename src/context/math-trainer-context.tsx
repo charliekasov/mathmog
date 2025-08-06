@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode, type Dispatch, type SetStateAction } from 'react';
@@ -191,10 +190,11 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
           setFeedback(`✅ Are you, like, psychic? 👁️ (You were within ${(deviation * 100).toFixed(0)}% of the exact answer)`);
           isCorrect = true;
         } else if (deviation <= tolerance) {
-          setFeedback(`😬 Close! (you were within ${(deviation * 100).toFixed(0)}% of the exact answer)`);
+          setFeedback(`✅ 😬 Close! (you were within ${(deviation * 100).toFixed(0)}% of the exact answer)`);
           isCorrect = true;
         } else {
-          setFeedback(`❌ Not quite. (The exact answer is ${typeof currentProblem.answer === 'number' ? currentProblem.answer.toFixed(3) : currentProblem.answer})`);
+           const answerDisplay = typeof currentProblem.answer === 'number' ? currentProblem.answer.toFixed(3) : currentProblem.answer;
+          setFeedback(`❌ Not quite. (The exact answer is ${answerDisplay})`);
         }
         
         if (!isCorrect) setShowAnswer(true);
@@ -332,3 +332,5 @@ export const useMathTrainer = () => {
   }
   return context;
 };
+
+    
