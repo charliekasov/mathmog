@@ -29,7 +29,13 @@ const MemorizeContent = () => {
     };
     const importantSquares = { 24: 576, 25: 625, 27: 729 };
     const memorizedMultiplicationExamples = [
-        { q: '17 × 4', a: 68 }, { q: '18 × 4', a: 72 }, { q: '19 × 5', a: 95 }, 
+        { q: '13 × 3', a: 39 }, { q: '13 × 4', a: 52 }, { q: '13 × 5', a: 65 },
+        { q: '14 × 3', a: 42 }, { q: '14 × 4', a: 56 }, { q: '14 × 5', a: 70 },
+        { q: '15 × 2', a: 30 }, { q: '15 × 3', a: 45 }, { q: '15 × 4', a: 60 }, { q: '15 × 5', a: 75 }, { q: '15 × 6', a: 90 }, { q: '15 × 7', a: 105 }, { q: '15 × 8', a: 120 }, { q: '15 × 9', a: 135 },
+        { q: '16 × 2', a: 32 }, { q: '16 × 3', a: 48 }, { q: '16 × 4', a: 64 }, { q: '16 × 5', a: 80 }, { q: '16 × 6', a: 96 }, { q: '16 × 7', a: 112 }, { q: '16 × 8', a: 128 }, { q: '16 × 9', a: 144 },
+        { q: '17 × 3', a: 51 }, { q: '17 × 4', a: 68 }, { q: '17 × 5', a: 85 },
+        { q: '18 × 3', a: 54 }, { q: '18 × 4', a: 72 }, { q: '18 × 5', a: 90 },
+        { q: '19 × 3', a: 57 }, { q: '19 × 4', a: 76 }, { q: '19 × 5', a: 95 },
         { q: '24 × 3', a: 72 }, { q: '24 × 4', a: 96 }, { q: '24 × 5', a: 120 },
         { q: '27 × 3', a: 81 }, { q: '27 × 4', a: 108 }, { q: '27 × 5', a: 135 },
         { q: '32 × 3', a: 96 }, { q: '32 × 4', a: 128 }, { q: '32 × 5', a: 160 },
@@ -103,7 +109,7 @@ const MemorizeContent = () => {
                                  <div>
                                     <h4 className="font-semibold mb-2">Common Multiples</h4>
                                     <p className="text-xs text-muted-foreground mb-2">It's useful to memorize certain multiplication facts that appear often.</p>
-                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
+                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
                                         {memorizedMultiplicationExamples.map(({ q, a }) => (
                                             <div key={q}><span className="font-semibold">{q}</span> = {a}</div>
                                         ))}

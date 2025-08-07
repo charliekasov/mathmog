@@ -120,8 +120,8 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty): Problem
         ];
     } else if (difficulty === 'Medium') {
         pool = [
-            { n1: [13, 17, 19], n2: [4, 5] }, 
-            { n1: [15], n2: [4, 5]},
+            { n1: [13, 14, 17, 18, 19], n2: [3, 4, 5] },
+            { n1: [15, 16], n2: [2, 3, 4, 5, 6, 7, 8, 9] },
             { n1: [24], n2: [3, 4, 5] },
             { n1: [36], n2: [3, 4, 5] },
             { n1: Array.from({length: 49}, (_, i) => i + 51).filter(n => n % 10 !== 0), n2: [2] }
