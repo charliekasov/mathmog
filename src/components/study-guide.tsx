@@ -132,29 +132,34 @@ const MemorizeContent = () => {
                            <div className="space-y-4">
                                 <div>
                                     <h4 className="font-semibold mb-2">Higher Powers</h4>
-                                     <div className="grid grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
-                                         <div key="base-2" className="flex flex-col space-y-2">
-                                             {Object.entries(higherPowers['2']).map(([exponent, result]) => (
-                                                 <div key={exponent}><span className="font-semibold">2{toSuperscript(exponent)}</span> = {result}</div>
-                                             ))}
-                                         </div>
-                                         <div key="base-3" className="flex flex-col space-y-2">
-                                             {Object.entries(higherPowers['3']).map(([exponent, result]) => (
-                                                 <div key={exponent}><span className="font-semibold">3{toSuperscript(exponent)}</span> = {result}</div>
-                                             ))}
-                                         </div>
-                                         <div key="base-456" className="flex flex-col space-y-2">
-                                             {Object.entries(higherPowers['4']).map(([exponent, result]) => (
-                                                 <div key={exponent}><span className="font-semibold">4{toSuperscript(exponent)}</span> = {result}</div>
-                                             ))}
-                                             {Object.entries(higherPowers['5']).map(([exponent, result]) => (
-                                                 <div key={exponent}><span className="font-semibold">5{toSuperscript(exponent)}</span> = {result}</div>
-                                             ))}
-                                              {Object.entries(higherPowers['6']).map(([exponent, result]) => (
-                                                 <div key={exponent}><span className="font-semibold">6{toSuperscript(exponent)}</span> = {result}</div>
-                                             ))}
-                                         </div>
-                                    </div>
+                                    <Table>
+                                        <TableBody>
+                                            <TableRow className="font-mono text-sm even:bg-muted/50">
+                                                <TableCell className="font-semibold">Base 2</TableCell>
+                                                {Object.entries(higherPowers['2']).map(([exponent, result]) => (
+                                                    <TableCell key={exponent}><span className="font-semibold">2{toSuperscript(exponent)}</span> = {result}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                            <TableRow className="font-mono text-sm even:bg-muted/50">
+                                                 <TableCell className="font-semibold">Base 3</TableCell>
+                                                 {Object.entries(higherPowers['3']).map(([exponent, result]) => (
+                                                    <TableCell key={exponent}><span className="font-semibold">3{toSuperscript(exponent)}</span> = {result}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                            <TableRow className="font-mono text-sm even:bg-muted/50">
+                                                 <TableCell className="font-semibold">Other Bases</TableCell>
+                                                 {Object.entries(higherPowers['4']).map(([exponent, result]) => (
+                                                    <TableCell key={exponent}><span className="font-semibold">4{toSuperscript(exponent)}</span> = {result}</TableCell>
+                                                ))}
+                                                {Object.entries(higherPowers['5']).map(([exponent, result]) => (
+                                                    <TableCell key={exponent}><span className="font-semibold">5{toSuperscript(exponent)}</span> = {result}</TableCell>
+                                                ))}
+                                                 {Object.entries(higherPowers['6']).map(([exponent, result]) => (
+                                                    <TableCell key={exponent}><span className="font-semibold">6{toSuperscript(exponent)}</span> = {result}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                                 <div className="pt-4">
                                     <h4 className="font-semibold mb-2">Important Squares</h4>
@@ -289,30 +294,44 @@ const EstimateContent = () => (
     </div>
 );
 
-const CraftyContent = () => (
+const CraftyContent = () => {
+    const strategies = [
+        { title: 'Multiplying by 4', example: 'Double the number twice.', calculation: 'e.g., 35 × 4 → 35×2=70 → 70×2=140' },
+        { title: 'Dividing by 4', example: 'Halve the number twice.', calculation: 'e.g., 180 ÷ 4 → 180÷2=90 → 90÷2=45' },
+        { title: 'Multiplying by 5', example: 'Multiply by 10, then divide by 2.', calculation: 'e.g., 84 × 5 → 84×10 ÷ 2 = 840 ÷ 2 = 420' },
+        { title: 'Dividing by 5', example: 'Divide by 10, then multiply by 2.', calculation: 'e.g., 420 ÷ 5 → 420÷10 × 2 = 42 × 2 = 84' },
+        { title: 'Multiplying by 8', example: 'Double the number three times.', calculation: 'e.g., 15 × 8 → 15×2=30 → 30×2=60 → 60×2=120' },
+        { title: 'Dividing by 8', example: 'Halve the number three times.', calculation: 'e.g., 240 ÷ 8 → 240÷2=120 → 120÷2=60 → 60÷2=30' },
+        { title: 'Multiplying by 9', example: 'Multiply by 10, then subtract the original number.', calculation: 'e.g., 23 × 9 → 23×10 - 23 = 230 - 23 = 207' },
+        { title: 'Multiplying by 11', example: 'For a 2-digit number (AB), the answer is A(A+B)B. If A+B > 9, carry the one.', calculation: 'e.g., 43 × 11 → 4 (4+3) 3 → 473\ne.g., 85 × 11 → 8 (8+5) 5 → 8 (13) 5 → 935' },
+        { title: 'Multiplying by 12', example: 'Multiply by 10, then add double the original number.', calculation: 'e.g., 35 × 12 → 35×10 + 35×2 = 350 + 70 = 420' },
+        { title: 'Dividing by 12', example: 'If a number is divisible by both 3 and 4, you can divide by 12. Halve it, then divide by 6, or divide by 2, then 2, then 3.', calculation: 'e.g., 552 ÷ 12 → 552÷6 = 92 → 92÷2 = 46' },
+        { title: 'Multiplying by 15', example: 'Multiply by 10, then add half of that result.', calculation: 'e.g., 42 × 15 → 42×10 + (420/2) = 420 + 210 = 630' },
+        { title: 'Multiplying by 25', example: 'Multiply by 100, then divide by 4.', calculation: 'e.g., 36 × 25 → 36×100 ÷ 4 = 3600 ÷ 4 = 900' },
+        { title: 'Multiplying by 19 / 99', example: 'Multiply by the next round number (20 / 100), then subtract the original number.', calculation: 'e.g., 16 × 19 → 16×20 - 16 = 320 - 16 = 304\ne.g., 18 × 99 → 18×100 - 18 = 1782' },
+        { title: 'Squaring numbers ending in 5', example: 'Take the tens digit (T), calculate T × (T+1), then append "25".', calculation: 'e.g., 35² → 3×(3+1) & 25 → 12 & 25 → 1225\ne.g., 85² → 8×(8+1) & 25 → 72 & 25 → 7225' },
+        { title: 'Complementary Multiplication (Difference of Squares)', example: 'For two numbers that are equally distant from a round number (like a multiple of 10 or 5), you can use the formula (x-d)(x+d) = x² - d².', calculation: 'e.g., 23 × 27 → (25-2)×(25+2) = 25² - 2² = 625 - 4 = 621\ne.g., 72 × 78 → (75-3)×(75+3) = 75² - 3² = 5625 - 9 = 5616' },
+    ];
+    return (
     <div className="space-y-6">
         <StudySection title="💡 Pro Tips & Strategies">
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
                 <AccordionTrigger>Strategic Multiplication & Division</AccordionTrigger>
                 <AccordionContent>
-                    <ul className="space-y-4 list-disc list-inside">
-                        <li><strong>Multiplying by 4:</strong> Double the number twice.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 35 × 4 → 35×2=70 → 70×2=140</span></li>
-                        <li><strong>Dividing by 4:</strong> Halve the number twice.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 180 ÷ 4 → 180÷2=90 → 90÷2=45</span></li>
-                        <li><strong>Multiplying by 5:</strong> Multiply by 10, then divide by 2.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 84 × 5 → 84×10 ÷ 2 = 840 ÷ 2 = 420</span></li>
-                        <li><strong>Dividing by 5:</strong> Divide by 10, then multiply by 2.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 420 ÷ 5 → 420÷10 × 2 = 42 × 2 = 84</span></li>
-                        <li><strong>Multiplying by 8:</strong> Double the number three times.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 15 × 8 → 15×2=30 → 30×2=60 → 60×2=120</span></li>
-                        <li><strong>Dividing by 8:</strong> Halve the number three times.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 240 ÷ 8 → 240÷2=120 → 120÷2=60 → 60÷2=30</span></li>
-                        <li><strong>Multiplying by 9:</strong> Multiply by 10, then subtract the original number.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 23 × 9 → 23×10 - 23 = 230 - 23 = 207</span></li>
-                        <li><strong>Multiplying by 11:</strong> For a 2-digit number (AB), the answer is A (A+B) B. If A+B > 9, carry the one.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 43 × 11 → 4 (4+3) 3 → 473</span><br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 85 × 11 → 8 (8+5) 5 → 8 (13) 5 → 935</span></li>
-                        <li><strong>Multiplying by 12:</strong> Multiply by 10, then add double the original number.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 35 × 12 → 35×10 + 35×2 = 350 + 70 = 420</span></li>
-                        <li><strong>Dividing by 12:</strong> If a number is divisible by both 3 and 4, you can divide by 12. Halve it, then divide by 6, or divide by 2, then 2, then 3.<br/><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 552 ÷ 12 → 552÷6 = 92 → 92÷2 = 46</span></li>
-                         <li><strong>Multiplying by 15:</strong> Multiply by 10, then add half of that result.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 42 × 15 → 42×10 + (420/2) = 420 + 210 = 630</span></li>
-                        <li><strong>Multiplying by 25:</strong> Multiply by 100, then divide by 4.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 36 × 25 → 36×100 ÷ 4 = 3600 ÷ 4 = 900</span></li>
-                         <li><strong>Multiplying by 19 / 99:</strong> Multiply by the next round number (20 / 100), then subtract the original number.<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 16 × 19 → 16×20 - 16 = 320 - 16 = 304</span><br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 18 × 99 → 18×100 - 18 = 1782</span></li>
-                         <li><strong>Squaring numbers ending in 5:</strong> Take the tens digit (T), calculate T × (T+1), then append "25".<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 35² → 3×(3+1) & 25 → 12 & 25 → 1225</span><br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 85² → 8×(8+1) & 25 → 72 & 25 → 7225</span></li>
-                        <li><strong>Complementary Multiplication (Difference of Squares):</strong> For two numbers that are equally distant from a round number (like a multiple of 10 or 5), you can use the formula (x-d)(x+d) = x² - d².<br /><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 23 × 27 → (25-2)×(25+2) = 25² - 2² = 625 - 4 = 621</span><br/><span className="text-sm ml-4 font-mono text-foreground/80">e.g., 72 × 78 → (75-3)×(75+3) = 75² - 3² = 5625 - 9 = 5616</span></li>
-                    </ul>
+                    <Table>
+                        <TableBody>
+                            {strategies.map(({ title, example, calculation }, index) => (
+                                <TableRow key={index} className="even:bg-muted/50">
+                                    <TableCell>
+                                        <p className="font-semibold">{title}</p>
+                                        <p className="text-sm text-muted-foreground">{example}</p>
+                                    </TableCell>
+                                    <TableCell className="font-mono text-sm text-foreground/80 whitespace-pre-line">{calculation}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -385,7 +404,7 @@ const CraftyContent = () => (
             </Accordion>
         </StudySection>
     </div>
-);
+)};
 
 const scalingData = {
     memorize: {
@@ -534,3 +553,4 @@ export default function StudyGuide() {
     </div>
   );
 }
+
