@@ -41,6 +41,15 @@ const MemorizeContent = () => {
         { q: '32 × 3', a: 96 }, { q: '32 × 4', a: 128 }, { q: '32 × 5', a: 160 },
         { q: '36 × 3', a: 108 }, { q: '36 × 4', a: 144 }, { q: '36 × 5', a: 180 },
     ];
+    const groupedMultiples = memorizedMultiplicationExamples.reduce((acc, { q, a }) => {
+        const base = q.split(' ')[0];
+        if (!acc[base]) {
+            acc[base] = [];
+        }
+        acc[base].push({ q, a });
+        return acc;
+    }, {} as Record<string, {q: string, a: number}[]>);
+
     const superscriptMap: { [key: string]: string } = {
         '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
         '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
@@ -54,32 +63,65 @@ const MemorizeContent = () => {
                     <AccordionItem value="item-1">
                         <AccordionTrigger>Perfect Squares (1-20)</AccordionTrigger>
                         <AccordionContent>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
-                                {Object.entries(perfectSquares).slice(0, 20).map(([base, square]) => (
-                                    <div key={base}><span className="font-semibold">{base}²</span> = {square}</div>
-                                ))}
-                            </div>
+                             <Table>
+                                <TableBody>
+                                    {Object.entries(perfectSquares).slice(0, 20).reduce((acc, _, index, array) => {
+                                        if (index % 4 === 0) {
+                                            acc.push(array.slice(index, index + 4));
+                                        }
+                                        return acc;
+                                    }, [] as [string, number][][]).map((row, rowIndex) => (
+                                        <TableRow key={rowIndex} className="font-mono text-sm even:bg-muted/50">
+                                            {row.map(([base, square]) => (
+                                                <TableCell key={base}><span className="font-semibold">{base}²</span> = {square}</TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-2">
                         <AccordionTrigger>Perfect Cubes (1-10)</AccordionTrigger>
                         <AccordionContent>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
-                                {Object.entries(perfectCubes).slice(0, 10).map(([base, cube]) => (
-                                    <div key={base}><span className="font-semibold">{base}³</span> = {cube}</div>
-                                ))}
-                            </div>
+                           <Table>
+                                <TableBody>
+                                    {Object.entries(perfectCubes).slice(0, 10).reduce((acc, _, index, array) => {
+                                        if (index % 4 === 0) {
+                                            acc.push(array.slice(index, index + 4));
+                                        }
+                                        return acc;
+                                    }, [] as [string, number][][]).map((row, rowIndex) => (
+                                        <TableRow key={rowIndex} className="font-mono text-sm even:bg-muted/50">
+                                            {row.map(([base, cube]) => (
+                                                <TableCell key={base}><span className="font-semibold">{base}³</span> = {cube}</TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="item-3">
                         <AccordionTrigger>Common Fraction Conversions</AccordionTrigger>
                         <AccordionContent>
                             <p className="text-sm text-muted-foreground mb-4">Note: For repeating decimals, rounded or truncated answers are often accepted in practice mode.</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 font-mono text-sm">
-                                 {commonFractionConversions.map(({ frac, decimal, percent }) => (
-                                    <div key={frac}><span className="font-semibold">{frac}</span> = {decimal} = {percent}</div>
-                                ))}
-                            </div>
+                             <Table>
+                                <TableBody>
+                                    {commonFractionConversions.reduce((acc, _, index, array) => {
+                                        if (index % 2 === 0) {
+                                            acc.push(array.slice(index, index + 2));
+                                        }
+                                        return acc;
+                                    }, [] as typeof commonFractionConversions[]).map((row, rowIndex) => (
+                                        <TableRow key={rowIndex} className="font-mono text-sm even:bg-muted/50">
+                                            {row.map(({ frac, decimal, percent }) => (
+                                                <TableCell key={frac}><span className="font-semibold">{frac}</span> = {decimal} = {percent}</TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-4">
@@ -88,7 +130,7 @@ const MemorizeContent = () => {
                            <div className="space-y-4">
                                 <div>
                                     <h4 className="font-semibold mb-2">Higher Powers</h4>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
+                                     <div className="grid grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
                                          {Object.entries(higherPowers).map(([base, powers]) => (
                                              <div key={base} className="flex flex-col space-y-2">
                                                  {Object.entries(powers).map(([exponent, result]) => (
@@ -98,22 +140,35 @@ const MemorizeContent = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <div>
+                                <div className="pt-4">
                                     <h4 className="font-semibold mb-2">Important Squares</h4>
-                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
-                                        {Object.entries(importantSquares).map(([base, square]) => (
-                                            <div key={base}><span className="font-semibold">{base}²</span> = {square}</div>
-                                        ))}
-                                    </div>
+                                     <Table>
+                                        <TableBody>
+                                            <TableRow className="font-mono text-sm even:bg-muted/50">
+                                                {Object.entries(importantSquares).map(([base, square]) => (
+                                                    <TableCell key={base}><span className="font-semibold">{base}²</span> = {square}</TableCell>
+                                                ))}
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
                                 </div>
-                                 <div>
+                                 <div className="pt-4">
                                     <h4 className="font-semibold mb-2">Common Multiples</h4>
                                     <p className="text-xs text-muted-foreground mb-2">It's useful to memorize certain multiplication facts that appear often.</p>
-                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
-                                        {memorizedMultiplicationExamples.map(({ q, a }) => (
-                                            <div key={q}><span className="font-semibold">{q}</span> = {a}</div>
-                                        ))}
-                                    </div>
+                                    <Table>
+                                        <TableBody>
+                                            {Object.entries(groupedMultiples).map(([base, multiples], rowIndex) => (
+                                                <TableRow key={base} className="font-mono text-sm even:bg-muted/50">
+                                                    <TableCell className="font-semibold">{base}s</TableCell>
+                                                    <TableCell className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1">
+                                                        {multiples.map(({ q, a }) => (
+                                                            <div key={q}>{q} = {a}</div>
+                                                        ))}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                            </div>
                         </AccordionContent>
@@ -314,7 +369,7 @@ const scalingData = {
                 "Perfect Squares (1-12)",
                 "Perfect Cubes (1-5)",
                 "Fraction/Decimal/Percent Conversions (denominators: 4, 5)",
-                "Memorized Multiplication (e.g., 17x3, 24x2)"
+                "Memorized Multiplication (e.g., 17x3, 24x2, 15x3, 15x4)"
             ],
             Medium: [
                 "Perfect Squares (11-20)",
@@ -453,4 +508,5 @@ export default function StudyGuide() {
     </div>
   );
 }
+
 
