@@ -187,7 +187,7 @@ export default function ProblemDisplay() {
          <div className="mx-auto">
              <Badge variant="secondary">{currentProblem.type}</Badge>
          </div>
-        {currentProblem.inputType !== 'multi-text' && <CardTitle className="text-2xl md:text-3xl font-bold pt-2">{currentProblem.question}</CardTitle>}
+         {currentProblem.inputType !== 'multi-text' && <CardTitle className="text-2xl md:text-3xl font-bold pt-2" dangerouslySetInnerHTML={{ __html: currentProblem.question as string}} />}
       </CardHeader>
       <CardContent>
         <div className="max-w-md mx-auto px-4">

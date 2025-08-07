@@ -143,7 +143,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
            emojis: '🧠🦵🦵🥱',
            title: 'Do your legs hurt from carrying that GIANT BRAIN around all day???',
            subtitle: 'Try a speed challenge?',
-           options: { yes: 'Yes, test my speed!', no: 'No, I need a break' },
+           options: { yes: 'Feed my speed need', no: 'Lemme practice more (I’m so scared)' },
          };
       }
 
