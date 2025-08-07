@@ -159,7 +159,7 @@ const MemorizeContent = () => {
                                         <TableBody>
                                             {Object.entries(groupedMultiples).map(([base, multiples], rowIndex) => (
                                                 <TableRow key={base} className="font-mono text-sm even:bg-muted/50">
-                                                    <TableCell className="font-semibold">{base}s</TableCell>
+                                                    <TableCell className="font-semibold">{base}</TableCell>
                                                     <TableCell className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1">
                                                         {multiples.map(({ q, a }) => (
                                                             <div key={q}>{q} = {a}</div>
@@ -508,5 +508,6 @@ export default function StudyGuide() {
     </div>
   );
 }
+
 
 
