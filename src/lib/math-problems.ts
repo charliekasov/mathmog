@@ -90,12 +90,20 @@ export const commonFractionConversions = [
 export const perfectSquares: Record<number, number> = {
     1: 1, 2: 4, 3: 9, 4: 16, 5: 25, 6: 36, 7: 49, 8: 64, 9: 81, 10: 100,
     11: 121, 12: 144, 13: 169, 14: 196, 15: 225, 16: 256, 17: 289, 18: 324, 19: 361, 20: 400,
+    24: 576, 25: 625, 27: 729,
     30: 900, 40: 1600, 50: 2500, 60: 3600, 70: 4900, 80: 6400, 90: 8100, 100: 10000
 };
 
 export const perfectCubes: Record<number, number> = {
     1: 1, 2: 8, 3: 27, 4: 64, 5: 125, 6: 216, 7: 343, 8: 512, 9: 729, 10: 1000,
     20: 8000, 30: 27000, 40: 64000, 50: 125000, 60: 216000, 70: 343000, 80: 512000, 90: 729000, 100: 1000000
+};
+
+const higherPowers: Record<string, number> = {
+    '2^4': 16, '2^5': 32, '2^6': 64, '2^7': 128, '2^8': 256, '2^9': 512,
+    '3^4': 81, '3^5': 243, '3^6': 729,
+    '4^4': 256,
+    '5^4': 625,
 };
 
 
@@ -163,16 +171,16 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
     if (difficulty === 'Easy') {
         pool = [
             { n1: [13, 14, 16, 17, 18, 19], n2: [2, 3] }, // 15 removed
-            { n1: [15], n2: [2, 3]}, // 15x2, 15x3
+            { n1: [15], n2: [2, 3]},
             { n1: [14, 16, 18], n2: [4, 5] },
-            { n1: Array.from({length: 31}, (_, i) => i + 20).filter(n => n % 10 !== 0), n2: [2] } // 20-50, not ending in 0
+            { n1: Array.from({length: 31}, (_, i) => i + 20).filter(n => n % 10 !== 0), n2: [2] }
         ];
     } else if (difficulty === 'Medium') {
         pool = [
             { n1: [13, 17, 19], n2: [4, 5] }, 
-            { n1: [15], n2: [4, 5]}, // 15x4, 15x5
+            { n1: [15], n2: [4, 5]},
             { n1: [24, 36], n2: [2, 3, 4, 5] },
-            { n1: Array.from({length: 49}, (_, i) => i + 51).filter(n => n % 10 !== 0), n2: [2] } // 51-99, not ending in 0
+            { n1: Array.from({length: 49}, (_, i) => i + 51).filter(n => n % 10 !== 0), n2: [2] }
         ];
     } else { // Hard
         pool = [
@@ -194,6 +202,42 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
     return { question: `${num1} × ${num2} = ?`, answer, type: 'Memorized Multiplication', explanation, inputType: 'number' };
 };
 
+const generateHigherPowersProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+    let problemSet: { [key: string]: number };
+
+    if (difficulty === 'Medium') {
+        problemSet = { '2^4': 16, '2^5': 32, '3^4': 81, '3^5': 243 };
+    } else { // Hard
+        problemSet = {
+            '2^6': 64, '2^7': 128, '2^8': 256, '2^9': 512,
+            '3^6': 729,
+            '4^4': 256, '5^4': 625,
+            '24^2': 576, '25^2': 625, '27^2': 729,
+        };
+    }
+    
+    const questions = Object.keys(problemSet);
+    const questionStr = questions[Math.floor(Math.random() * questions.length)];
+    const answer = problemSet[questionStr];
+    
+    const [base, exponent] = questionStr.split('^');
+    let explanation: string;
+
+    if (exponent === '2') {
+         explanation = `${base}² = ${base}×${base} = ${answer}.`;
+    } else {
+        explanation = `${questionStr} = ${answer}. This is a key power to have memorized.`;
+    }
+
+    return {
+        question: `${questionStr} = ?`,
+        answer,
+        type: 'Higher Powers & Squares',
+        explanation,
+        inputType: 'number'
+    };
+};
+
 
 const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     let problemTypes: string[];
@@ -202,9 +246,9 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     if (difficulty === 'Easy') {
         problemTypes = ['square', 'cube', 'fraction', 'memorizedMultiplication'];
     } else if (difficulty === 'Medium') {
-        problemTypes = ['fraction', 'square', 'cube', 'memorizedMultiplication'];
+        problemTypes = ['fraction', 'square', 'cube', 'memorizedMultiplication', 'higherPowers'];
     } else { // Hard
-        problemTypes = ['square', 'cube', 'memorizedMultiplication'];
+        problemTypes = ['square', 'cube', 'memorizedMultiplication', 'higherPowers'];
     }
     
     // In Medium, make fractions appear ~50% of the time, and multiplication 20%
@@ -217,7 +261,9 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
     }
 
-    if (type === 'memorizedMultiplication') {
+    if (type === 'higherPowers') {
+        return generateHigherPowersProblem(difficulty, hardModeBonus);
+    } else if (type === 'memorizedMultiplication') {
         return generateMemorizedMultiplicationProblem(difficulty, hardModeBonus);
     } else if (type === 'square') {
         let num: number;
@@ -400,6 +446,7 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
     let base: number;
     let questionText: string;
     let problemType: string = 'Percentage Estimation';
+    let tolerance = 0.2;
 
     if (difficulty === 'Easy') {
         percent = [10, 15, 20, 25, 30, 40, 50, 60, 65, 75, 80, 90][Math.floor(Math.random() * 12)];
@@ -432,7 +479,7 @@ const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number
 So, ${percent}% = (${tens} × 10%) + (${ones} × 1%) = (${tens} × ${tenPercent.toFixed(2)}) + (${ones} × ${onePercent.toFixed(2)}) = ${tens*tenPercent} + ${ones*onePercent} = ${answer}.`;
     
 
-    return { question: questionText, answer, type: problemType, explanation, inputType: 'number', tolerance: 0.20 };
+    return { question: questionText, answer, type: problemType, explanation, inputType: 'number', tolerance };
 };
 
 const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
