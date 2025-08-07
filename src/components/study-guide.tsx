@@ -26,8 +26,10 @@ const MemorizeContent = () => {
         '3': { '4': 81, '5': 243, '6': 729 },
         '4': { '4': 256 },
         '5': { '4': 625 },
+        '6': { '4': 1296 },
     };
-    const importantSquares = { 24: 576, 25: 625, 27: 729 };
+    const importantSquares = { 24: 576, 25: 625, 27: 729, 36: 1296, 40: 1600, 41: 1681 };
+    
     const memorizedMultiplicationExamples = [
         { q: '13 × 3', a: 39 }, { q: '13 × 4', a: 52 }, { q: '13 × 5', a: 65 },
         { q: '14 × 3', a: 42 }, { q: '14 × 4', a: 56 }, { q: '14 × 5', a: 70 },
@@ -131,23 +133,47 @@ const MemorizeContent = () => {
                                 <div>
                                     <h4 className="font-semibold mb-2">Higher Powers</h4>
                                      <div className="grid grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
-                                         {Object.entries(higherPowers).map(([base, powers]) => (
-                                             <div key={base} className="flex flex-col space-y-2">
-                                                 {Object.entries(powers).map(([exponent, result]) => (
-                                                     <div key={exponent}><span className="font-semibold">{base}{toSuperscript(exponent)}</span> = {result}</div>
-                                                 ))}
-                                             </div>
-                                        ))}
+                                         <div key="base-2" className="flex flex-col space-y-2">
+                                             {Object.entries(higherPowers['2']).map(([exponent, result]) => (
+                                                 <div key={exponent}><span className="font-semibold">2{toSuperscript(exponent)}</span> = {result}</div>
+                                             ))}
+                                         </div>
+                                         <div key="base-3" className="flex flex-col space-y-2">
+                                             {Object.entries(higherPowers['3']).map(([exponent, result]) => (
+                                                 <div key={exponent}><span className="font-semibold">3{toSuperscript(exponent)}</span> = {result}</div>
+                                             ))}
+                                         </div>
+                                         <div key="base-456" className="flex flex-col space-y-2">
+                                             {Object.entries(higherPowers['4']).map(([exponent, result]) => (
+                                                 <div key={exponent}><span className="font-semibold">4{toSuperscript(exponent)}</span> = {result}</div>
+                                             ))}
+                                             {Object.entries(higherPowers['5']).map(([exponent, result]) => (
+                                                 <div key={exponent}><span className="font-semibold">5{toSuperscript(exponent)}</span> = {result}</div>
+                                             ))}
+                                              {Object.entries(higherPowers['6']).map(([exponent, result]) => (
+                                                 <div key={exponent}><span className="font-semibold">6{toSuperscript(exponent)}</span> = {result}</div>
+                                             ))}
+                                         </div>
                                     </div>
                                 </div>
                                 <div className="pt-4">
                                     <h4 className="font-semibold mb-2">Important Squares</h4>
                                      <Table>
-                                        <TableBody>
-                                            <TableRow className="font-mono text-sm even:bg-muted/50">
-                                                {Object.entries(importantSquares).map(([base, square]) => (
-                                                    <TableCell key={base}><span className="font-semibold">{base}²</span> = {square}</TableCell>
-                                                ))}
+                                        <TableBody className="font-mono text-sm">
+                                            <TableRow className="even:bg-muted/50">
+                                                <TableCell><span className="font-semibold">24²</span> = {importantSquares[24]}</TableCell>
+                                                <TableCell><span className="font-semibold">25²</span> = {importantSquares[25]}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground italic">from the 7-24-25 Pythagorean triple</TableCell>
+                                            </TableRow>
+                                            <TableRow className="even:bg-muted/50">
+                                                <TableCell><span className="font-semibold">27²</span> = {importantSquares[27]}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground italic">(same as 3⁶ and 9³)</TableCell>
+                                                <TableCell><span className="font-semibold">36²</span> = {importantSquares[36]} <span className="text-xs text-muted-foreground italic">(same as 6⁴)</span></TableCell>
+                                            </TableRow>
+                                            <TableRow className="even:bg-muted/50">
+                                                <TableCell><span className="font-semibold">40²</span> = {importantSquares[40]}</TableCell>
+                                                <TableCell><span className="font-semibold">41²</span> = {importantSquares[41]}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground italic">from the 9-40-41 Pythagorean triple</TableCell>
                                             </TableRow>
                                         </TableBody>
                                     </Table>
@@ -157,12 +183,12 @@ const MemorizeContent = () => {
                                     <p className="text-xs text-muted-foreground mb-2">It's useful to memorize certain multiplication facts that appear often.</p>
                                     <Table>
                                         <TableBody>
-                                            {Object.entries(groupedMultiples).map(([base, multiples], rowIndex) => (
+                                            {Object.entries(groupedMultiples).map(([base, multiples]) => (
                                                 <TableRow key={base} className="font-mono text-sm even:bg-muted/50">
                                                     <TableCell className="font-semibold">{base}</TableCell>
                                                     <TableCell className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1">
                                                         {multiples.map(({ q, a }) => (
-                                                            <div key={q}>{q} = {a}</div>
+                                                            <div key={q}>{q.replace('×', '× ')} = {a}</div>
                                                         ))}
                                                     </TableCell>
                                                 </TableRow>
@@ -508,6 +534,3 @@ export default function StudyGuide() {
     </div>
   );
 }
-
-
-
