@@ -13,6 +13,7 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import type { Difficulty, LeaderboardScore, LeaderboardUser } from './types';
+import { moderateText } from '@/ai/flows/moderate-text-flow';
 
 const USERS_COLLECTION = 'users';
 const SCORES_COLLECTION = 'scores';
@@ -37,23 +38,49 @@ export async function isNameTaken(name: string, secret: string): Promise<boolean
 }
 
 /**
- * Creates a new user if the name is not taken.
+ * Creates a new user if the name is not taken and is appropriate.
  * @param name The name for the new user.
- *- @param secret The secret for the new user.
- * @returns The new user's ID if successful, otherwise null.
+ * @param secret The secret for the new user.
+ * @returns An object indicating success or the reason for failure.
  */
-export async function createLeaderboardUser(name: string, secret: string): Promise<string | null> {
-    if (await isNameTaken(name, secret)) {
-        return null;
-    }
+export async function createLeaderboardUser(
+  name: string,
+  secret: string
+): Promise<{ success: boolean; message: string; userId?: string }> {
+  // Rule 1: Validate name format (1-12 alphanumeric characters)
+  const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+  if (name.length === 0 || name.length > 12 || !alphanumericRegex.test(name)) {
+    return { success: false, message: 'Name must be 1-12 alphanumeric characters.' };
+  }
 
+  // Rule 2: Check for profanity
+  try {
+    const moderationResult = await moderateText({ textToModerate: name });
+    if (moderationResult.isProfane) {
+      return { success: false, message: 'This name is not allowed. Please choose another.' };
+    }
+  } catch (error) {
+    console.error('Moderation check failed:', error);
+    return { success: false, message: 'Could not verify name. Please try again later.' };
+  }
+
+  // Rule 3: Check if name is already taken by another user
+  if (await isNameTaken(name, secret)) {
+    return { success: false, message: 'This name has already been taken.' };
+  }
+
+  try {
     const usersRef = collection(db, USERS_COLLECTION);
     const docRef = await addDoc(usersRef, {
-        name,
-        secret, // In a real app, this should be hashed, but for arcade-style it's okay.
-        createdAt: serverTimestamp(),
+      name,
+      secret, // In a real app, this should be hashed, but for arcade-style it's okay.
+      createdAt: serverTimestamp(),
     });
-    return docRef.id;
+    return { success: true, message: 'User created successfully!', userId: docRef.id };
+  } catch (error) {
+    console.error('Error creating user in Firestore:', error);
+    return { success: false, message: 'Failed to create user.' };
+  }
 }
 
 
