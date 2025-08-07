@@ -241,7 +241,6 @@ const generateHigherPowersProblem = (difficulty: Difficulty, hardModeBonus: numb
 
 const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
     let problemTypes: string[];
-    let type: string;
 
     if (difficulty === 'Easy') {
         problemTypes = ['square', 'cube', 'fraction', 'memorizedMultiplication'];
@@ -251,15 +250,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         problemTypes = ['square', 'cube', 'memorizedMultiplication', 'higherPowers'];
     }
     
-    // In Medium, make fractions appear ~50% of the time, and multiplication 20%
-    if (difficulty === 'Medium' && Math.random() < 0.5) {
-        type = 'fraction';
-    } else if (difficulty === 'Medium' && Math.random() < 0.7) {
-        type = 'memorizedMultiplication';
-    }
-    else {
-        type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
-    }
+    const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
 
     if (type === 'higherPowers') {
         return generateHigherPowersProblem(difficulty, hardModeBonus);
