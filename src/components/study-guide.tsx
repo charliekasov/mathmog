@@ -63,7 +63,7 @@ const MemorizeContent = () => {
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-4">
-                        <AccordionTrigger>Key Powers & Multiples</AccordionTrigger>
+                        <AccordionTrigger>Advanced Memorization</AccordionTrigger>
                         <AccordionContent>
                            <div className="space-y-4">
                                 <div>
