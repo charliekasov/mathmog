@@ -24,7 +24,8 @@ const HowToPractice = () => (
                         <li><strong>Choose a Mode</strong> - Start with <strong>Memorize</strong> to build a foundation, then move to <strong>Estimate</strong> to develop intuition, and finally <strong>Get Crafty</strong> to learn advanced strategies.</li>
                         <li><strong>Start with Medium</strong> - If it's too hard, drop to Easy. If it's too easy, the app will suggest moving to Hard.</li>
                         <li><strong>Use the Study Guide</strong> - The study guide provides reference tables for memorization, estimation strategies, and tricks for multiplication and division.</li>
-                        <li><strong>Build speed before advancing</strong> - Use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, not just correctly.</li>
+                        <li><strong>Don't Show Your Work</strong> - The point of this is to practice everything in your head. So throw out your pencil, paper, and calculator or donate them to charity.</li>
+                        <li><strong>Build speed before advancing</strong> - Once you feel like you can handle a difficulty level in your head, use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, not just correctly.</li>
                         <li><strong>Use your keyboard</strong> - For text answers, press `Enter` to check your answer and again for the next problem. For "Yes/No" questions, use the `y` and `n` keys.</li>
                     </ul>
                 </AccordionContent>
