@@ -168,15 +168,20 @@ const scalingData = {
                 "Perfect Squares (1-12)",
                 "Perfect Cubes (1-5)",
                 "Fraction/Decimal/Percent Conversions (denominators: 4, 5)",
+                "Memorized Multiplication (e.g., 17x3, 42x2, 18x5, 24x2)"
             ],
             Medium: [
                 "Perfect Squares (11-20)",
                 "Perfect Cubes (4-10)",
                 "Fraction/Decimal/Percent Conversions (denominators: 3, 6, 8, 9, 7)",
+                "Memorized Multiplication (e.g., 19x5, 24x4, 36x3, 78x2)",
+                "Higher Powers (2⁴, 2⁵, 3⁴, 3⁵)"
             ],
             Hard: [
-                "Perfect Squares (20-100, tens)",
+                "Perfect Squares (30-100, tens)",
                 "Perfect Cubes (20-100, tens)",
+                "Memorized Multiplication (e.g., 27x4, 32x5)",
+                "Higher Powers & Squares (e.g., 2⁶, 3⁶, 4⁴, 24²)"
             ]
         }
     },
