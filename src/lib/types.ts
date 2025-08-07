@@ -21,8 +21,9 @@ export interface SpeedChallengeState {
 }
 
 export interface PendingLevelUp {
-  from: Difficulty;
-  to: Difficulty;
+  action: 'changeDifficulty' | 'trySpeedChallenge';
+  from?: Difficulty;
+  to?: Difficulty;
   emojis: string;
   title: string;
   allCapsTitle?: string;
@@ -36,6 +37,5 @@ export interface PendingLevelUp {
 export interface AdaptiveData {
   consecutiveCorrect: number;
   currentAdaptiveLevel: Difficulty | null;
-  hardModeBonus: number;
   pendingLevelUp: PendingLevelUp | null;
 }

@@ -106,7 +106,7 @@ const superscriptMap: { [key: string]: string } = {
 
 const toSuperscript = (n: number | string) => String(n).split('').map(char => superscriptMap[char]).join('');
 
-const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+const generateMemorizedMultiplicationProblem = (difficulty: Difficulty): Problem => {
     let num1: number, num2: number;
     let pool: {n1: number[], n2: number[]}[] = [];
 
@@ -136,7 +136,6 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
     num1 = selectedPool.n1[Math.floor(Math.random() * selectedPool.n1.length)];
     num2 = selectedPool.n2[Math.floor(Math.random() * selectedPool.n2.length)];
     
-    // Ensure num1 is the larger number for consistency in question format
     if (num1 < num2) {
       [num1, num2] = [num2, num1];
     }
@@ -146,7 +145,7 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
     return { question: `${num1} × ${num2} = ?`, answer, type: 'Memorized Multiplication', explanation, inputType: 'number' };
 };
 
-const generateHigherPowersProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+const generateHigherPowersProblem = (difficulty: Difficulty): Problem => {
     let problemSet: { [key: string]: number };
 
     if (difficulty === 'Medium') {
@@ -186,19 +185,18 @@ const generateHigherPowersProblem = (difficulty: Difficulty, hardModeBonus: numb
 };
 
 
-const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+const generateLevel1Problem = (difficulty: Difficulty, history: string[]): Problem => {
     let problemTypes: string[];
 
     if (difficulty === 'Easy') {
         problemTypes = ['square', 'cube', 'fraction', 'memorizedMultiplication'];
     } else if (difficulty === 'Medium') {
-        // Weighted pool for Medium difficulty
         problemTypes = [
             'square', 'square',
             'cube', 'cube',
             'fraction', 'fraction',
             'memorizedMultiplication', 'memorizedMultiplication',
-            'higherPowers' // Underweighted
+            'higherPowers'
         ];
     } else { // Hard
         problemTypes = ['square', 'cube', 'memorizedMultiplication', 'higherPowers'];
@@ -207,9 +205,9 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
 
     if (type === 'higherPowers') {
-        return generateHigherPowersProblem(difficulty, hardModeBonus);
+        return generateHigherPowersProblem(difficulty);
     } else if (type === 'memorizedMultiplication') {
-        return generateMemorizedMultiplicationProblem(difficulty, hardModeBonus);
+        return generateMemorizedMultiplicationProblem(difficulty);
     } else if (type === 'square') {
         let num: number;
         if (difficulty === 'Easy') {
@@ -224,7 +222,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         }
         const answer = perfectSquares[num] || num * num;
         let explanation = `${num}² = ${num}×${num} = ${answer}`;
-        if (difficulty === 'Hard' && num >= 20 && num % 10 === 0) {
+        if (difficulty === 'Hard' && num >= 30 && num % 10 === 0) {
             const base = num / 10;
             explanation = `(${num})² = (${base}×10)² = ${base}²×10² = ${base*base}×100 = ${answer}`;
         }
@@ -252,7 +250,6 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         const easyDenominators = [4, 5];
         let mediumDenominators = [3, 6, 8, 9, 7];
 
-        // Underweight thirds in medium mode
         if (Math.random() < 0.3) {
             mediumDenominators = [6, 8, 9, 7];
         }
@@ -270,7 +267,6 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         const easyConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToDec'];
         const mediumConversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
         
-        // In Easy, don't ask for fraction from a repeating decimal
         let conversionTypes = difficulty === 'Easy' ? easyConversionTypes : mediumConversionTypes;
         if (difficulty === 'Easy' && repeating) {
             conversionTypes = ['fracToDec', 'fracToPerc'];
@@ -289,8 +285,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         const percentValue = decimalValue * 100;
         
         if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
-          // Reroll if we get a whole number for a "to fraction" question
-          return generateLevel1Problem(difficulty, hardModeBonus, history);
+          return generateLevel1Problem(difficulty, history);
         }
 
         switch (conversionType) {
@@ -345,8 +340,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
                 return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
             }
             default:
-                // Fallback in case of an unexpected conversionType
-                return generateLevel1Problem(difficulty, hardModeBonus, history);
+                return generateLevel1Problem(difficulty, history);
         }
     }
 };
@@ -408,10 +402,10 @@ const createUniqueProblem = (generator: () => Problem, history: string[]): Probl
     return problem;
 }
 
-const generateMultiplicationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+const generateMultiplicationProblem = (difficulty: Difficulty): Problem => {
     let aMin = 11, aMax = 29, bMin = 11, bMax = 29;
     if (difficulty === 'Medium') { aMin=21; aMax=69; bMin=11; bMax=39; }
-    if (difficulty === 'Hard') { aMin=51 + (hardModeBonus*10); aMax=149 + (hardModeBonus*10); bMin=21; bMax=79; }
+    if (difficulty === 'Hard') { aMin=51; aMax=149; bMin=21; bMax=79; }
     
     const generateNonMultipleOf10 = (min: number, max: number) => {
         let num;
@@ -443,7 +437,7 @@ Your answer should be between ${lowerBound} and ${upperBound}. The exact answer 
     return { question: `Estimate: ${a} × ${b}`, answer: a * b, type: 'Multiplication Estimation', explanation, inputType: 'number', tolerance: 0.20 };
 }
 
-const generatePercentageProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+const generatePercentageProblem = (difficulty: Difficulty): Problem => {
     let percent: number;
     let base: number;
     let questionText: string;
@@ -484,7 +478,7 @@ So, ${percent}% = (${tens} × 10%) + (${ones} × 1%) = (${tens} × ${tenPercent.
     return { question: questionText, answer, type: problemType, explanation, inputType: 'number', tolerance };
 };
 
-const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
+const generateFractionEstimationProblem = (difficulty: Difficulty): Problem => {
     let num: number, den: number;
 
     if (difficulty === 'Medium') {
@@ -499,8 +493,8 @@ const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus
 
         den = baseDen + denOffset;
         num = baseNum + numOffset;
-    } else { // Hard or Hard + Bonus
-        if (hardModeBonus > 0 && Math.random() > 0.5) { // Improper Fraction
+    } else { // Hard
+        if (Math.random() > 0.5) { // Improper Fraction
             num = Math.floor(Math.random() * 800) + 100; // 100-899
             den = Math.floor(Math.random() * (num * 0.9 - 20)) + 20; // Ensure den < num
         } else { // Proper Fraction
@@ -509,9 +503,8 @@ const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus
         }
     }
     
-    // Ensure we don't get a simple fraction or an impossible one
     if (gcd(num, den) > 5 || num <= 10 || den <= 10) {
-        return generateFractionEstimationProblem(difficulty, hardModeBonus);
+        return generateFractionEstimationProblem(difficulty);
     }
     
     const answer = num / den;
@@ -529,7 +522,7 @@ const generateFractionEstimationProblem = (difficulty: Difficulty, hardModeBonus
 };
 
 
-const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+const generateLevel2Problem = (difficulty: Difficulty, history: string[]): Problem => {
     try {
         let problemTypes = ['multiplication', 'rootEstimation', 'percentage', 'fractionEstimation'];
         if (difficulty === 'Easy') {
@@ -575,8 +568,7 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const lowerBound = table[base];
             const upperBound = table[nextBase];
             if (lowerBound === undefined || upperBound === undefined) {
-                 // This case should not happen with the corrected logic, but as a failsafe:
-                 return generateMultiplicationProblem(difficulty, hardModeBonus);
+                 return generateMultiplicationProblem(difficulty);
             }
 
             const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
@@ -592,33 +584,27 @@ const generateLevel2Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             
             return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
         } else if (type === 'percentage') {
-            return generatePercentageProblem(difficulty, hardModeBonus);
+            return generatePercentageProblem(difficulty);
         } else if (type === 'fractionEstimation') {
-            return generateFractionEstimationProblem(difficulty, hardModeBonus);
+            return generateFractionEstimationProblem(difficulty);
         }
         
-        // Fallback to Multiplication if root estimation fails or is not chosen
-        return generateMultiplicationProblem(difficulty, hardModeBonus);
+        return generateMultiplicationProblem(difficulty);
     } catch (error) {
         console.error("Error generating Level 2 problem, falling back to multiplication", error);
-        // Failsafe: if anything goes wrong, generate a simple multiplication problem
-        return generateMultiplicationProblem(difficulty, hardModeBonus);
+        return generateMultiplicationProblem(difficulty);
     }
 };
 
-const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
+const generateLevel3Problem = (difficulty: Difficulty, history: string[]): Problem => {
     let type: string;
 
     const easyOps = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9', 'divisibility'];
     const mediumOps = ['mul_8', 'div_8', 'mul_12_15', 'div_4_rem', 'div_5_rem', 'divisibility'];
     
     let hardOps: string[];
-    if (hardModeBonus > 0) {
-      hardOps = ['adv_div', 'mul_9_11_19_99', 'div_8_rem', 'div_12', 'mul_25', 'square_ending_5', 'comp_mul'];
-    } else {
-      hardOps = ['div_8_rem', 'div_12', 'mul_25', 'square_ending_5', 'comp_mul'];
-    }
-
+    hardOps = ['adv_div', 'mul_9_11_19_99', 'div_8_rem', 'div_12', 'mul_25', 'square_ending_5', 'comp_mul'];
+    
     if (difficulty === 'Easy') {
         type = easyOps[Math.floor(Math.random() * easyOps.length)];
     } else if (difficulty === 'Medium') {
@@ -666,7 +652,7 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
             const divisors = [7, 11];
             const divisor = divisors[Math.floor(Math.random() * divisors.length)];
             let min, max;
-            min = 2000 + (hardModeBonus * 1000); max = 15000 + (hardModeBonus * 5000);
+            min = 2000; max = 15000;
             const testNum = Math.floor(Math.random() * (max - min + 1)) + min;
             const isDivisible = testNum % divisor === 0;
             const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
@@ -760,8 +746,8 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         }
         case 'mul_9_11_19_99': {
             const multiplier = [9, 11, 19, 99][Math.floor(Math.random() * 4)];
-            const numMin = 50 + (hardModeBonus * 5);
-            const numMax = 100 + (hardModeBonus * 5);
+            const numMin = 50;
+            const numMax = 100;
             const num = Math.floor(Math.random() * (numMax - numMin + 1)) + numMin;
             const answer = num * multiplier;
             let explanation = `${num} × ${multiplier} = ${answer}`;
@@ -794,13 +780,12 @@ const generateLevel3Problem = (difficulty: Difficulty, hardModeBonus: number, hi
              return { question: `${num1} × ${num2} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
         }
         default:
-             // Fallback to a known good state
-            return generateLevel3Problem(difficulty, hardModeBonus, history);
+            return generateLevel3Problem(difficulty, history);
     }
 };
 
-export const generateProblem = (level: number, difficulty: Difficulty, hardModeBonus: number, history: string[]): Problem => {
-    let generatorFunction: (difficulty: Difficulty, hardModeBonus: number, history: string[]) => Problem;
+export const generateProblem = (level: number, difficulty: Difficulty, history: string[]): Problem => {
+    let generatorFunction: (difficulty: Difficulty, history: string[]) => Problem;
 
     switch (level) {
         case 1:
@@ -816,9 +801,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
             throw new Error(`Invalid level requested: ${level}. Cannot generate problem.`);
     }
 
-    const generator = () => generatorFunction(difficulty, hardModeBonus, history);
+    const generator = () => generatorFunction(difficulty, history);
     return createUniqueProblem(generator, history);
 };
-
-
-

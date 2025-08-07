@@ -52,7 +52,6 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [adaptiveData, setAdaptiveData] = useState<AdaptiveData>({
     consecutiveCorrect: 0,
     currentAdaptiveLevel: null,
-    hardModeBonus: 0,
     pendingLevelUp: null,
   });
   const [speedChallenge, setSpeedChallenge] = useState<SpeedChallengeState>({
@@ -76,7 +75,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     
     while (!problemGenerated && attempt < 10) {
       try {
-        const newProblem = generateProblem(levelToUse, difficultyToUse, adaptiveData.hardModeBonus, problemHistory);
+        const newProblem = generateProblem(levelToUse, difficultyToUse, problemHistory);
         setProblemHistory(prev => {
             const newHistory = [...prev, newProblem.question.toString()];
             if (newHistory.length > HISTORY_LIMIT) {
@@ -99,7 +98,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setFeedback('');
     setShowAnswer(false);
     setIsLoading(false);
-  }, [currentLevel, currentDifficulty, adaptiveData.hardModeBonus, problemHistory, toast]);
+  }, [currentLevel, currentDifficulty, problemHistory, toast]);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -119,6 +118,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       let levelUpData: PendingLevelUp | null = null;
       if (difficulty === 'Easy') {
         levelUpData = {
+          action: 'changeDifficulty',
           from: 'Easy', to: 'Medium',
           emojis: '😋🪏🍳🥞',
           title: "We're all out of easy problems because",
@@ -129,6 +129,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       }
       if (difficulty === 'Medium') {
          levelUpData = {
+          action: 'changeDifficulty',
           from: 'Medium', to: 'Hard',
           emojis: '💪💃🌋',
           title: "This medium world cannot contain you",
@@ -136,6 +137,16 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
           options: { yes: "Let's ride", no: "This is my safe space" }
         };
       }
+      if (difficulty === 'Hard') {
+         levelUpData = {
+           action: 'trySpeedChallenge',
+           emojis: '🧠🦵🦵🥱',
+           title: 'Do your legs hurt from carrying that GIANT BRAIN around all day???',
+           subtitle: 'Try a speed challenge?',
+           options: { yes: 'Yes, test my speed!', no: 'No, I need a break' },
+         };
+      }
+
 
       if (levelUpData) {
         setAdaptiveData(prev => ({
@@ -148,19 +159,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     if (adaptiveData.consecutiveCorrect >= 7 && !speedChallenge.isActive && !adaptiveData.pendingLevelUp) {
-      if (currentDifficulty === 'Hard') {
-          setAdaptiveData(prev => ({
-            ...prev,
-            consecutiveCorrect: 0, // Reset on bonus
-            hardModeBonus: (prev.hardModeBonus || 0) + 1,
-          }));
-          toast({
-            title: "🔥 Hard Mode Bonus!",
-            description: "Difficulty increased slightly. You're on fire!",
-          });
-      } else {
-        handleLevelUpLogic(currentDifficulty);
-      }
+      handleLevelUpLogic(currentDifficulty);
     }
   }, [adaptiveData.consecutiveCorrect, currentDifficulty, speedChallenge.isActive, adaptiveData.pendingLevelUp, handleLevelUpLogic, toast]);
 
@@ -267,20 +266,27 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setCurrentLevel(level);
     setCurrentDifficulty(difficulty);
     setProblemHistory([]);
-    setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
+    setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, pendingLevelUp: null });
     setScore({ correct: 0, total: 0 });
     handleNewProblem(level, difficulty);
   }, [handleNewProblem]);
 
   const handleLevelUp = useCallback((accept: boolean) => {
-    if (accept && adaptiveData.pendingLevelUp) {
-      const { to } = adaptiveData.pendingLevelUp;
-      handleLevelDifficultyChange(currentLevel, to);
-      setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, currentAdaptiveLevel: to }));
-      toast({ title: `Difficulty set to ${to}!` });
-    } else {
-      setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0 }));
+    const { pendingLevelUp } = adaptiveData;
+    if (!pendingLevelUp) return;
+
+    if (accept) {
+      if (pendingLevelUp.action === 'changeDifficulty' && pendingLevelUp.to) {
+        handleLevelDifficultyChange(currentLevel, pendingLevelUp.to);
+        toast({ title: `Difficulty set to ${pendingLevelUp.to}!` });
+      } else if (pendingLevelUp.action === 'trySpeedChallenge') {
+        setSpeedChallenge(prev => ({ ...prev, enabled: true }));
+        toast({ title: "Speed Challenge enabled!", description: "Toggle it on and start the timer when you're ready." });
+      }
     }
+    
+    setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0 }));
+
   }, [adaptiveData.pendingLevelUp, toast, handleLevelDifficultyChange, currentLevel]);
 
   const handleStartSpeedChallenge = useCallback(() => {
@@ -297,7 +303,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setScore({ correct: 0, total: 0 });
     setProblemHistory([]);
-    setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, hardModeBonus: 0, pendingLevelUp: null });
+    setAdaptiveData({ consecutiveCorrect: 0, currentAdaptiveLevel: null, pendingLevelUp: null });
     handleNewProblem();
   }, [handleNewProblem]);
 
@@ -332,5 +338,3 @@ export const useMathTrainer = () => {
   }
   return context;
 };
-
-    
