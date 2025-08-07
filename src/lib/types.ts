@@ -39,3 +39,20 @@ export interface AdaptiveData {
   currentAdaptiveLevel: Difficulty | null;
   pendingLevelUp: PendingLevelUp | null;
 }
+
+export interface LeaderboardScore {
+    id?: string;
+    userId: string;
+    name: string;
+    score: number;
+    level: number;
+    difficulty: Difficulty;
+    createdAt: Date;
+}
+
+export interface LeaderboardUser {
+    id?: string;
+    secret: string;
+    name: string;
+    createdAt: Date;
+}
