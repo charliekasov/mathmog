@@ -122,12 +122,13 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
         pool = [
             { n1: [13, 17, 19], n2: [4, 5] }, 
             { n1: [15], n2: [4, 5]},
-            { n1: [24, 36], n2: [3, 4, 5] },
+            { n1: [24], n2: [3, 4, 5] },
+            { n1: [36], n2: [3, 4, 5] },
             { n1: Array.from({length: 49}, (_, i) => i + 51).filter(n => n % 10 !== 0), n2: [2] }
         ];
     } else { // Hard
         pool = [
-            { n1: [27, 32], n2: [2, 3, 4, 5] },
+            { n1: [27, 32], n2: [3, 4, 5] },
         ];
     }
 
@@ -219,7 +220,7 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         } else if (difficulty === 'Medium') {
             num = Math.floor(Math.random() * 10) + 11; // 11-20
         } else { // Hard
-            num = (Math.floor(Math.random() * 9) + 2) * 10; // 20, 30... 100
+            num = (Math.floor(Math.random() * 8) + 3) * 10; // 30, 40... 100
         }
         const answer = perfectSquares[num] || num * num;
         let explanation = `${num}² = ${num}×${num} = ${answer}`;
@@ -818,5 +819,6 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
+
 
 
