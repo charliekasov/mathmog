@@ -99,70 +99,12 @@ export const perfectCubes: Record<number, number> = {
     20: 8000, 30: 27000, 40: 64000, 50: 125000, 60: 216000, 70: 343000, 80: 512000, 90: 729000, 100: 1000000
 };
 
-const higherPowers: Record<string, number> = {
-    '2^4': 16, '2^5': 32, '2^6': 64, '2^7': 128, '2^8': 256, '2^9': 512,
-    '3^4': 81, '3^5': 243, '3^6': 729,
-    '4^4': 256,
-    '5^4': 625,
+const superscriptMap: { [key: string]: string } = {
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
+    '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
 };
 
-
-const createUniqueProblem = (generator: () => Problem, history: string[]): Problem => {
-    let problem: Problem;
-    let attempt = 0;
-    do {
-        problem = generator();
-        attempt++;
-    } while (history.includes(problem.question.toString()) && attempt < 50); // Failsafe to prevent infinite loops
-    return problem;
-}
-
-const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: boolean): string => {
-    const digits = String(num).split('').map(Number);
-    switch (divisor) {
-        case 3:
-            const sum = digits.reduce((a, b) => a + b, 0);
-            return `${num} → ${digits.join(' + ')} = ${sum}. Since ${sum} is ${sum % 3 === 0 ? '' : 'not '}divisible by 3, ${num} is ${isDivisible ? '' : 'not '}divisible by 3.`;
-        case 4:
-            const lastTwo = num % 100;
-            return `For ${num}, we only need to check the last two digits: ${lastTwo}. Since ${lastTwo} is ${lastTwo % 4 === 0 ? '' : 'not '}divisible by 4, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 4.`;
-        case 5:
-            return `${num} → The number ends in ${num % 10}, so it is ${isDivisible ? '' : 'not '}divisible by 5.`;
-        case 6:
-            const isEven = num % 2 === 0;
-            const sumFor6 = digits.reduce((a, b) => a + b, 0);
-            const isDivBy3 = sumFor6 % 3 === 0;
-            return `${num} is ${isEven ? 'even' : 'odd'} and its digits sum to ${sumFor6} (which is ${isDivBy3 ? '' : 'not '}divisible by 3). A number must be divisible by BOTH 2 and 3 to be divisible by 6. So, ${num} is ${isDivisible ? '' : 'not '}divisible by 6.`;
-        case 7:
-            let tempNum = num;
-            const steps = [];
-            while (tempNum > 99) {
-                const lastDigit = tempNum % 10;
-                const rest = Math.floor(tempNum / 10);
-                const nextNum = rest - 2 * lastDigit;
-                steps.push(`${rest} - 2×${lastDigit} = ${nextNum}`);
-                tempNum = Math.abs(nextNum);
-            }
-            const finalResult = tempNum;
-            return `${num} → ${steps.join(' → ')}. Since ${finalResult} is ${finalResult % 7 === 0 ? '' : 'not '}divisible by 7, the original number is ${isDivisible ? '' : 'not '}divisible by 7.`;
-        case 8:
-            const lastThree = num % 1000;
-            return `For ${num}, we only need to check the last three digits: ${lastThree}. Since ${lastThree} is ${lastThree % 8 === 0 ? '' : 'not '}divisible by 8, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 8. (You can also check by halving the number three times; if you get a whole number, it's divisible by 8.)`;
-        case 9:
-            const sumFor9 = digits.reduce((a, b) => a + b, 0);
-            return `${num} → ${digits.join(' + ')} = ${sumFor9}. Since ${sumFor9} is ${sumFor9 % 9 === 0 ? '' : 'not '}divisible by 9, ${num} is ${isDivisible ? '' : 'not '}divisible by 9.`;
-        case 11:
-            const alternatingSum = digits.reduce((acc, digit, index) => acc + digit * Math.pow(-1, index), 0);
-            const alternatingSumStr = digits.map((d, i) => (i > 0 ? (i % 2 !== 0 ? ` - ${d}`: ` + ${d}`) : `${d}`)).join('');
-            return `${num} → ${alternatingSumStr} = ${alternatingSum}. Since ${alternatingSum} is ${alternatingSum % 11 === 0 ? '' : 'not '}divisible by 11, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 11.`;
-        case 12:
-             const isDivBy3For12 = digits.reduce((a, b) => a + b, 0) % 3 === 0;
-             const isDivBy4For12 = (num % 100) % 4 === 0;
-             return `To be divisible by 12, a number must be divisible by both 3 and 4. For ${num}, it is ${isDivBy3For12 ? '' : 'not '}divisible by 3 and ${isDivBy4For12 ? '' : 'not '}divisible by 4. So, it is ${isDivisible ? '' : 'not '}divisible by 12.`;
-        default:
-            return `${num} ${isDivisible ? 'is' : 'is not'} divisible by ${divisor}`;
-    }
-}
+const toSuperscript = (n: number | string) => String(n).split('').map(char => superscriptMap[char]).join('');
 
 const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
     let num1: number, num2: number;
@@ -170,7 +112,7 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty, hardMode
 
     if (difficulty === 'Easy') {
         pool = [
-            { n1: [13, 14, 16, 17, 18, 19], n2: [2, 3] }, // 15 removed
+            { n1: [13, 14, 16, 17, 18, 19], n2: [2, 3] },
             { n1: [15], n2: [2, 3]},
             { n1: [14, 16, 18], n2: [4, 5] },
             { n1: Array.from({length: 31}, (_, i) => i + 20).filter(n => n % 10 !== 0), n2: [2] }
@@ -220,17 +162,20 @@ const generateHigherPowersProblem = (difficulty: Difficulty, hardModeBonus: numb
     const questionStr = questions[Math.floor(Math.random() * questions.length)];
     const answer = problemSet[questionStr];
     
-    const [base, exponent] = questionStr.split('^');
+    const [base, exponent] = questionStr.split('^').map(Number);
+    const formattedExponent = toSuperscript(exponent);
+    const formattedQuestion = `${base}${formattedExponent} = ?`;
+
     let explanation: string;
 
-    if (exponent === '2') {
+    if (exponent === 2) {
          explanation = `${base}² = ${base}×${base} = ${answer}.`;
     } else {
-        explanation = `${questionStr} = ${answer}. This is a key power to have memorized.`;
+        explanation = `${base}${formattedExponent} = ${answer}. This is a key power to have memorized.`;
     }
 
     return {
-        question: `${questionStr} = ?`,
+        question: formattedQuestion,
         answer,
         type: 'Higher Powers & Squares',
         explanation,
@@ -245,7 +190,14 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
     if (difficulty === 'Easy') {
         problemTypes = ['square', 'cube', 'fraction', 'memorizedMultiplication'];
     } else if (difficulty === 'Medium') {
-        problemTypes = ['fraction', 'square', 'cube', 'memorizedMultiplication', 'higherPowers'];
+        // Weighted pool for Medium difficulty
+        problemTypes = [
+            'square', 'square',
+            'cube', 'cube',
+            'fraction', 'fraction',
+            'memorizedMultiplication', 'memorizedMultiplication',
+            'higherPowers' // Underweighted
+        ];
     } else { // Hard
         problemTypes = ['square', 'cube', 'memorizedMultiplication', 'higherPowers'];
     }
@@ -396,6 +348,63 @@ const generateLevel1Problem = (difficulty: Difficulty, hardModeBonus: number, hi
         }
     }
 };
+
+const getDivisibilityExplanation = (num: number, divisor: number, isDivisible: boolean): string => {
+    const digits = String(num).split('').map(Number);
+    switch (divisor) {
+        case 3:
+            const sum = digits.reduce((a, b) => a + b, 0);
+            return `${num} → ${digits.join(' + ')} = ${sum}. Since ${sum} is ${sum % 3 === 0 ? '' : 'not '}divisible by 3, ${num} is ${isDivisible ? '' : 'not '}divisible by 3.`;
+        case 4:
+            const lastTwo = num % 100;
+            return `For ${num}, we only need to check the last two digits: ${lastTwo}. Since ${lastTwo} is ${lastTwo % 4 === 0 ? '' : 'not '}divisible by 4, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 4.`;
+        case 5:
+            return `${num} → The number ends in ${num % 10}, so it is ${isDivisible ? '' : 'not '}divisible by 5.`;
+        case 6:
+            const isEven = num % 2 === 0;
+            const sumFor6 = digits.reduce((a, b) => a + b, 0);
+            const isDivBy3 = sumFor6 % 3 === 0;
+            return `${num} is ${isEven ? 'even' : 'odd'} and its digits sum to ${sumFor6} (which is ${isDivBy3 ? '' : 'not '}divisible by 3). A number must be divisible by BOTH 2 and 3 to be divisible by 6. So, ${num} is ${isDivisible ? '' : 'not '}divisible by 6.`;
+        case 7:
+            let tempNum = num;
+            const steps = [];
+            while (tempNum > 99) {
+                const lastDigit = tempNum % 10;
+                const rest = Math.floor(tempNum / 10);
+                const nextNum = rest - 2 * lastDigit;
+                steps.push(`${rest} - 2×${lastDigit} = ${nextNum}`);
+                tempNum = Math.abs(nextNum);
+            }
+            const finalResult = tempNum;
+            return `${num} → ${steps.join(' → ')}. Since ${finalResult} is ${finalResult % 7 === 0 ? '' : 'not '}divisible by 7, the original number is ${isDivisible ? '' : 'not '}divisible by 7.`;
+        case 8:
+            const lastThree = num % 1000;
+            return `For ${num}, we only need to check the last three digits: ${lastThree}. Since ${lastThree} is ${lastThree % 8 === 0 ? '' : 'not '}divisible by 8, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 8. (You can also check by halving the number three times; if you get a whole number, it's divisible by 8.)`;
+        case 9:
+            const sumFor9 = digits.reduce((a, b) => a + b, 0);
+            return `${num} → ${digits.join(' + ')} = ${sumFor9}. Since ${sumFor9} is ${sumFor9 % 9 === 0 ? '' : 'not '}divisible by 9, ${num} is ${isDivisible ? '' : 'not '}divisible by 9.`;
+        case 11:
+            const alternatingSum = digits.reduce((acc, digit, index) => acc + digit * Math.pow(-1, index), 0);
+            const alternatingSumStr = digits.map((d, i) => (i > 0 ? (i % 2 !== 0 ? ` - ${d}`: ` + ${d}`) : `${d}`)).join('');
+            return `${num} → ${alternatingSumStr} = ${alternatingSum}. Since ${alternatingSum} is ${alternatingSum % 11 === 0 ? '' : 'not '}divisible by 11, the number ${num} is ${isDivisible ? '' : 'not '}divisible by 11.`;
+        case 12:
+             const isDivBy3For12 = digits.reduce((a, b) => a + b, 0) % 3 === 0;
+             const isDivBy4For12 = (num % 100) % 4 === 0;
+             return `To be divisible by 12, a number must be divisible by both 3 and 4. For ${num}, it is ${isDivBy3For12 ? '' : 'not '}divisible by 3 and ${isDivBy4For12 ? '' : 'not '}divisible by 4. So, it is ${isDivisible ? '' : 'not '}divisible by 12.`;
+        default:
+            return `${num} ${isDivisible ? 'is' : 'is not'} divisible by ${divisor}`;
+    }
+}
+
+const createUniqueProblem = (generator: () => Problem, history: string[]): Problem => {
+    let problem: Problem;
+    let attempt = 0;
+    do {
+        problem = generator();
+        attempt++;
+    } while (history.includes(problem.question.toString()) && attempt < 50); // Failsafe to prevent infinite loops
+    return problem;
+}
 
 const generateMultiplicationProblem = (difficulty: Difficulty, hardModeBonus: number): Problem => {
     let aMin = 11, aMax = 29, bMin = 11, bMax = 29;
@@ -808,3 +817,4 @@ export const generateProblem = (level: number, difficulty: Difficulty, hardModeB
     const generator = () => generatorFunction(difficulty, hardModeBonus, history);
     return createUniqueProblem(generator, history);
 };
+
