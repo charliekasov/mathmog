@@ -9,7 +9,7 @@ import { useMathTrainer } from '@/context/math-trainer-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const StudySection = ({ title, children, className }: { title: string, children: React.Node, className?: string }) => (
+const StudySection = ({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) => (
   <Card className={className}>
     <CardHeader>
       <CardTitle className="text-xl text-primary">{title}</CardTitle>
@@ -21,11 +21,25 @@ const StudySection = ({ title, children, className }: { title: string, children:
 );
 
 const MemorizeContent = () => {
-    const higherPowers = { '2^4': 16, '2^5': 32, '3^4': 81, '3^5': 243, '4^4': 256, '5^4': 625, '2^6': 64, '2^7': 128, '2^8': 256, '2^9': 512, '3^6': 729 };
+    const higherPowers: Record<string, Record<string, number>> = {
+        '2': { '4': 16, '5': 32, '6': 64, '7': 128, '8': 256, '9': 512 },
+        '3': { '4': 81, '5': 243, '6': 729 },
+        '4': { '4': 256 },
+        '5': { '4': 625 },
+    };
     const importantSquares = { 24: 576, 25: 625, 27: 729 };
     const memorizedMultiplicationExamples = [
-        { q: '24 × 3', a: 72 }, { q: '17 × 4', a: 68 }, { q: '36 × 3', a: 108 }, { q: '19 × 5', a: 95 }
+        { q: '17 × 4', a: 68 }, { q: '18 × 4', a: 72 }, { q: '19 × 5', a: 95 }, 
+        { q: '24 × 3', a: 72 }, { q: '24 × 4', a: 96 }, { q: '24 × 5', a: 120 },
+        { q: '27 × 3', a: 81 }, { q: '27 × 4', a: 108 }, { q: '27 × 5', a: 135 },
+        { q: '32 × 3', a: 96 }, { q: '32 × 4', a: 128 }, { q: '32 × 5', a: 160 },
+        { q: '36 × 3', a: 108 }, { q: '36 × 4', a: 144 }, { q: '36 × 5', a: 180 },
     ];
+    const superscriptMap: { [key: string]: string } = {
+        '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵',
+        '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+    };
+    const toSuperscript = (n: number | string) => String(n).split('').map(char => superscriptMap[char]).join('');
 
     return (
         <div className="space-y-6">
@@ -68,9 +82,13 @@ const MemorizeContent = () => {
                            <div className="space-y-4">
                                 <div>
                                     <h4 className="font-semibold mb-2">Higher Powers</h4>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
-                                         {Object.entries(higherPowers).map(([base, result]) => (
-                                            <div key={base}><span className="font-semibold">{base.replace('^', '⁴⁵⁶⁷⁸⁹'[parseInt(base.split('^')[1]) - 4])}</span> = {result}</div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
+                                         {Object.entries(higherPowers).map(([base, powers]) => (
+                                             <div key={base} className="flex flex-col space-y-2">
+                                                 {Object.entries(powers).map(([exponent, result]) => (
+                                                     <div key={exponent}><span className="font-semibold">{base}{toSuperscript(exponent)}</span> = {result}</div>
+                                                 ))}
+                                             </div>
                                         ))}
                                     </div>
                                 </div>
@@ -290,13 +308,13 @@ const scalingData = {
                 "Perfect Squares (1-12)",
                 "Perfect Cubes (1-5)",
                 "Fraction/Decimal/Percent Conversions (denominators: 4, 5)",
-                "Memorized Multiplication (e.g., 17x3, 42x2, 18x5, 24x2)"
+                "Memorized Multiplication (e.g., 17x3, 24x2)"
             ],
             Medium: [
                 "Perfect Squares (11-20)",
                 "Perfect Cubes (4-10)",
                 "Fraction/Decimal/Percent Conversions (denominators: 3, 6, 8, 9, 7)",
-                "Memorized Multiplication (e.g., 19x5, 24x4, 36x3, 78x2)",
+                "Memorized Multiplication (e.g., 19x5, 24x4, 36x3)",
                 "Higher Powers (2⁴, 2⁵, 3⁴, 3⁵)"
             ],
             Hard: [
