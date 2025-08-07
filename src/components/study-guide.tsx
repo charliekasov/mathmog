@@ -9,7 +9,7 @@ import { useMathTrainer } from '@/context/math-trainer-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const StudySection = ({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) => (
+const StudySection = ({ title, children, className }: { title: string, children: React.Node, className?: string }) => (
   <Card className={className}>
     <CardHeader>
       <CardTitle className="text-xl text-primary">{title}</CardTitle>
@@ -20,45 +20,85 @@ const StudySection = ({ title, children, className }: { title: string, children:
   </Card>
 );
 
-const MemorizeContent = () => (
-    <div className="space-y-6">
-        <StudySection title="🧠 Memorization Facts">
-           <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                    <AccordionTrigger>Perfect Squares (1-20)</AccordionTrigger>
-                    <AccordionContent>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
-                            {Object.entries(perfectSquares).map(([base, square]) => (
-                                <div key={base}><span className="font-semibold">{base}²</span> = {square}</div>
-                            ))}
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2">
-                    <AccordionTrigger>Perfect Cubes (1-10)</AccordionTrigger>
-                    <AccordionContent>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
-                            {Object.entries(perfectCubes).map(([base, cube]) => (
-                                <div key={base}><span className="font-semibold">{base}³</span> = {cube}</div>
-                            ))}
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-3">
-                    <AccordionTrigger>Common Fraction Conversions</AccordionTrigger>
-                    <AccordionContent>
-                        <p className="text-sm text-muted-foreground mb-4">Note: For repeating decimals, rounded or truncated answers are often accepted in practice mode.</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 font-mono text-sm">
-                             {commonFractionConversions.map(({ frac, decimal, percent }) => (
-                                <div key={frac}><span className="font-semibold">{frac}</span> = {decimal} = {percent}</div>
-                            ))}
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-        </StudySection>
-    </div>
-);
+const MemorizeContent = () => {
+    const higherPowers = { '2^4': 16, '2^5': 32, '3^4': 81, '3^5': 243, '4^4': 256, '5^4': 625, '2^6': 64, '2^7': 128, '2^8': 256, '2^9': 512, '3^6': 729 };
+    const importantSquares = { 24: 576, 25: 625, 27: 729 };
+    const memorizedMultiplicationExamples = [
+        { q: '24 × 3', a: 72 }, { q: '17 × 4', a: 68 }, { q: '36 × 3', a: 108 }, { q: '19 × 5', a: 95 }
+    ];
+
+    return (
+        <div className="space-y-6">
+            <StudySection title="🧠 Memorization Facts">
+               <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger>Perfect Squares (1-20)</AccordionTrigger>
+                        <AccordionContent>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
+                                {Object.entries(perfectSquares).slice(0, 20).map(([base, square]) => (
+                                    <div key={base}><span className="font-semibold">{base}²</span> = {square}</div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                        <AccordionTrigger>Perfect Cubes (1-10)</AccordionTrigger>
+                        <AccordionContent>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-8 gap-y-2 font-mono text-sm">
+                                {Object.entries(perfectCubes).slice(0, 10).map(([base, cube]) => (
+                                    <div key={base}><span className="font-semibold">{base}³</span> = {cube}</div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-3">
+                        <AccordionTrigger>Common Fraction Conversions</AccordionTrigger>
+                        <AccordionContent>
+                            <p className="text-sm text-muted-foreground mb-4">Note: For repeating decimals, rounded or truncated answers are often accepted in practice mode.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 font-mono text-sm">
+                                 {commonFractionConversions.map(({ frac, decimal, percent }) => (
+                                    <div key={frac}><span className="font-semibold">{frac}</span> = {decimal} = {percent}</div>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                     <AccordionItem value="item-4">
+                        <AccordionTrigger>Key Powers & Multiples</AccordionTrigger>
+                        <AccordionContent>
+                           <div className="space-y-4">
+                                <div>
+                                    <h4 className="font-semibold mb-2">Higher Powers</h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
+                                         {Object.entries(higherPowers).map(([base, result]) => (
+                                            <div key={base}><span className="font-semibold">{base.replace('^', '⁴⁵⁶⁷⁸⁹'[parseInt(base.split('^')[1]) - 4])}</span> = {result}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold mb-2">Important Squares</h4>
+                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
+                                        {Object.entries(importantSquares).map(([base, square]) => (
+                                            <div key={base}><span className="font-semibold">{base}²</span> = {square}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                                 <div>
+                                    <h4 className="font-semibold mb-2">Common Multiples</h4>
+                                    <p className="text-xs text-muted-foreground mb-2">It's useful to memorize certain multiplication facts that appear often.</p>
+                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-2 font-mono text-sm">
+                                        {memorizedMultiplicationExamples.map(({ q, a }) => (
+                                            <div key={q}><span className="font-semibold">{q}</span> = {a}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                           </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </StudySection>
+        </div>
+    );
+};
 
 const EstimateContent = () => (
     <div className="space-y-6">
