@@ -141,7 +141,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
          levelUpData = {
            action: 'trySpeedChallenge',
            emojis: '🧠🦵🦵🥱',
-           title: 'Do your legs hurt from carrying that GIANT BRAIN around all day???',
+           title: 'Do your legs hurt from carrying that GIANT BRAIN all day???',
            subtitle: 'Try a speed challenge?',
            options: { yes: 'Feed my speed need', no: 'Lemme practice more (I’m so scared)' },
          };
