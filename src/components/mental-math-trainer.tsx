@@ -26,7 +26,7 @@ const HowToPractice = () => (
                         <li><strong>Use the Study Guide</strong> - The study guide provides reference tables for memorization, estimation strategies, and tricks for multiplication and division.</li>
                         <li><strong>Don't Show Your Work</strong> - The point of this is to practice everything in your head. So throw out your pencil, paper, and calculator or donate them to charity.</li>
                         <li><strong>Build speed before advancing</strong> - Once you feel like you can handle a difficulty level in your head, use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, not just correctly.</li>
-                        <li><strong>Use your keyboard</strong> - For text answers, press `Enter` to check your answer and again for the next problem. For "Yes/No" questions, use the `y` and `n` keys.</li>
+                        <li><strong>Pro-Tip: Use your keyboard</strong> - For text answers, press `Enter` to check your answer and again for the next problem. For "Yes/No" questions, use the `y` and `n` keys.</li>
                     </ul>
                 </AccordionContent>
             </AccordionItem>
