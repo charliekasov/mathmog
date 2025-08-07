@@ -113,7 +113,7 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty): Problem
     if (difficulty === 'Easy') {
         pool = [
             { n1: [13, 14, 16, 17, 18, 19], n2: [2, 3] },
-            { n1: [15], n2: [2, 3]},
+            { n1: [15], n2: [3, 4] },
             { n1: [14, 16, 18], n2: [4, 5] },
             { n1: [24], n2: [2] },
             { n1: Array.from({length: 31}, (_, i) => i + 20).filter(n => n % 10 !== 0), n2: [2] }
@@ -121,7 +121,8 @@ const generateMemorizedMultiplicationProblem = (difficulty: Difficulty): Problem
     } else if (difficulty === 'Medium') {
         pool = [
             { n1: [13, 14, 17, 18, 19], n2: [3, 4, 5] },
-            { n1: [15, 16], n2: [2, 3, 4, 5, 6, 7, 8, 9] },
+            { n1: [15], n2: [5, 6, 7, 8, 9] },
+            { n1: [16], n2: [2, 3, 4, 5, 6, 7, 8, 9] },
             { n1: [24], n2: [3, 4, 5] },
             { n1: [36], n2: [3, 4, 5] },
             { n1: Array.from({length: 49}, (_, i) => i + 51).filter(n => n % 10 !== 0), n2: [2] }
@@ -804,3 +805,4 @@ export const generateProblem = (level: number, difficulty: Difficulty, history: 
     const generator = () => generatorFunction(difficulty, history);
     return createUniqueProblem(generator, history);
 };
+
