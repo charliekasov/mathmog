@@ -20,13 +20,13 @@ const HowToPractice = () => (
             <AccordionItem value="item-1" className="border-b-0">
                 <AccordionTrigger className="bg-secondary hover:bg-muted rounded-md px-4 no-underline">How Do I Practice?</AccordionTrigger>
                 <AccordionContent className="pt-4">
-                    <ul className="space-y-3 list-disc list-inside pl-2">
-                        <li><strong>Choose a Mode</strong> - Start with <strong>Memorize</strong> to build a foundation, then move to <strong>Estimate</strong> to develop intuition, and finally <strong>Get Crafty</strong> to learn advanced strategies.</li>
-                        <li><strong>Start with Medium</strong> - If it's too hard, drop to Easy. If it's too easy, the app will suggest moving to Hard.</li>
-                        <li><strong>Use the Study Guide</strong> - The study guide provides reference tables for memorization, estimation strategies, and tricks for multiplication and division.</li>
-                        <li><strong>Don't Show Your Work</strong> - The point of this is to practice everything in your head. So throw out your pencil, paper, and calculator or donate them to charity.</li>
-                        <li><strong>Build speed before advancing</strong> - Once you feel like you can handle a difficulty level in your head, use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, not just correctly.</li>
-                        <li><strong>Pro-Tip: Use your keyboard</strong> - For text answers, press `Enter` to check your answer and again for the next problem. For "Yes/No" questions, use the `y` and `n` keys.</li>
+                    <ul className="space-y-3">
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Choose a Mode</strong> - Start with <strong>Memorize</strong> to build a foundation, then move to <strong>Estimate</strong> to develop intuition, and finally <strong>Get Crafty</strong> to learn advanced strategies.</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Start with Medium</strong> - If it's too hard, drop to Easy. If it's too easy, the app will suggest moving to Hard.</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Use the Study Guide</strong> - The study guide provides reference tables for memorization, estimation strategies, and tricks for multiplication and division.</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Don't Show Your Work</strong> - The point of this is to practice everything in your head. So throw out your pencil, paper, and calculator or donate them to charity.</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Build speed before advancing</strong> - Once you feel like you can handle a difficulty level in your head, use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, not just correctly.</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Pro-Tip: Use your keyboard</strong> - For text answers, press `Enter` to check your answer and again for the next problem. For "Yes/No" questions, use the `y` and `n` keys.</li>
                     </ul>
                 </AccordionContent>
             </AccordionItem>
@@ -40,11 +40,11 @@ const HowToStudy = () => (
             <AccordionItem value="item-1" className="border-b-0">
                 <AccordionTrigger className="bg-secondary hover:bg-muted rounded-md px-4 no-underline">How Do I Study?</AccordionTrigger>
                 <AccordionContent className="pt-4">
-                    <ul className="space-y-4 mt-3 list-disc list-inside pl-2">
-                        <li><strong>Chunk information</strong> - Break complex topics into smaller pieces. Master 1²-5² before adding 6²-10².</li>
-                        <li><strong>Practice active recall</strong> - Close the study guide and test yourself. Can you recite all perfect squares 1²-10² from memory?</li>
-                        <li><strong>Alternate study and practice</strong> - Study a chunk (like 1²-5²), then immediately practice Easy problems using those squares.</li>
-                        <li>
+                    <ul className="space-y-3">
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Chunk information</strong> - Break complex topics into smaller pieces. Master 1²-5² before adding 6²-10².</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Practice active recall</strong> - Close the study guide and test yourself. Can you recite all perfect squares 1²-10² from memory?</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary"><strong>Alternate study and practice</strong> - Study a chunk (like 1²-5²), then immediately practice Easy problems using those squares.</li>
+                        <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
                             <strong>Use spaced repetition (2,3,5,7 method)</strong> - Study today, then review 2 days later, then 3 days after that, then 5 days, then 7 days. This spacing helps move information into long-term memory.
                             <div className="mt-2 p-3 rounded-md font-mono text-xs bg-muted text-muted-foreground">
                                 <strong>Schedule:</strong> Day 1: Study → Day 3: Review → Day 6: Review → Day 11: Review → Day 18: Review
