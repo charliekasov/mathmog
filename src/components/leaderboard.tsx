@@ -100,9 +100,9 @@ export default function Leaderboard() {
     return (
         <Card>
             <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle>Speed Challenge High Scores</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl">Speed Challenge High Scores</CardTitle>
                         <CardDescription>{currentDifficulty} - Mode: {currentLevel === 1 ? 'Memorize' : currentLevel === 2 ? 'Estimate' : 'Get Crafty'}</CardDescription>
                     </div>
                     <Button onClick={fetchLeaderboard} variant="ghost" size="icon" disabled={isLoading}>
@@ -119,7 +119,7 @@ export default function Leaderboard() {
                     <>
                         <div className="mb-6">
                             <div className="text-sm font-medium mb-2">Duration</div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 {durationOptions.map(({ duration, label }) => (
                                     <Button
                                         key={duration}
