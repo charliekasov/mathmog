@@ -1,5 +1,5 @@
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
-export type Mode = 'practice' | 'study';
+export type Mode = 'practice' | 'study' | 'leaderboard';
 
 export interface Problem {
   question: string | string[];
@@ -48,6 +48,7 @@ export interface LeaderboardScore {
     level: number;
     difficulty: Difficulty;
     createdAt: Date;
+    isCurrentUser?: boolean;
 }
 
 export interface LeaderboardUser {
@@ -55,4 +56,10 @@ export interface LeaderboardUser {
     secret: string;
     name: string;
     createdAt: Date;
+}
+
+export interface LeaderboardData {
+    scores: LeaderboardScore[];
+    user: { id: string; name: string } | null;
+    userScore: { score: number; rank: number } | null;
 }

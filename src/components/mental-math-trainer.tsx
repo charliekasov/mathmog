@@ -14,6 +14,7 @@ import SpeedChallengeControls from '@/components/speed-challenge-controls';
 import DifficultySelector from '@/components/difficulty-selector';
 import ProblemDisplay from '@/components/problem-display';
 import ScoreDisplay from '@/components/score-display';
+import Leaderboard from './leaderboard';
 
 const HowToPractice = () => (
     <div className="mb-6">
@@ -69,9 +70,9 @@ const levelToTab = (level: number) => {
 }
 
 export default function MentalMathTrainer() {
-    const { mode, setMode, darkMode, setDarkMode, currentLevel, setStudyTab } = useMathTrainer();
+    const { mode, setMode, darkMode, setDarkMode, currentLevel, setStudyTab, speedChallenge } = useMathTrainer();
 
-    const handleModeChange = (newMode: 'practice' | 'study') => {
+    const handleModeChange = (newMode: 'practice' | 'study' | 'leaderboard') => {
         if (newMode === 'study') {
             setStudyTab(levelToTab(currentLevel));
         }
@@ -101,10 +102,11 @@ export default function MentalMathTrainer() {
 
                 <Card className="shadow-xl">
                     <CardContent className="p-4 sm:p-6">
-                        <Tabs value={mode} onValueChange={(value) => handleModeChange(value as 'practice' | 'study')} className="w-full">
-                            <TabsList className="grid w-full grid-cols-2">
+                        <Tabs value={mode} onValueChange={(value) => handleModeChange(value as 'practice' | 'study' | 'leaderboard')} className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="practice">🎯 Practice</TabsTrigger>
                                 <TabsTrigger value="study">📚 Study Guide</TabsTrigger>
+                                <TabsTrigger value="leaderboard">🏆 Leaderboard</TabsTrigger>
                             </TabsList>
                             <TabsContent value="practice" className="mt-6">
                                 <HowToPractice />
@@ -116,6 +118,15 @@ export default function MentalMathTrainer() {
                             <TabsContent value="study" className="mt-6">
                                 <HowToStudy />
                                 <StudyGuide />
+                            </TabsContent>
+                            <TabsContent value="leaderboard" className="mt-6">
+                                { speedChallenge.isActive ? (
+                                    <div className="text-center p-8">
+                                        <p className="text-lg text-muted-foreground">Leaderboard is disabled during Speed Challenge.</p>
+                                    </div>
+                                ) : (
+                                    <Leaderboard />
+                                )}
                             </TabsContent>
                         </Tabs>
                     </CardContent>

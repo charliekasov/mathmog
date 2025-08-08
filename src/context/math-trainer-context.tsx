@@ -5,6 +5,8 @@ import { createContext, useState, useCallback, useRef, useEffect, useContext, ty
 import { generateProblem, simplifyFraction } from '@/lib/math-problems';
 import type { Mode, Difficulty, Problem, SpeedChallengeState, AdaptiveData, PendingLevelUp } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { submitScore } from '@/ai/flows/leaderboard-flow';
+import { v4 as uuidv4 } from 'uuid';
 
 interface MathTrainerContextType {
   isLoading: boolean;
@@ -32,6 +34,17 @@ interface MathTrainerContextType {
   handleReset: () => void;
   handleLevelUp: (accept: boolean) => void;
 }
+
+const getSecret = (): string => {
+    if (typeof window === 'undefined') return '';
+    let secret = localStorage.getItem('mathmog-secret');
+    if (!secret) {
+        secret = uuidv4();
+        localStorage.setItem('mathmog-secret', secret);
+    }
+    return secret;
+}
+
 
 const MathTrainerContext = createContext<MathTrainerContextType | undefined>(undefined);
 
@@ -65,6 +78,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const secret = getSecret();
 
   const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
     setIsLoading(true);
@@ -316,11 +330,14 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       if(timerRef.current) clearInterval(timerRef.current);
       setSpeedChallenge(prev => ({ ...prev, isActive: false, results: { correct: score.correct, total: score.total } }));
       setCurrentProblem(null);
+      if (score.correct > 0) {
+          submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret });
+      }
     }
     return () => {
       if(timerRef.current) clearInterval(timerRef.current);
     };
-  }, [speedChallenge.isActive, speedChallenge.timeLeft, score.correct, score.total]);
+  }, [speedChallenge.isActive, speedChallenge.timeLeft, score.correct, score.total, currentLevel, currentDifficulty, secret]);
 
   const value = {
     isLoading, mode, setMode, studyTab, setStudyTab, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
