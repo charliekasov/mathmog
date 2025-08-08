@@ -7,13 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Crown, Loader2, UserPlus, RefreshCw } from 'lucide-react';
 import { getLeaderboardData, createUser } from '@/ai/flows/leaderboard-flow';
 import type { LeaderboardData } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { cn } from '@/lib/utils';
+
 
 const getSecret = (): string => {
     let secret = localStorage.getItem('mathmog-secret');
@@ -91,6 +91,12 @@ export default function Leaderboard() {
         ));
     };
 
+    const durationOptions = [
+        { duration: 1, label: '⚡️ 1 min' },
+        { duration: 2, label: '⚡️⚡️ 2 min' },
+        { duration: 3, label: '⚡️⚡️⚡️ 3 min' },
+    ];
+
     return (
         <Card>
             <CardHeader>
@@ -111,19 +117,24 @@ export default function Leaderboard() {
                     </div>
                 ) : (
                     <>
-                        <div className="mb-4">
-                            <Label htmlFor="duration-select" className="mb-2 block">Duration</Label>
-                            <Select
-                                value={String(durationFilter)}
-                                onValueChange={(value) => setDurationFilter(parseInt(value))}
-                            >
-                                <SelectTrigger id="duration-select"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="1">1 minute</SelectItem>
-                                    <SelectItem value="2">2 minutes</SelectItem>
-                                    <SelectItem value="3">3 minutes</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="mb-6">
+                            <div className="text-sm font-medium mb-2">Duration</div>
+                            <div className="flex items-center gap-2">
+                                {durationOptions.map(({ duration, label }) => (
+                                    <Button
+                                        key={duration}
+                                        onClick={() => setDurationFilter(duration)}
+                                        variant={durationFilter === duration ? 'default' : 'outline'}
+                                        size="sm"
+                                        className={cn(
+                                            "rounded-full px-4",
+                                            durationFilter === duration && "bg-accent hover:bg-accent/90 text-accent-foreground"
+                                        )}
+                                    >
+                                        {label}
+                                    </Button>
+                                ))}
+                            </div>
                         </div>
                         
                         {!leaderboardData?.user && (
