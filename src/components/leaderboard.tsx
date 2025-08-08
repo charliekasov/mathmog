@@ -119,7 +119,7 @@ export default function Leaderboard() {
                     <>
                         <div className="mb-6">
                             <div className="text-sm font-medium mb-2">Duration</div>
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                                 {durationOptions.map(({ duration, label }) => (
                                     <Button
                                         key={duration}
