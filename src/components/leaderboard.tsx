@@ -80,10 +80,10 @@ export default function Leaderboard() {
         }
 
         return leaderboardData.scores.map((score, index) => (
-            <TableRow key={score.id} className={score.isCurrentUser ? 'bg-accent/50' : ''}>
-                <TableCell className="font-medium">{index + 1}{index === 0 && <Crown className="inline w-4 h-4 ml-1 text-yellow-500" />}</TableCell>
-                <TableCell>{score.name}</TableCell>
-                <TableCell className="text-right">{score.score}</TableCell>
+            <TableRow key={score.id} className={score.isCurrentUser ? 'bg-accent/20' : ''}>
+                <TableCell className="font-semibold text-lg">{index + 1}{index === 0 && <Crown className="inline w-6 h-6 ml-1 text-amber-500" />}</TableCell>
+                <TableCell className="font-semibold text-lg">{score.name}</TableCell>
+                <TableCell className="text-right font-semibold text-lg">{score.score}</TableCell>
             </TableRow>
         ));
     };
@@ -93,7 +93,7 @@ export default function Leaderboard() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle>Leaderboard</CardTitle>
+                        <CardTitle>Speed Challenge High Scores</CardTitle>
                         <CardDescription>{currentDifficulty} - Mode: {currentLevel === 1 ? 'Memorize' : currentLevel === 2 ? 'Estimate' : 'Get Crafty'}</CardDescription>
                     </div>
                     <Button onClick={fetchLeaderboard} variant="ghost" size="icon" disabled={isLoading}>
@@ -144,7 +144,7 @@ export default function Leaderboard() {
                         </Table>
 
                         {leaderboardData?.user && leaderboardData.userScore && (
-                             <div className="mt-4 p-3 bg-accent/80 rounded-md text-center text-accent-foreground">
+                             <div className="mt-4 p-3 bg-accent/90 rounded-md text-center text-accent-foreground">
                                 Your best score for this mode is <span className="font-bold">{leaderboardData.userScore.score}</span>, ranked #{leaderboardData.userScore.rank}.
                             </div>
                         )}
