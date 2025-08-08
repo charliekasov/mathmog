@@ -127,8 +127,11 @@ export default function Leaderboard() {
                                         variant={durationFilter === duration ? 'default' : 'outline'}
                                         size="sm"
                                         className={cn(
-                                            "rounded-full px-4",
-                                            durationFilter === duration && "bg-accent hover:bg-accent/90 text-accent-foreground"
+                                            "rounded-full px-4 font-bold shadow-sm transition-all",
+                                            "hover:shadow-md",
+                                            durationFilter === duration 
+                                                ? "bg-accent hover:bg-accent/90 text-accent-foreground shadow-inner"
+                                                : "bg-background"
                                         )}
                                     >
                                         {label}
