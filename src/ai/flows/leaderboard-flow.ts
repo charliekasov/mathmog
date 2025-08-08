@@ -23,6 +23,7 @@ const USERS_COLLECTION = 'users';
 const GetLeaderboardInputSchema = z.object({
   level: z.number(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
+  duration: z.number(),
   secret: z.string(),
 });
 export type GetLeaderboardInput = z.infer<typeof GetLeaderboardInputSchema>;
@@ -36,6 +37,7 @@ export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
 const AddScoreInputSchema = z.object({
   level: z.number(),
   difficulty: z.enum(['Easy', 'Medium', 'Hard']),
+  duration: z.number(),
   score: z.number(),
   secret: z.string(),
 });
@@ -67,9 +69,9 @@ export const getLeaderboardData = ai.defineFlow(
     inputSchema: GetLeaderboardInputSchema,
     outputSchema: z.custom<LeaderboardData>(),
   },
-  async ({ level, difficulty, secret }): Promise<LeaderboardData> => {
+  async ({ level, difficulty, duration, secret }): Promise<LeaderboardData> => {
     const user = await findUserBySecret(secret);
-    const scores = await getLeaderboard(level, difficulty);
+    const scores = await getLeaderboard(level, difficulty, duration);
     
     let userScore: { score: number; rank: number } | null = null;
     
@@ -107,10 +109,10 @@ export const submitScore = ai.defineFlow(
     inputSchema: AddScoreInputSchema,
     outputSchema: z.object({ success: z.boolean() }),
   },
-  async ({ level, difficulty, score, secret }) => {
+  async ({ level, difficulty, duration, score, secret }) => {
     const user = await findUserBySecret(secret);
     if (user && user.id) {
-      await addScore(user.id, user.name, score, level, difficulty);
+      await addScore(user.id, user.name, score, level, difficulty, duration);
       return { success: true };
     }
     return { success: false };

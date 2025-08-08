@@ -47,6 +47,7 @@ export interface LeaderboardScore {
     score: number;
     level: number;
     difficulty: Difficulty;
+    duration: number; // in minutes
     createdAt: Date;
     isCurrentUser?: boolean;
 }

@@ -69,8 +69,8 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   });
   const [speedChallenge, setSpeedChallenge] = useState<SpeedChallengeState>({
     enabled: false,
-    duration: 2,
-    timeLeft: 120,
+    duration: 1,
+    timeLeft: 60,
     isActive: false,
     results: null,
   });
@@ -331,13 +331,13 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
       setSpeedChallenge(prev => ({ ...prev, isActive: false, results: { correct: score.correct, total: score.total } }));
       setCurrentProblem(null);
       if (score.correct > 0) {
-          submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret });
+          submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret, duration: speedChallenge.duration });
       }
     }
     return () => {
       if(timerRef.current) clearInterval(timerRef.current);
     };
-  }, [speedChallenge.isActive, speedChallenge.timeLeft, score.correct, score.total, currentLevel, currentDifficulty, secret]);
+  }, [speedChallenge.isActive, speedChallenge.timeLeft, speedChallenge.duration, score.correct, score.total, currentLevel, currentDifficulty, secret]);
 
   const value = {
     isLoading, mode, setMode, studyTab, setStudyTab, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,

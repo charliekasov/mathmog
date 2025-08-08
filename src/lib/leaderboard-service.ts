@@ -79,8 +79,9 @@ export async function createLeaderboardUser(
  * @param score The score to add.
  * @param level The level of the challenge.
  * @param difficulty The difficulty of the challenge.
+ * @param duration The duration of the challenge in minutes.
  */
-export async function addScore(userId: string, name: string, score: number, level: number, difficulty: Difficulty) {
+export async function addScore(userId: string, name: string, score: number, level: number, difficulty: Difficulty, duration: number) {
   const scoresRef = collection(db, SCORES_COLLECTION);
   await addDoc(scoresRef, {
     userId,
@@ -88,6 +89,7 @@ export async function addScore(userId: string, name: string, score: number, leve
     score,
     level,
     difficulty,
+    duration,
     createdAt: serverTimestamp(),
   });
 }
@@ -96,14 +98,16 @@ export async function addScore(userId: string, name: string, score: number, leve
  * Fetches the top 10 scores for a given level and difficulty.
  * @param level The level to fetch scores for.
  * @param difficulty The difficulty to fetch scores for.
+ * @param duration The duration in minutes to fetch scores for.
  * @returns A promise that resolves to an array of LeaderboardScore objects.
  */
-export async function getLeaderboard(level: number, difficulty: Difficulty): Promise<LeaderboardScore[]> {
+export async function getLeaderboard(level: number, difficulty: Difficulty, duration: number): Promise<LeaderboardScore[]> {
   const scoresRef = collection(db, SCORES_COLLECTION);
   const q = query(
     scoresRef,
     where('level', '==', level),
     where('difficulty', '==', difficulty),
+    where('duration', '==', duration),
     orderBy('score', 'desc'),
     limit(10)
   );

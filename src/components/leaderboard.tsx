@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Crown, Loader2, UserPlus, RefreshCw } from 'lucide-react';
 import { getLeaderboardData, createUser } from '@/ai/flows/leaderboard-flow';
 import type { LeaderboardData } from '@/lib/types';
@@ -28,20 +30,21 @@ export default function Leaderboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [durationFilter, setDurationFilter] = useState<number>(1);
     const { toast } = useToast();
     const secret = getSecret();
 
     const fetchLeaderboard = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await getLeaderboardData({ level: currentLevel, difficulty: currentDifficulty, secret });
+            const data = await getLeaderboardData({ level: currentLevel, difficulty: currentDifficulty, duration: durationFilter, secret });
             setLeaderboardData(data);
         } catch (error) {
             console.error("Failed to fetch leaderboard", error);
             toast({ title: "Error", description: "Could not load leaderboard data.", variant: "destructive" });
         }
         setIsLoading(false);
-    }, [currentLevel, currentDifficulty, secret, toast]);
+    }, [currentLevel, currentDifficulty, durationFilter, secret, toast]);
 
     useEffect(() => {
         fetchLeaderboard();
@@ -81,7 +84,7 @@ export default function Leaderboard() {
 
         return leaderboardData.scores.map((score, index) => (
             <TableRow key={score.id} className={score.isCurrentUser ? 'bg-accent/20' : ''}>
-                <TableCell className="font-semibold text-lg">{index + 1}{index === 0 && <Crown className="inline w-6 h-6 ml-2 text-amber-500" />}</TableCell>
+                <TableCell className="font-semibold text-lg">{index + 1}{index === 0 && <Crown className="inline w-6 h-6 ml-2 text-amber-400" />}</TableCell>
                 <TableCell className="font-semibold text-lg">{score.name}</TableCell>
                 <TableCell className="text-right font-semibold text-lg">{score.score}</TableCell>
             </TableRow>
@@ -108,6 +111,21 @@ export default function Leaderboard() {
                     </div>
                 ) : (
                     <>
+                        <div className="mb-4">
+                            <Label htmlFor="duration-select" className="mb-2 block">Duration</Label>
+                            <Select
+                                value={String(durationFilter)}
+                                onValueChange={(value) => setDurationFilter(parseInt(value))}
+                            >
+                                <SelectTrigger id="duration-select"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1">1 minute</SelectItem>
+                                    <SelectItem value="2">2 minutes</SelectItem>
+                                    <SelectItem value="3">3 minutes</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
                         {!leaderboardData?.user && (
                             <div className="mb-6 p-4 border rounded-lg bg-secondary/50">
                                 <h3 className="font-semibold mb-2 flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Set Your Leaderboard Name</h3>
