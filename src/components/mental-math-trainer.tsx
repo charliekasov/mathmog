@@ -106,7 +106,7 @@ export default function MentalMathTrainer() {
                             <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="practice">🎯 Practice</TabsTrigger>
                                 <TabsTrigger value="study">📚 Study Guide</TabsTrigger>
-                                <TabsTrigger value="leaderboard">🏆 Leaderboard</TabsTrigger>
+                                <TabsTrigger value="leaderboard">🏆 High Scores</TabsTrigger>
                             </TabsList>
                             <TabsContent value="practice" className="mt-6">
                                 <HowToPractice />
