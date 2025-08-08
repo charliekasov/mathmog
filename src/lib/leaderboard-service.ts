@@ -13,7 +13,6 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import type { Difficulty, LeaderboardScore, LeaderboardUser } from './types';
-import { moderateText } from '@/ai/flows/moderate-text-flow';
 
 const USERS_COLLECTION = 'users';
 const SCORES_COLLECTION = 'scores';
@@ -53,18 +52,7 @@ export async function createLeaderboardUser(
     return { success: false, message: 'Name must be 1-12 alphanumeric characters.' };
   }
 
-  // Rule 2: Check for profanity
-  try {
-    const moderationResult = await moderateText({ textToModerate: name });
-    if (moderationResult.isProfane) {
-      return { success: false, message: 'This name is not allowed. Please choose another.' };
-    }
-  } catch (error) {
-    console.error('Moderation check failed:', error);
-    return { success: false, message: 'Could not verify name. Please try again later.' };
-  }
-
-  // Rule 3: Check if name is already taken by another user
+  // Rule 2: Check if name is already taken by another user
   if (await isNameTaken(name, secret)) {
     return { success: false, message: 'This name has already been taken.' };
   }
