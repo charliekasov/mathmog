@@ -134,8 +134,8 @@ export default function MentalMathTrainer() {
                         <Tabs value={mode} onValueChange={(value) => handleModeChange(value as 'practice' | 'study' | 'leaderboard')} className="w-full">
                             <TabsList className="grid w-full grid-cols-3 mb-6">
                                 <TabsTrigger value="practice">🎯 Practice</TabsTrigger>
-                                <TabsTrigger value="study">📚 Study Guide</TabsTrigger>
-                                <TabsTrigger value="leaderboard">🏆 High Scores</TabsTrigger>
+                                <TabsTrigger value="study">📚 Study</TabsTrigger>
+                                <TabsTrigger value="leaderboard">🏆 Scores</TabsTrigger>
                             </TabsList>
                             <TabsContent value="practice" className="mt-0">
                                 <HowToPractice />
