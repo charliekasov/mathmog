@@ -127,7 +127,7 @@ export default function Leaderboard() {
                                 <div>
                                     <Label htmlFor="level-filter" className="mb-2 block">Mode</Label>
                                     <Select value={String(levelFilter)} onValueChange={(v) => setLevelFilter(Number(v))}>
-                                        <SelectTrigger id="level-filter"><SelectValue /></SelectTrigger>
+                                        <SelectTrigger id="level-filter"><SelectValue /></SelectValue>
                                         <SelectContent>
                                             {levels.map(({ level, name }) => (
                                                 <SelectItem key={level} value={String(level)}>{name}</SelectItem>
@@ -138,7 +138,7 @@ export default function Leaderboard() {
                                 <div>
                                     <Label htmlFor="difficulty-filter" className="mb-2 block">Difficulty</Label>
                                     <Select value={difficultyFilter} onValueChange={(v) => setDifficultyFilter(v as Difficulty)}>
-                                        <SelectTrigger id="difficulty-filter"><SelectValue /></SelectTrigger>
+                                        <SelectTrigger id="difficulty-filter"><SelectValue /></SelectValue>
                                         <SelectContent>
                                             {difficulties.map((difficulty) => (
                                                 <SelectItem key={difficulty} value={difficulty}>{difficulty}</SelectItem>
@@ -203,7 +203,7 @@ export default function Leaderboard() {
                                 {!isSettingName ? (
                                     <div className="text-center">
                                         <p className="mb-2 text-muted-foreground">Want to see your name on the scoreboard?</p>
-                                        <Button onClick={() => setIsSettingName(true)}>
+                                        <Button onClick={() => setIsSettingName(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
                                             <UserPlus className="w-5 h-5 mr-2" /> Set Your Scoreboard Name
                                         </Button>
                                     </div>
