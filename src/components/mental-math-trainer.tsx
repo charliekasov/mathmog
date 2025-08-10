@@ -126,7 +126,7 @@ export default function MentalMathTrainer() {
                             {darkMode ? <Sun className="text-yellow-400" /> : <Moon />}
                         </Button>
                     </div>
-                    <p className="text-muted-foreground">Flex your mental math muscle</p>
+                    <p className="text-primary/70">Flex your mental math muscle</p>
                 </div>
 
                 <Card className="shadow-xl">
