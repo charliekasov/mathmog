@@ -53,7 +53,7 @@ export default function SpeedChallengeReadyScreen() {
                     </div>
 
                     <div className="flex flex-col gap-2 pt-4">
-                         <Button onClick={handleStartSpeedChallenge} size="lg" className="h-12 text-lg">
+                         <Button onClick={handleStartSpeedChallenge} size="lg" className="h-12 text-lg font-bold bg-accent hover:bg-accent/90">
                             <Timer className="mr-2 h-5 w-5" /> Start Challenge
                         </Button>
                         <Button onClick={() => setSpeedChallenge(prev => ({...prev, enabled: false}))} variant="ghost">
