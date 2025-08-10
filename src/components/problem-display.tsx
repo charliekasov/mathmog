@@ -10,14 +10,16 @@ import { Check, ArrowRight, Loader2, UserPlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { createUser } from '@/ai/flows/leaderboard-flow';
+import { createUser, submitScore } from '@/ai/flows/leaderboard-flow';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
+
 
 const getSecret = (): string => {
     if (typeof window === 'undefined') return '';
     let secret = localStorage.getItem('mathmog-secret');
     if (!secret) {
-        secret = (Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15));
+        secret = uuidv4();
         localStorage.setItem('mathmog-secret', secret);
     }
     return secret;
@@ -27,18 +29,34 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
     const [nameInput, setNameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
-    const { setMode } = useMathTrainer();
+    const { setMode, speedChallenge, currentLevel, currentDifficulty, refreshLeaderboardData } = useMathTrainer();
+    const { results } = speedChallenge;
 
     const handleCreateUser = async () => {
+        if (!results) return;
+
         setIsSubmitting(true);
         const secret = getSecret();
-        const result = await createUser({ name: nameInput, secret });
-        if (result.success) {
+        const createResult = await createUser({ name: nameInput, secret });
+        
+        if (createResult.success) {
             toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved.` });
+
+            // Now submit the score
+            await submitScore({
+                level: currentLevel,
+                difficulty: currentDifficulty,
+                duration: speedChallenge.duration,
+                score: results.correct,
+                secret
+            });
+
+            await refreshLeaderboardData(); // This will update the user state globally
             onOpenChange(false);
-            setTimeout(() => setMode('leaderboard'), 200);
+            setMode('leaderboard');
+
         } else {
-            toast({ title: "Oops!", description: result.message, variant: "destructive" });
+            toast({ title: "Oops!", description: createResult.message, variant: "destructive" });
         }
         setIsSubmitting(false);
     };

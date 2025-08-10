@@ -33,6 +33,7 @@ interface MathTrainerContextType {
   handleStartSpeedChallenge: () => void;
   handleReset: () => void;
   handleLevelUp: (accept: boolean) => void;
+  refreshLeaderboardData: () => Promise<void>;
 }
 
 const getSecret = (): string => {
@@ -74,11 +75,16 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     isActive: false,
     results: null,
   });
+  const [leaderboardVersion, setLeaderboardVersion] = useState(0);
 
   const [darkMode, setDarkMode] = useState(false);
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const secret = getSecret();
+
+  const refreshLeaderboardData = useCallback(async () => {
+    setLeaderboardVersion(v => v + 1);
+  }, []);
 
   const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
     setIsLoading(true);
@@ -257,24 +263,24 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         if(!isCorrect) setShowAnswer(true);
     }
 
-    if (isCorrect) {
-      setScore(prev => ({ correct: prev.correct + 1, total: prev.total + 1 }));
-
-      if (speedChallenge.isActive) {
-        setTimeout(() => handleNewProblem(), 500);
-      } else {
+    setScore(prev => ({
+      correct: isCorrect ? prev.correct + 1 : prev.correct,
+      total: prev.total + 1
+    }));
+    
+    if (speedChallenge.isActive) {
+      setTimeout(() => handleNewProblem(), 500);
+    } else {
+      if (isCorrect) {
         setAdaptiveData(prev => ({
           ...prev, 
           consecutiveCorrect: prev.consecutiveCorrect + 1 
         }));
-      }
-    } else {
-      setScore(prev => ({ ...prev, total: prev.total + 1 }));
-      setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
-      if (speedChallenge.isActive) {
-        setTimeout(() => handleNewProblem(), 500);
+      } else {
+        setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
       }
     }
+
   }, [currentProblem, speedChallenge.isActive, handleNewProblem, feedback]);
 
 
@@ -336,6 +342,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
                 isNewUser = true;
             } else if (score.correct > 0) {
                 await submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret, duration: speedChallenge.duration });
+                await refreshLeaderboardData();
             }
         } catch (error) {
             console.error("Error checking user status or submitting score", error);
@@ -363,12 +370,13 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       if(timerRef.current) clearInterval(timerRef.current);
     };
-  }, [speedChallenge.isActive, speedChallenge.timeLeft, speedChallenge.duration, score.correct, score.total, currentLevel, currentDifficulty, secret]);
+  }, [speedChallenge.isActive, speedChallenge.timeLeft, speedChallenge.duration, score, currentLevel, currentDifficulty, secret, refreshLeaderboardData]);
 
   const value = {
     isLoading, mode, setMode, studyTab, setStudyTab, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
     feedback, score, showAnswer, darkMode, setDarkMode, adaptiveData, speedChallenge, setSpeedChallenge,
     handleCheckAnswer, handleNewProblem, handleLevelDifficultyChange, handleStartSpeedChallenge, handleReset, handleLevelUp,
+    leaderboardVersion, refreshLeaderboardData,
   };
 
   return <MathTrainerContext.Provider value={value}>{children}</MathTrainerContext.Provider>;

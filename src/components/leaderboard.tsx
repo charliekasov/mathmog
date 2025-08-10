@@ -25,7 +25,7 @@ const getSecret = (): string => {
 }
 
 export default function Leaderboard() {
-    const { currentLevel, currentDifficulty, score } = useMathTrainer();
+    const { currentLevel, currentDifficulty, score, refreshLeaderboardData, leaderboardVersion } = useMathTrainer();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
@@ -48,20 +48,7 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchLeaderboard();
-    }, [fetchLeaderboard]);
-    
-    useEffect(() => {
-      if (leaderboardData?.user && score.total > (leaderboardData.userScore?.score || 0)) {
-        // Simple way to auto-submit score if user is known and has a new high score
-        // Note: This relies on the context being aware of a score submission mechanism if we want to be more robust
-        // For now, we will just refresh the leaderboard to show the new score
-        const hasNewHighScore = score.correct > (leaderboardData.userScore?.score || 0);
-
-        if (hasNewHighScore) {
-             setTimeout(fetchLeaderboard, 1000); // give db time to update
-        }
-      }
-    }, [score.total, score.correct, leaderboardData, fetchLeaderboard])
+    }, [fetchLeaderboard, leaderboardVersion]);
 
 
     const handleCreateUser = async () => {
@@ -69,7 +56,7 @@ export default function Leaderboard() {
         const result = await createUser({ name: nameInput, secret });
         if (result.success) {
             toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved to this browser.` });
-            await fetchLeaderboard();
+            await refreshLeaderboardData();
         } else {
             toast({ title: "Oops!", description: result.message, variant: "destructive" });
         }
