@@ -271,6 +271,9 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setScore(prev => ({ ...prev, total: prev.total + 1 }));
       setAdaptiveData(prev => ({ ...prev, consecutiveCorrect: 0 }));
+      if (speedChallenge.isActive) {
+        setTimeout(() => handleNewProblem(), 500);
+      }
     }
   }, [currentProblem, speedChallenge.isActive, handleNewProblem, feedback]);
 
