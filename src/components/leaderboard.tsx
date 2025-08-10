@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -208,7 +207,7 @@ export default function Leaderboard() {
                                 <div className="text-center">
                                     <p className="mb-2 text-muted-foreground">Want to see your name on the scoreboard?</p>
                                     <Button onClick={handleTrySpeedChallenge} className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold">
-                                        <Zap className="w-5 h-5 mr-2" /> Try a Speed Challenge!
+                                        Try a Speed Challenge!
                                     </Button>
                                 </div>
                             </div>
