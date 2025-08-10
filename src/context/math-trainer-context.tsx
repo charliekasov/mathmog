@@ -35,6 +35,7 @@ interface MathTrainerContextType {
   handleReset: () => void;
   handleLevelUp: (accept: boolean) => void;
   refreshLeaderboardData: (user?: LeaderboardUser) => Promise<void>;
+  clearSpeedChallengeResults: () => void;
 }
 
 const getSecret = (): string => {
@@ -335,6 +336,10 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     handleNewProblem();
   }, [handleNewProblem]);
 
+  const clearSpeedChallengeResults = useCallback(() => {
+    setSpeedChallenge(prev => ({ ...prev, results: null }));
+  }, []);
+
   useEffect(() => {
     const handleChallengeEnd = async () => {
         if(timerRef.current) clearInterval(timerRef.current);
@@ -385,7 +390,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     isLoading, mode, setMode, studyTab, setStudyTab, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
     feedback, score, showAnswer, darkMode, setDarkMode, adaptiveData, speedChallenge, setSpeedChallenge, user,
     handleCheckAnswer, handleNewProblem, handleLevelDifficultyChange, handleStartSpeedChallenge, handleReset, handleLevelUp,
-    leaderboardVersion, refreshLeaderboardData,
+    leaderboardVersion, refreshLeaderboardData, clearSpeedChallengeResults,
   };
 
   return <MathTrainerContext.Provider value={value}>{children}</MathTrainerContext.Provider>;

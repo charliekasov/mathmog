@@ -29,7 +29,7 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
     const [nameInput, setNameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { toast } = useToast();
-    const { setMode, speedChallenge, currentLevel, currentDifficulty, refreshLeaderboardData } = useMathTrainer();
+    const { setMode, speedChallenge, currentLevel, currentDifficulty, refreshLeaderboardData, clearSpeedChallengeResults } = useMathTrainer();
     const { results } = speedChallenge;
 
     const handleCreateUser = async () => {
@@ -53,6 +53,7 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
 
             await refreshLeaderboardData(createResult.user); // This will update the user state globally
             onOpenChange(false);
+            clearSpeedChallengeResults();
             setMode('leaderboard');
 
         } else {
@@ -126,7 +127,7 @@ const LevelUpDialog = () => {
 };
 
 const ChallengeResults = () => {
-    const { speedChallenge } = useMathTrainer();
+    const { speedChallenge, handleNewProblem } = useMathTrainer();
     const { results } = speedChallenge;
     const [isCreateUserOpen, setCreateUserOpen] = useState(false);
 
@@ -149,6 +150,11 @@ const ChallengeResults = () => {
                 )}
             </AlertDescription>
         </Alert>
+        <div className="mt-4 flex justify-center">
+            <Button onClick={() => handleNewProblem()}>
+                <ArrowRight className="w-5 h-5 mr-2" /> Start New Challenge
+            </Button>
+        </div>
         <CreateUserDialog isOpen={isCreateUserOpen} onOpenChange={setCreateUserOpen} />
         </>
     )
