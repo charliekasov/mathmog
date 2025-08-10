@@ -203,7 +203,7 @@ export default function Leaderboard() {
                                 {!isSettingName ? (
                                     <div className="text-center">
                                         <p className="mb-2 text-muted-foreground">Want to see your name on the scoreboard?</p>
-                                        <Button onClick={() => setIsSettingName(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                                        <Button onClick={() => setIsSettingName(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold">
                                             <UserPlus className="w-5 h-5 mr-2" /> Set Your Scoreboard Name
                                         </Button>
                                     </div>
