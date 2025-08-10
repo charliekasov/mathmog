@@ -142,7 +142,7 @@ export default function Leaderboard() {
                         
                         {!leaderboardData?.user && (
                             <div className="mb-6 p-4 border rounded-lg bg-secondary/50">
-                                <h3 className="font-semibold mb-2 flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Set Your Leaderboard Name</h3>
+                                <h3 className="font-semibold mb-2 flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Set Your High Score Name</h3>
                                 <div className="flex gap-2">
                                     <Input
                                         value={nameInput}

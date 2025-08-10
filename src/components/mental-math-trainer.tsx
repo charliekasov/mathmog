@@ -122,7 +122,7 @@ export default function MentalMathTrainer() {
                             <TabsContent value="leaderboard" className="mt-6">
                                 { speedChallenge.isActive ? (
                                     <div className="text-center p-8">
-                                        <p className="text-lg text-muted-foreground">Leaderboard is disabled during Speed Challenge.</p>
+                                        <p className="text-lg text-muted-foreground">High Scores are disabled during Speed Challenge.</p>
                                     </div>
                                 ) : (
                                     <Leaderboard />
