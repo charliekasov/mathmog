@@ -86,7 +86,7 @@ export default function MentalMathTrainer() {
                     <div className="flex items-center justify-center gap-4 mb-2">
                         <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-2 tracking-tight">
                             <Brain className="text-primary w-8 h-8" />
-                            <span className="font-headline bg-gradient-to-r from-sky-200 to-primary bg-clip-text text-transparent">MathMog</span>
+                            <span className="font-headline">MathMog</span>
                         </h1>
                         <Button
                             variant="ghost"
