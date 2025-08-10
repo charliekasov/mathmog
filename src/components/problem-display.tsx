@@ -6,10 +6,73 @@ import { useMathTrainer } from '@/context/math-trainer-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight, Loader2, UserPlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { createUser } from '@/ai/flows/leaderboard-flow';
+import { useToast } from '@/hooks/use-toast';
+
+const getSecret = (): string => {
+    if (typeof window === 'undefined') return '';
+    let secret = localStorage.getItem('mathmog-secret');
+    if (!secret) {
+        secret = (Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15));
+        localStorage.setItem('mathmog-secret', secret);
+    }
+    return secret;
+}
+
+const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
+    const [nameInput, setNameInput] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
+    const { setMode } = useMathTrainer();
+
+    const handleCreateUser = async () => {
+        setIsSubmitting(true);
+        const secret = getSecret();
+        const result = await createUser({ name: nameInput, secret });
+        if (result.success) {
+            toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved.` });
+            onOpenChange(false);
+            setTimeout(() => setMode('leaderboard'), 200);
+        } else {
+            toast({ title: "Oops!", description: result.message, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="text-center text-2xl">
+                        <div className="text-4xl mb-4">🏆</div>
+                        <span className="font-extrabold text-lg block">You got a high score!</span>
+                    </DialogTitle>
+                    <DialogDescription className="text-center pt-2">
+                        Set your name to appear on the scoreboard. Your name is saved to this browser for future scores.
+                    </DialogDescription>
+                </DialogHeader>
+                 <div className="flex gap-2 pt-4">
+                    <Input
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        maxLength={12}
+                        placeholder="1-12 alphanumeric characters"
+                        disabled={isSubmitting}
+                        onKeyPress={(e) => { if (e.key === 'Enter') handleCreateUser() }}
+                    />
+                    <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length === 0}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save & View Scores
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
 
 
 const LevelUpDialog = () => {
@@ -47,15 +110,29 @@ const LevelUpDialog = () => {
 const ChallengeResults = () => {
     const { speedChallenge } = useMathTrainer();
     const { results } = speedChallenge;
+    const [isCreateUserOpen, setCreateUserOpen] = useState(false);
+
+    useEffect(() => {
+        if (results && results.isNewUser) {
+            setCreateUserOpen(true);
+        }
+    }, [results]);
+
     if (!results) return null;
 
     return (
+        <>
          <Alert>
             <AlertTitle className="text-xl">Challenge Complete!</AlertTitle>
             <AlertDescription>
                 You got <span className='font-bold'>{results.correct}</span> out of <span className='font-bold'>{results.total}</span> correct.
+                {results.isNewUser && (
+                     <Button variant="link" className="p-0 h-auto ml-2" onClick={() => setCreateUserOpen(true)}>Set your scoreboard name!</Button>
+                )}
             </AlertDescription>
         </Alert>
+        <CreateUserDialog isOpen={isCreateUserOpen} onOpenChange={setCreateUserOpen} />
+        </>
     )
 }
 

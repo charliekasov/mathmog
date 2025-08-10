@@ -5,7 +5,7 @@ import { createContext, useState, useCallback, useRef, useEffect, useContext, ty
 import { generateProblem, simplifyFraction } from '@/lib/math-problems';
 import type { Mode, Difficulty, Problem, SpeedChallengeState, AdaptiveData, PendingLevelUp } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { submitScore } from '@/ai/flows/leaderboard-flow';
+import { submitScore, getLeaderboardData } from '@/ai/flows/leaderboard-flow';
 import { v4 as uuidv4 } from 'uuid';
 
 interface MathTrainerContextType {
@@ -325,18 +325,41 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [handleNewProblem]);
 
   useEffect(() => {
+    const handleChallengeEnd = async () => {
+        if(timerRef.current) clearInterval(timerRef.current);
+        setCurrentProblem(null);
+        
+        let isNewUser = false;
+        try {
+            const data = await getLeaderboardData({ level: currentLevel, difficulty: currentDifficulty, duration: speedChallenge.duration, secret });
+            if (!data.user) {
+                isNewUser = true;
+            } else if (score.correct > 0) {
+                await submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret, duration: speedChallenge.duration });
+            }
+        } catch (error) {
+            console.error("Error checking user status or submitting score", error);
+        }
+
+        setSpeedChallenge(prev => ({ 
+            ...prev, 
+            isActive: false, 
+            results: { 
+                correct: score.correct, 
+                total: score.total,
+                isNewUser: isNewUser && score.correct > 0
+            } 
+        }));
+    };
+
     if (speedChallenge.isActive && speedChallenge.timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setSpeedChallenge(prev => ({ ...prev, timeLeft: prev.timeLeft - 1 }));
       }, 1000);
     } else if (speedChallenge.timeLeft <= 0 && speedChallenge.isActive) {
-      if(timerRef.current) clearInterval(timerRef.current);
-      setSpeedChallenge(prev => ({ ...prev, isActive: false, results: { correct: score.correct, total: score.total } }));
-      setCurrentProblem(null);
-      if (score.correct > 0) {
-          submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret, duration: speedChallenge.duration });
-      }
+      handleChallengeEnd();
     }
+
     return () => {
       if(timerRef.current) clearInterval(timerRef.current);
     };

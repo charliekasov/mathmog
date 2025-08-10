@@ -17,7 +17,11 @@ export interface SpeedChallengeState {
   duration: number; // in minutes
   timeLeft: number; // in seconds
   isActive: boolean;
-  results: { correct: number; total: number } | null;
+  results: { 
+    correct: number; 
+    total: number;
+    isNewUser: boolean;
+  } | null;
 }
 
 export interface PendingLevelUp {
