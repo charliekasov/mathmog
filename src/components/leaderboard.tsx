@@ -87,7 +87,7 @@ export default function Leaderboard() {
             <TableRow key={score.id} className={score.isCurrentUser ? 'bg-accent/20' : ''}>
                 <TableCell className="font-semibold text-lg">{index + 1}{index === 0 && <Crown className="inline w-6 h-6 ml-2 text-amber-400" />}</TableCell>
                 <TableCell className="font-semibold text-lg">{score.name}</TableCell>
-                <TableCell className="text-right text-muted-foreground">{new Date(score.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right text-muted-foreground">{new Date(score.createdAt).toLocaleDateString(undefined, { year: '2-digit', month: 'numeric', day: 'numeric' })}</TableCell>
                 <TableCell className="text-right font-semibold text-lg">{score.score}</TableCell>
             </TableRow>
         ));
