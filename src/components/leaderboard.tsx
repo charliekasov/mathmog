@@ -34,6 +34,12 @@ const levels = [
 
 const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 
+const durationOptions = [
+    { duration: 1, label: '⚡️ 1 min' },
+    { duration: 2, label: '⚡️⚡️ 2 min' },
+    { duration: 3, label: '⚡️⚡️⚡️ 3 min' },
+];
+
 export default function Leaderboard() {
     const { user, refreshLeaderboardData } = useMathTrainer();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
@@ -96,12 +102,6 @@ export default function Leaderboard() {
         ));
     };
 
-    const durationOptions = [
-        { duration: 1, label: '⚡️ 1 min' },
-        { duration: 2, label: '⚡️⚡️ 2 min' },
-        { duration: 3, label: '⚡️⚡️⚡️ 3 min' },
-    ];
-    
     return (
         <Card>
             <CardHeader>
@@ -127,7 +127,7 @@ export default function Leaderboard() {
                                 <div>
                                     <Label htmlFor="level-filter" className="mb-2 block">Mode</Label>
                                     <Select value={String(levelFilter)} onValueChange={(v) => setLevelFilter(Number(v))}>
-                                        <SelectTrigger id="level-filter"><SelectValue /></SelectValue>
+                                        <SelectTrigger id="level-filter"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             {levels.map(({ level, name }) => (
                                                 <SelectItem key={level} value={String(level)}>{name}</SelectItem>
@@ -138,7 +138,7 @@ export default function Leaderboard() {
                                 <div>
                                     <Label htmlFor="difficulty-filter" className="mb-2 block">Difficulty</Label>
                                     <Select value={difficultyFilter} onValueChange={(v) => setDifficultyFilter(v as Difficulty)}>
-                                        <SelectTrigger id="difficulty-filter"><SelectValue /></SelectValue>
+                                        <SelectTrigger id="difficulty-filter"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             {difficulties.map((difficulty) => (
                                                 <SelectItem key={difficulty} value={difficulty}>{difficulty}</SelectItem>
