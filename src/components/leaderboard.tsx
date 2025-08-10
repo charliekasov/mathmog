@@ -40,6 +40,7 @@ export default function Leaderboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSettingName, setIsSettingName] = useState(false);
     
     const [levelFilter, setLevelFilter] = useState<number>(1);
     const [difficultyFilter, setDifficultyFilter] = useState<Difficulty>('Medium');
@@ -72,6 +73,7 @@ export default function Leaderboard() {
             toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved to this browser.` });
             await refreshLeaderboardData(result.user);
             fetchLeaderboard();
+            setIsSettingName(false);
         } else {
             toast({ title: "Oops!", description: result.message, variant: "destructive" });
         }
@@ -170,28 +172,8 @@ export default function Leaderboard() {
                             </div>
                         </div>
                         
-                        {!user && (
-                            <div className="mb-6 p-4 border rounded-lg bg-secondary/50">
-                                <h3 className="font-semibold mb-2 flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Set Your Scoreboard Name</h3>
-                                <div className="flex gap-2">
-                                    <Input
-                                        value={nameInput}
-                                        onChange={(e) => setNameInput(e.target.value)}
-                                        maxLength={12}
-                                        placeholder="1-12 alphanumeric characters"
-                                        disabled={isSubmitting}
-                                    />
-                                    <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length === 0}>
-                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        Save
-                                    </Button>
-                                </div>
-                                 <p className="text-xs text-muted-foreground mt-2">
-                                    Your name is your identity here. It's saved to this browser. Clearing browser data will permanently reset it.
-                                 </p>
-                            </div>
-                        )}
                         <Separator className="my-6" />
+
                         <div className="text-center mb-4">
                             <h3 className="text-lg font-semibold text-primary">{levels.find(l => l.level === levelFilter)?.name}</h3>
                             <p className="text-sm text-muted-foreground">{difficultyFilter} Difficulty &middot; {durationFilter} Minute Challenge</p>
@@ -213,6 +195,40 @@ export default function Leaderboard() {
                         {leaderboardData?.user && leaderboardData.userScore && (
                              <div className="mt-4 p-3 bg-accent/90 rounded-md text-center text-accent-foreground">
                                 Your best score for this mode is <span className="font-bold">{leaderboardData.userScore.score}</span>, ranked #{leaderboardData.userScore.rank}.
+                            </div>
+                        )}
+
+                        {!user && (
+                            <div className="mt-6 pt-6 border-t">
+                                {!isSettingName ? (
+                                    <div className="text-center">
+                                        <p className="mb-2 text-muted-foreground">Want to see your name on the scoreboard?</p>
+                                        <Button onClick={() => setIsSettingName(true)}>
+                                            <UserPlus className="w-5 h-5 mr-2" /> Set Your Scoreboard Name
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <h3 className="font-semibold mb-2 text-center">Set Your Scoreboard Name</h3>
+                                        <div className="flex gap-2 max-w-sm mx-auto">
+                                            <Input
+                                                value={nameInput}
+                                                onChange={(e) => setNameInput(e.target.value)}
+                                                maxLength={12}
+                                                placeholder="1-12 alphanumeric characters"
+                                                disabled={isSubmitting}
+                                                onKeyPress={(e) => { if (e.key === 'Enter') handleCreateUser() }}
+                                            />
+                                            <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length === 0}>
+                                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                Save
+                                            </Button>
+                                        </div>
+                                         <p className="text-xs text-muted-foreground mt-2 text-center max-w-sm mx-auto">
+                                            Your name is your identity here. It's saved to this browser. Clearing browser data will permanently reset it.
+                                         </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </>
