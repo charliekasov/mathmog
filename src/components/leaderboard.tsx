@@ -80,13 +80,14 @@ export default function Leaderboard() {
 
     const renderLeaderboard = () => {
         if (!leaderboardData || leaderboardData.scores.length === 0) {
-            return <TableRow><TableCell colSpan={3} className="text-center">No scores yet. Be the first!</TableCell></TableRow>;
+            return <TableRow><TableCell colSpan={4} className="text-center">No scores yet. Be the first!</TableCell></TableRow>;
         }
 
         return leaderboardData.scores.map((score, index) => (
             <TableRow key={score.id} className={score.isCurrentUser ? 'bg-accent/20' : ''}>
                 <TableCell className="font-semibold text-lg">{index + 1}{index === 0 && <Crown className="inline w-6 h-6 ml-2 text-amber-400" />}</TableCell>
                 <TableCell className="font-semibold text-lg">{score.name}</TableCell>
+                <TableCell className="text-right text-muted-foreground">{new Date(score.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell className="text-right font-semibold text-lg">{score.score}</TableCell>
             </TableRow>
         ));
@@ -195,9 +196,10 @@ export default function Leaderboard() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-1/6">Rank</TableHead>
-                                    <TableHead className="w-4/6">Name</TableHead>
-                                    <TableHead className="text-right w-1/6">Score</TableHead>
+                                    <TableHead className="w-[15%]">Rank</TableHead>
+                                    <TableHead className="w-[45%]">Name</TableHead>
+                                    <TableHead className="text-right w-[20%]">Date</TableHead>
+                                    <TableHead className="text-right w-[20%]">Score</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
