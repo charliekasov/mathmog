@@ -105,7 +105,7 @@ export async function addScore(userId: string, name: string, score: number, leve
 }
 
 /**
- * Fetches the top 10 scores for a given level and difficulty.
+ * Fetches the top 100 scores for a given level and difficulty.
  * @param level The level to fetch scores for.
  * @param difficulty The difficulty to fetch scores for.
  * @param duration The duration in minutes to fetch scores for.
@@ -119,7 +119,7 @@ export async function getLeaderboard(level: number, difficulty: Difficulty, dura
     where('difficulty', '==', difficulty),
     where('duration', '==', duration),
     orderBy('score', 'desc'),
-    limit(10)
+    limit(100)
   );
 
   const querySnapshot = await getDocs(q);

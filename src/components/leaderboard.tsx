@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from './ui/separator';
+import { ScrollArea } from './ui/scroll-area';
 
 const getSecret = (): string => {
     let secret = localStorage.getItem('mathmog-secret');
@@ -182,19 +183,21 @@ export default function Leaderboard() {
                             <h3 className="text-lg font-semibold text-primary">{levels.find(l => l.level === levelFilter)?.name}</h3>
                             <p className="text-sm text-muted-foreground">{difficultyFilter} Difficulty &middot; {durationFilter} Minute Challenge</p>
                         </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[15%]">Rank</TableHead>
-                                    <TableHead className="w-[45%]">Name</TableHead>
-                                    <TableHead className="text-right w-[20%]">Date</TableHead>
-                                    <TableHead className="text-right w-[20%]">Score</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {renderLeaderboard()}
-                            </TableBody>
-                        </Table>
+                        <ScrollArea className="h-[400px]">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[15%]">Rank</TableHead>
+                                        <TableHead className="w-[45%]">Name</TableHead>
+                                        <TableHead className="text-right w-[20%]">Date</TableHead>
+                                        <TableHead className="text-right w-[20%]">Score</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {renderLeaderboard()}
+                                </TableBody>
+                            </Table>
+                        </ScrollArea>
 
                         {leaderboardData?.user && leaderboardData.userScore && (
                              <div className="mt-4 p-3 bg-accent/90 rounded-md text-center text-accent-foreground">
@@ -243,5 +246,3 @@ export default function Leaderboard() {
         </Card>
     );
 }
-
-    
