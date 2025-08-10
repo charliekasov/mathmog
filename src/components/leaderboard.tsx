@@ -9,11 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Crown, Loader2, UserPlus, RefreshCw } from 'lucide-react';
 import { getLeaderboardData, createUser } from '@/ai/flows/leaderboard-flow';
-import type { LeaderboardData } from '@/lib/types';
+import type { LeaderboardData, Difficulty } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 const getSecret = (): string => {
     let secret = localStorage.getItem('mathmog-secret');
@@ -24,27 +25,39 @@ const getSecret = (): string => {
     return secret;
 }
 
+const levels = [
+  { level: 1, name: '🧠 Memorize' },
+  { level: 2, name: '📊 Estimate' },
+  { level: 3, name: '😈 Get Crafty' }
+];
+
+const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];
+
 export default function Leaderboard() {
-    const { currentLevel, currentDifficulty, score, refreshLeaderboardData, leaderboardVersion } = useMathTrainer();
+    const { currentLevel, currentDifficulty, leaderboardVersion, refreshLeaderboardData } = useMathTrainer();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const [levelFilter, setLevelFilter] = useState<number>(currentLevel);
+    const [difficultyFilter, setDifficultyFilter] = useState<Difficulty>(currentDifficulty);
     const [durationFilter, setDurationFilter] = useState<number>(1);
+    
     const { toast } = useToast();
     const secret = getSecret();
 
     const fetchLeaderboard = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await getLeaderboardData({ level: currentLevel, difficulty: currentDifficulty, duration: durationFilter, secret });
+            const data = await getLeaderboardData({ level: levelFilter, difficulty: difficultyFilter, duration: durationFilter, secret });
             setLeaderboardData(data);
         } catch (error) {
             console.error("Failed to fetch leaderboard", error);
             toast({ title: "Error", description: "Could not load leaderboard data.", variant: "destructive" });
         }
         setIsLoading(false);
-    }, [currentLevel, currentDifficulty, durationFilter, secret, toast]);
+    }, [levelFilter, difficultyFilter, durationFilter, secret, toast]);
 
     useEffect(() => {
         fetchLeaderboard();
@@ -84,13 +97,15 @@ export default function Leaderboard() {
         { duration: 3, label: '⚡️⚡️⚡️ 3 min' },
     ];
 
+    const currentModeName = levels.find(l => l.level === levelFilter)?.name.split(' ')[1] || 'Memorize';
+    
     return (
         <Card>
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
                         <CardTitle className="text-xl md:text-2xl">Speed Challenge High Scores</CardTitle>
-                        <CardDescription>{currentDifficulty} - Mode: {currentLevel === 1 ? 'Memorize' : currentLevel === 2 ? 'Estimate' : 'Get Crafty'}</CardDescription>
+                        <CardDescription>{difficultyFilter} - Mode: {currentModeName}</CardDescription>
                     </div>
                     <Button onClick={fetchLeaderboard} variant="ghost" size="icon" disabled={isLoading}>
                         <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -104,26 +119,53 @@ export default function Leaderboard() {
                     </div>
                 ) : (
                     <>
-                        <div className="mb-6">
-                            <div className="text-sm font-medium mb-2">Duration</div>
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                                {durationOptions.map(({ duration, label }) => (
-                                    <Button
-                                        key={duration}
-                                        onClick={() => setDurationFilter(duration)}
-                                        variant={durationFilter === duration ? 'default' : 'outline'}
-                                        size="sm"
-                                        className={cn(
-                                            "rounded-full px-4 font-bold shadow-sm transition-all",
-                                            "hover:shadow-md",
-                                            durationFilter === duration 
-                                                ? "bg-accent hover:bg-accent/90 text-accent-foreground shadow-inner"
-                                                : "bg-background"
-                                        )}
-                                    >
-                                        {label}
-                                    </Button>
-                                ))}
+                        <div className="mb-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="level-filter" className="mb-2 block">Mode</Label>
+                                    <Select value={String(levelFilter)} onValueChange={(v) => setLevelFilter(Number(v))}>
+                                        <SelectTrigger id="level-filter"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {levels.map(({ level, name }) => (
+                                                <SelectItem key={level} value={String(level)}>{name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="difficulty-filter" className="mb-2 block">Difficulty</Label>
+                                    <Select value={difficultyFilter} onValueChange={(v) => setDifficultyFilter(v as Difficulty)}>
+                                        <SelectTrigger id="difficulty-filter"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {difficulties.map((difficulty) => (
+                                                <SelectItem key={difficulty} value={difficulty}>{difficulty}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                             <div>
+                                <Label className="mb-2 block">Duration</Label>
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                    {durationOptions.map(({ duration, label }) => (
+                                        <Button
+                                            key={duration}
+                                            onClick={() => setDurationFilter(duration)}
+                                            variant={durationFilter === duration ? 'default' : 'outline'}
+                                            size="sm"
+                                            className={cn(
+                                                "rounded-full px-4 font-bold shadow-sm transition-all",
+                                                "hover:shadow-md",
+                                                durationFilter === duration 
+                                                    ? "bg-accent hover:bg-accent/90 text-accent-foreground shadow-inner"
+                                                    : "bg-background"
+                                            )}
+                                        >
+                                            {label}
+                                        </Button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                         
