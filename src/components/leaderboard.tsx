@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Separator } from './ui/separator';
 
 const getSecret = (): string => {
     let secret = localStorage.getItem('mathmog-secret');
@@ -98,8 +99,6 @@ export default function Leaderboard() {
         { duration: 2, label: '⚡️⚡️ 2 min' },
         { duration: 3, label: '⚡️⚡️⚡️ 3 min' },
     ];
-
-    const currentModeName = levels.find(l => l.level === levelFilter)?.name.split(' ')[1] || 'Memorize';
     
     return (
         <Card>
@@ -107,7 +106,7 @@ export default function Leaderboard() {
                 <div className="flex justify-between items-start">
                     <div>
                         <CardTitle className="text-xl md:text-2xl">Speed Challenge High Scores</CardTitle>
-                        <CardDescription>{difficultyFilter} - Mode: {currentModeName}</CardDescription>
+                        <CardDescription>View the top scores by mode, difficulty, and duration.</CardDescription>
                     </div>
                     <Button onClick={fetchLeaderboard} variant="ghost" size="icon" disabled={isLoading}>
                         <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -192,7 +191,11 @@ export default function Leaderboard() {
                                  </p>
                             </div>
                         )}
-
+                        <Separator className="my-6" />
+                        <div className="text-center mb-4">
+                            <h3 className="text-lg font-semibold text-primary">{levels.find(l => l.level === levelFilter)?.name}</h3>
+                            <p className="text-sm text-muted-foreground">{difficultyFilter} Difficulty &middot; {durationFilter} Minute Challenge</p>
+                        </div>
                         <Table>
                             <TableHeader>
                                 <TableRow>
