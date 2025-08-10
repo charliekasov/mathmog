@@ -11,10 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import StudyGuide from '@/components/study-guide';
 import SpeedChallengeControls from '@/components/speed-challenge-controls';
+import SpeedChallengeReadyScreen from '@/components/speed-challenge-ready-screen';
 import DifficultySelector from '@/components/difficulty-selector';
 import ProblemDisplay from '@/components/problem-display';
 import ScoreDisplay from '@/components/score-display';
 import Leaderboard from './leaderboard';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ArrowRight } from 'lucide-react';
 
 const HowToPractice = () => (
     <div className="mb-6">
@@ -60,6 +63,30 @@ const HowToStudy = () => (
     </div>
 );
 
+const ChallengeResults = () => {
+    const { speedChallenge, handleNewProblem } = useMathTrainer();
+    const { results } = speedChallenge;
+
+    if (!speedChallenge.enabled || speedChallenge.isActive || !results) return null;
+
+    return (
+        <div className="mt-6">
+            <Alert>
+                <AlertTitle className="text-xl">Challenge Complete!</AlertTitle>
+                <AlertDescription>
+                    You got <span className='font-bold'>{results.correct}</span> out of <span className='font-bold'>{results.total}</span> correct.
+                </AlertDescription>
+            </Alert>
+            <div className="mt-4 flex justify-center">
+                <Button onClick={() => handleNewProblem()}>
+                    <ArrowRight className="w-5 h-5 mr-2" /> Start New Challenge
+                </Button>
+            </div>
+        </div>
+    )
+}
+
+
 const levelToTab = (level: number) => {
     switch (level) {
         case 1: return 'memorize';
@@ -78,9 +105,11 @@ export default function MentalMathTrainer() {
         }
         setMode(newMode);
     }
+    
+    const showPracticeContent = !speedChallenge.enabled || speedChallenge.isActive;
 
     return (
-        <main className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'} font-body`}>
+        <main className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark bg-background' : 'bg-background'}`}>
             <div className="max-w-4xl mx-auto p-4 md:p-8">
                 <div className="text-center mb-6">
                     <div className="flex items-center justify-center gap-4 mb-2">
@@ -111,9 +140,18 @@ export default function MentalMathTrainer() {
                             <TabsContent value="practice" className="mt-6">
                                 <HowToPractice />
                                 <SpeedChallengeControls />
-                                <DifficultySelector />
-                                <ProblemDisplay />
-                                <ScoreDisplay />
+                                
+                                {showPracticeContent ? (
+                                    <>
+                                        <DifficultySelector />
+                                        <ProblemDisplay />
+                                        <ScoreDisplay />
+                                    </>
+                                ) : (
+                                    <SpeedChallengeReadyScreen />
+                                )}
+                                <ChallengeResults />
+
                             </TabsContent>
                             <TabsContent value="study" className="mt-6">
                                 <HowToStudy />

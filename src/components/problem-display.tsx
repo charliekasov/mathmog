@@ -6,7 +6,7 @@ import { useMathTrainer } from '@/context/math-trainer-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowRight, Loader2, UserPlus } from 'lucide-react';
+import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -83,7 +83,7 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                         disabled={isSubmitting}
                         onKeyPress={(e) => { if (e.key === 'Enter') handleCreateUser() }}
                     />
-                    <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length === 0}>
+                    <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length < 3}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save & View Scores
                     </Button>
@@ -95,8 +95,22 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
 
 
 const LevelUpDialog = () => {
-  const { adaptiveData, handleLevelUp } = useMathTrainer();
+  const { adaptiveData, handleLevelUp, speedChallenge } = useMathTrainer();
   const { pendingLevelUp } = adaptiveData;
+  const [isCreateUserOpen, setCreateUserOpen] = useState(false);
+
+  useEffect(() => {
+      if (speedChallenge.results && speedChallenge.results.isNewUser) {
+          setCreateUserOpen(true);
+      }
+  }, [speedChallenge.results]);
+
+
+  if (!pendingLevelUp && !speedChallenge.results?.isNewUser) return null;
+
+  if (speedChallenge.results?.isNewUser) {
+      return <CreateUserDialog isOpen={isCreateUserOpen} onOpenChange={setCreateUserOpen} />;
+  }
 
   if (!pendingLevelUp) return null;
 
@@ -125,40 +139,6 @@ const LevelUpDialog = () => {
     </Dialog>
   );
 };
-
-const ChallengeResults = () => {
-    const { speedChallenge, handleNewProblem } = useMathTrainer();
-    const { results } = speedChallenge;
-    const [isCreateUserOpen, setCreateUserOpen] = useState(false);
-
-    useEffect(() => {
-        if (results && results.isNewUser) {
-            setCreateUserOpen(true);
-        }
-    }, [results]);
-
-    if (!results) return null;
-
-    return (
-        <>
-         <Alert>
-            <AlertTitle className="text-xl">Challenge Complete!</AlertTitle>
-            <AlertDescription>
-                You got <span className='font-bold'>{results.correct}</span> out of <span className='font-bold'>{results.total}</span> correct.
-                {results.isNewUser && (
-                     <Button variant="link" className="p-0 h-auto ml-2" onClick={() => setCreateUserOpen(true)}>Set your scoreboard name!</Button>
-                )}
-            </AlertDescription>
-        </Alert>
-        <div className="mt-4 flex justify-center">
-            <Button onClick={() => handleNewProblem()}>
-                <ArrowRight className="w-5 h-5 mr-2" /> Start New Challenge
-            </Button>
-        </div>
-        <CreateUserDialog isOpen={isCreateUserOpen} onOpenChange={setCreateUserOpen} />
-        </>
-    )
-}
 
 const MultiTextInput = ({ questionParts, onComplete, onCheck, disabled }: { questionParts: string[], onComplete: (val: string) => void, onCheck: () => void, disabled: boolean }) => {
     const [answers, setAnswers] = useState<string[]>(['', '', '']);
@@ -276,9 +256,6 @@ export default function ProblemDisplay() {
   }
 
   if (!currentProblem) {
-    if (speedChallenge.enabled && !speedChallenge.isActive && speedChallenge.results) {
-        return <ChallengeResults />;
-    }
     return <LevelUpDialog />;
   }
 
