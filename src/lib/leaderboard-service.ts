@@ -47,10 +47,10 @@ export async function createLeaderboardUser(
   name: string,
   secret: string
 ): Promise<{ success: boolean; message: string; userId?: string }> {
-  // Rule 1: Validate name format (1-12 alphanumeric characters)
+  // Rule 1: Validate name format (3-12 alphanumeric characters)
   const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-  if (name.length === 0 || name.length > 12 || !alphanumericRegex.test(name)) {
-    return { success: false, message: 'Name must be 1-12 alphanumeric characters.' };
+  if (name.length < 3 || name.length > 12 || !alphanumericRegex.test(name)) {
+    return { success: false, message: 'Name must be 3-12 alphanumeric characters.' };
   }
 
   // Rule 2: Check if name is already taken by another user

@@ -215,7 +215,7 @@ export default function Leaderboard() {
                                                 value={nameInput}
                                                 onChange={(e) => setNameInput(e.target.value)}
                                                 maxLength={12}
-                                                placeholder="1-12 alphanumeric characters"
+                                                placeholder="3-12 characters"
                                                 disabled={isSubmitting}
                                                 onKeyPress={(e) => { if (e.key === 'Enter') handleCreateUser() }}
                                             />

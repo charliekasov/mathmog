@@ -504,8 +504,8 @@ const DifficultyScalingContent = () => (
                         <TableBody>
                             {Object.entries(level.difficulties).map(([difficulty, types]) => (
                                 <TableRow key={difficulty}>
-                                    <TableCell className="font-medium">{difficulty}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="font-medium align-top">{difficulty}</TableCell>
+                                    <TableCell className="align-top">
                                         <ul className="list-disc list-inside">
                                             {types.map(type => <li key={type}>{type}</li>)}
                                         </ul>
@@ -531,7 +531,7 @@ export default function StudyGuide() {
       </div>
       
       <Tabs value={studyTab} onValueChange={(value) => setStudyTab(value)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="memorize">🧠 Memorize</TabsTrigger>
           <TabsTrigger value="estimate">📊 Estimate</TabsTrigger>
           <TabsTrigger value="crafty">😈 Get Crafty</TabsTrigger>
@@ -553,4 +553,3 @@ export default function StudyGuide() {
     </div>
   );
 }
-
