@@ -155,7 +155,7 @@ export default function Leaderboard() {
 
                              <div>
                                 <Label className="mb-2 block">Duration</Label>
-                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                <div className="flex flex-col sm:flex-row items-stretch gap-2">
                                     {durationOptions.map(({ duration, label }) => (
                                         <Button
                                             key={duration}
