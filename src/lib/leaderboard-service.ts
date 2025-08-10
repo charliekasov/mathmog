@@ -1,3 +1,4 @@
+
 // This service is not a Genkit flow, so it does not need 'use server'.
 // It will be imported into other server-side files.
 
@@ -59,6 +60,15 @@ export async function createLeaderboardUser(
 
   try {
     const usersRef = collection(db, USERS_COLLECTION);
+    
+    // Check if user with this secret already exists
+    const existingUserQuery = query(usersRef, where('secret', '==', secret), limit(1));
+    const existingUserSnapshot = await getDocs(existingUserQuery);
+    
+    if (!existingUserSnapshot.empty) {
+      return { success: false, message: 'A user for this browser already exists.' };
+    }
+
     const docRef = await addDoc(usersRef, {
       name,
       secret, // In a real app, this should be hashed, but for arcade-style it's okay.

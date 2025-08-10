@@ -11,7 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import {
   getLeaderboard,
-  createLeaderboardUser,
+  createLeaderboardUser as createDbUser,
   addScore,
 } from '@/lib/leaderboard-service';
 import type { Difficulty, LeaderboardData, LeaderboardUser } from '@/lib/types';
@@ -85,7 +85,7 @@ export const getLeaderboardData = ai.defineFlow(
 
     return {
       scores: scoresWithCurrentUser,
-      user: user ? { id: user.id!, name: user.name } : null,
+      user: user ? { id: user.id!, name: user.name, secret: user.secret, createdAt: user.createdAt } : null,
       userScore,
     };
   }
@@ -96,10 +96,19 @@ export const createUser = ai.defineFlow(
     {
         name: 'createLeaderboardUserFlow',
         inputSchema: CreateUserInputSchema,
-        outputSchema: z.object({ success: z.boolean(), message: z.string() }),
+        outputSchema: z.object({ 
+            success: z.boolean(), 
+            message: z.string(),
+            user: z.custom<LeaderboardUser>().optional()
+        }),
     },
     async ( { name, secret }) => {
-        return createLeaderboardUser(name, secret);
+        const result = await createDbUser(name, secret);
+        if (result.success && result.userId) {
+            const newUser = await findUserBySecret(secret);
+            return { ...result, user: newUser! };
+        }
+        return { ...result, user: undefined };
     }
 );
 

@@ -39,7 +39,7 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
         const secret = getSecret();
         const createResult = await createUser({ name: nameInput, secret });
         
-        if (createResult.success) {
+        if (createResult.success && createResult.user) {
             toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved.` });
 
             // Now submit the score
@@ -51,7 +51,7 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
                 secret
             });
 
-            await refreshLeaderboardData(); // This will update the user state globally
+            await refreshLeaderboardData(createResult.user); // This will update the user state globally
             onOpenChange(false);
             setMode('leaderboard');
 

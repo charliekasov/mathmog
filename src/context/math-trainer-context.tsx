@@ -3,7 +3,7 @@
 
 import { createContext, useState, useCallback, useRef, useEffect, useContext, type ReactNode, type Dispatch, type SetStateAction } from 'react';
 import { generateProblem, simplifyFraction } from '@/lib/math-problems';
-import type { Mode, Difficulty, Problem, SpeedChallengeState, AdaptiveData, PendingLevelUp } from '@/lib/types';
+import type { Mode, Difficulty, Problem, SpeedChallengeState, AdaptiveData, PendingLevelUp, LeaderboardUser } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { submitScore, getLeaderboardData } from '@/ai/flows/leaderboard-flow';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,13 +27,14 @@ interface MathTrainerContextType {
   adaptiveData: AdaptiveData;
   speedChallenge: SpeedChallengeState;
   setSpeedChallenge: Dispatch<SetStateAction<SpeedChallengeState>>;
+  user: LeaderboardUser | null;
   handleCheckAnswer: (answerToCheck: string) => void;
   handleNewProblem: (level?: number, difficulty?: Difficulty) => void;
   handleLevelDifficultyChange: (level: number, difficulty: Difficulty) => void;
   handleStartSpeedChallenge: () => void;
   handleReset: () => void;
   handleLevelUp: (accept: boolean) => void;
-  refreshLeaderboardData: () => Promise<void>;
+  refreshLeaderboardData: (user?: LeaderboardUser) => Promise<void>;
 }
 
 const getSecret = (): string => {
@@ -63,6 +64,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [feedback, setFeedback] = useState('');
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [showAnswer, setShowAnswer] = useState(false);
+  const [user, setUser] = useState<LeaderboardUser | null>(null);
   const [adaptiveData, setAdaptiveData] = useState<AdaptiveData>({
     consecutiveCorrect: 0,
     currentAdaptiveLevel: null,
@@ -82,7 +84,10 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const secret = getSecret();
 
-  const refreshLeaderboardData = useCallback(async () => {
+  const refreshLeaderboardData = useCallback(async (newUser?: LeaderboardUser) => {
+    if (newUser) {
+      setUser(newUser);
+    }
     setLeaderboardVersion(v => v + 1);
   }, []);
 
@@ -335,12 +340,16 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         if(timerRef.current) clearInterval(timerRef.current);
         setCurrentProblem(null);
         
-        let isNewUser = false;
+        let isNewUser = !user;
+        
         try {
             const data = await getLeaderboardData({ level: currentLevel, difficulty: currentDifficulty, duration: speedChallenge.duration, secret });
-            if (!data.user) {
-                isNewUser = true;
-            } else if (score.correct > 0) {
+            if (data.user) {
+              setUser(data.user);
+              isNewUser = false;
+            }
+            
+            if (!isNewUser && score.correct > 0) {
                 await submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret, duration: speedChallenge.duration });
                 await refreshLeaderboardData();
             }
@@ -370,11 +379,11 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       if(timerRef.current) clearInterval(timerRef.current);
     };
-  }, [speedChallenge.isActive, speedChallenge.timeLeft, speedChallenge.duration, score, currentLevel, currentDifficulty, secret, refreshLeaderboardData]);
+  }, [speedChallenge.isActive, speedChallenge.timeLeft, speedChallenge.duration, score, currentLevel, currentDifficulty, secret, refreshLeaderboardData, user]);
 
   const value = {
     isLoading, mode, setMode, studyTab, setStudyTab, currentLevel, currentDifficulty, currentProblem, userAnswer, setUserAnswer,
-    feedback, score, showAnswer, darkMode, setDarkMode, adaptiveData, speedChallenge, setSpeedChallenge,
+    feedback, score, showAnswer, darkMode, setDarkMode, adaptiveData, speedChallenge, setSpeedChallenge, user,
     handleCheckAnswer, handleNewProblem, handleLevelDifficultyChange, handleStartSpeedChallenge, handleReset, handleLevelUp,
     leaderboardVersion, refreshLeaderboardData,
   };

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Crown, Loader2, UserPlus, RefreshCw } from 'lucide-react';
-import { getLeaderboardData, createUser } from '@/ai/flows/leaderboard-flow';
+import { getLeaderboardData, createUser as createUserFlow } from '@/ai/flows/leaderboard-flow';
 import type { LeaderboardData, Difficulty } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
@@ -34,7 +34,7 @@ const levels = [
 const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 
 export default function Leaderboard() {
-    const { leaderboardVersion, refreshLeaderboardData } = useMathTrainer();
+    const { user, refreshLeaderboardData } = useMathTrainer();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
@@ -61,16 +61,15 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchLeaderboard();
-    }, [fetchLeaderboard, leaderboardVersion]);
+    }, [fetchLeaderboard]);
 
 
     const handleCreateUser = async () => {
         setIsSubmitting(true);
-        const result = await createUser({ name: nameInput, secret });
-        if (result.success) {
+        const result = await createUserFlow({ name: nameInput, secret });
+        if (result.success && result.user) {
             toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved to this browser.` });
-            await refreshLeaderboardData();
-            // Refetch leaderboard after user creation to show them
+            await refreshLeaderboardData(result.user);
             fetchLeaderboard();
         } else {
             toast({ title: "Oops!", description: result.message, variant: "destructive" });
@@ -171,7 +170,7 @@ export default function Leaderboard() {
                             </div>
                         </div>
                         
-                        {!leaderboardData?.user && (
+                        {!user && (
                             <div className="mb-6 p-4 border rounded-lg bg-secondary/50">
                                 <h3 className="font-semibold mb-2 flex items-center"><UserPlus className="w-5 h-5 mr-2" /> Set Your Scoreboard Name</h3>
                                 <div className="flex gap-2">
@@ -189,7 +188,7 @@ export default function Leaderboard() {
                                 </div>
                                  <p className="text-xs text-muted-foreground mt-2">
                                     Your name is your identity here. It's saved to this browser. Clearing browser data will permanently reset it.
-                                </p>
+                                 </p>
                             </div>
                         )}
 
