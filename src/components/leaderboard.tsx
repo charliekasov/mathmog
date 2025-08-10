@@ -34,14 +34,14 @@ const levels = [
 const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 
 export default function Leaderboard() {
-    const { currentLevel, currentDifficulty, leaderboardVersion, refreshLeaderboardData } = useMathTrainer();
+    const { leaderboardVersion, refreshLeaderboardData } = useMathTrainer();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const [levelFilter, setLevelFilter] = useState<number>(currentLevel);
-    const [difficultyFilter, setDifficultyFilter] = useState<Difficulty>(currentDifficulty);
+    const [levelFilter, setLevelFilter] = useState<number>(1);
+    const [difficultyFilter, setDifficultyFilter] = useState<Difficulty>('Medium');
     const [durationFilter, setDurationFilter] = useState<number>(1);
     
     const { toast } = useToast();
@@ -70,6 +70,8 @@ export default function Leaderboard() {
         if (result.success) {
             toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved to this browser.` });
             await refreshLeaderboardData();
+            // Refetch leaderboard after user creation to show them
+            fetchLeaderboard();
         } else {
             toast({ title: "Oops!", description: result.message, variant: "destructive" });
         }
