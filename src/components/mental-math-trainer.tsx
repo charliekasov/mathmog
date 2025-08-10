@@ -132,12 +132,12 @@ export default function MentalMathTrainer() {
                 <Card className="shadow-xl">
                     <CardContent className="p-4 sm:p-6">
                         <Tabs value={mode} onValueChange={(value) => handleModeChange(value as 'practice' | 'study' | 'leaderboard')} className="w-full">
-                            <TabsList className="grid w-full grid-cols-3">
+                            <TabsList className="grid w-full grid-cols-3 mb-6">
                                 <TabsTrigger value="practice">🎯 Practice</TabsTrigger>
                                 <TabsTrigger value="study">📚 Study Guide</TabsTrigger>
                                 <TabsTrigger value="leaderboard">🏆 High Scores</TabsTrigger>
                             </TabsList>
-                            <TabsContent value="practice" className="mt-6">
+                            <TabsContent value="practice" className="mt-0">
                                 <HowToPractice />
                                 <SpeedChallengeControls />
                                 
@@ -153,11 +153,11 @@ export default function MentalMathTrainer() {
                                 <ChallengeResults />
 
                             </TabsContent>
-                            <TabsContent value="study" className="mt-6">
+                            <TabsContent value="study" className="mt-0">
                                 <HowToStudy />
                                 <StudyGuide />
                             </TabsContent>
-                            <TabsContent value="leaderboard" className="mt-6">
+                            <TabsContent value="leaderboard" className="mt-0">
                                 { speedChallenge.isActive ? (
                                     <div className="text-center p-8">
                                         <p className="text-lg text-muted-foreground">High Scores are disabled during Speed Challenge.</p>
