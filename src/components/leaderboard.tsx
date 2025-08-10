@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Crown, Loader2, UserPlus, RefreshCw } from 'lucide-react';
+import { Crown, Loader2, UserPlus, RefreshCw, Zap } from 'lucide-react';
 import { getLeaderboardData, createUser as createUserFlow } from '@/ai/flows/leaderboard-flow';
 import type { LeaderboardData, Difficulty } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -41,7 +41,7 @@ const durationOptions = [
 ];
 
 export default function Leaderboard() {
-    const { user, refreshLeaderboardData } = useMathTrainer();
+    const { user, refreshLeaderboardData, setMode, setSpeedChallenge } = useMathTrainer();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
@@ -85,6 +85,11 @@ export default function Leaderboard() {
         }
         setIsSubmitting(false);
         setNameInput('');
+    }
+
+    const handleTrySpeedChallenge = () => {
+        setMode('practice');
+        setSpeedChallenge(prev => ({...prev, enabled: true}));
     }
 
     const renderLeaderboard = () => {
@@ -198,37 +203,39 @@ export default function Leaderboard() {
                             </div>
                         )}
 
-                        {!user && (
+                        {!user && !isSettingName && (
                             <div className="mt-6 pt-6 border-t">
-                                {!isSettingName ? (
-                                    <div className="text-center">
-                                        <p className="mb-2 text-muted-foreground">Want to see your name on the scoreboard?</p>
-                                        <Button onClick={() => setIsSettingName(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold">
-                                            <UserPlus className="w-5 h-5 mr-2" /> Set Your Scoreboard Name
+                                <div className="text-center">
+                                    <p className="mb-2 text-muted-foreground">Want to see your name on the scoreboard?</p>
+                                    <Button onClick={handleTrySpeedChallenge} className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold">
+                                        <Zap className="w-5 h-5 mr-2" /> Try a Speed Challenge!
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {isSettingName && (
+                            <div className="mt-6 pt-6 border-t">
+                                <div>
+                                    <h3 className="font-semibold mb-2 text-center">Set Your Scoreboard Name</h3>
+                                    <div className="flex gap-2 max-w-sm mx-auto">
+                                        <Input
+                                            value={nameInput}
+                                            onChange={(e) => setNameInput(e.target.value)}
+                                            maxLength={12}
+                                            placeholder="3-12 characters"
+                                            disabled={isSubmitting}
+                                            onKeyPress={(e) => { if (e.key === 'Enter') handleCreateUser() }}
+                                        />
+                                        <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length === 0}>
+                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Save
                                         </Button>
                                     </div>
-                                ) : (
-                                    <div>
-                                        <h3 className="font-semibold mb-2 text-center">Set Your Scoreboard Name</h3>
-                                        <div className="flex gap-2 max-w-sm mx-auto">
-                                            <Input
-                                                value={nameInput}
-                                                onChange={(e) => setNameInput(e.target.value)}
-                                                maxLength={12}
-                                                placeholder="3-12 characters"
-                                                disabled={isSubmitting}
-                                                onKeyPress={(e) => { if (e.key === 'Enter') handleCreateUser() }}
-                                            />
-                                            <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length === 0}>
-                                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                Save
-                                            </Button>
-                                        </div>
-                                         <p className="text-xs text-muted-foreground mt-2 text-center max-w-sm mx-auto">
-                                            Your name is your identity here. It's saved to this browser. Clearing browser data will permanently reset it.
-                                         </p>
-                                    </div>
-                                )}
+                                     <p className="text-xs text-muted-foreground mt-2 text-center max-w-sm mx-auto">
+                                        Your name is your identity here. It's saved to this browser. Clearing browser data will permanently reset it.
+                                     </p>
+                                </div>
                             </div>
                         )}
                     </>
@@ -237,3 +244,5 @@ export default function Leaderboard() {
         </Card>
     );
 }
+
+    
