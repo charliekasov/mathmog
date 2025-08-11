@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Crown, Loader2, UserPlus, RefreshCw, Zap } from 'lucide-react';
+import { Crown, Loader2, RefreshCw, Zap } from 'lucide-react';
 import { getLeaderboardData, createUser as createUserFlow } from '@/ai/flows/leaderboard-flow';
 import type { LeaderboardData, Difficulty } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -128,8 +128,8 @@ export default function Leaderboard() {
                 ) : (
                     <>
                         <div className="mb-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <div className="w-full sm:w-1/2">
                                     <Label htmlFor="level-filter" className="mb-2 block">Mode</Label>
                                     <Select value={String(levelFilter)} onValueChange={(v) => setLevelFilter(Number(v))}>
                                         <SelectTrigger id="level-filter"><SelectValue /></SelectTrigger>
@@ -140,7 +140,7 @@ export default function Leaderboard() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div>
+                                <div className="w-full sm:w-1/2">
                                     <Label htmlFor="difficulty-filter" className="mb-2 block">Difficulty</Label>
                                     <Select value={difficultyFilter} onValueChange={(v) => setDifficultyFilter(v as Difficulty)}>
                                         <SelectTrigger id="difficulty-filter"><SelectValue /></SelectTrigger>
