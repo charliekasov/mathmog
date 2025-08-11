@@ -6,9 +6,9 @@ import { Label } from '@/components/ui/label';
 import type { Difficulty } from '@/lib/types';
 
 const levels = [
-  { level: 1, name: 'Memorize' },
-  { level: 2, name: 'Estimate' },
-  { level: 3, name: 'Get Crafty' }
+  { level: 1, name: '🧠 Memorize' },
+  { level: 2, name: '📊 Estimate' },
+  { level: 3, name: '😈 Get Crafty' }
 ];
 
 const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];

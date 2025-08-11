@@ -27,9 +27,9 @@ const getSecret = (): string => {
 }
 
 const levels = [
-  { level: 1, name: 'Memorize' },
-  { level: 2, name: 'Estimate' },
-  { level: 3, name: 'Get Crafty' }
+  { level: 1, name: '🧠 Memorize' },
+  { level: 2, name: '📊 Estimate' },
+  { level: 3, name: '😈 Get Crafty' }
 ];
 
 const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];
@@ -195,7 +195,7 @@ export default function Leaderboard() {
                                 </TableHeader>
                                 <TableBody>
                                     {renderLeaderboard()}
-                                </TableBody>
+                                 </TableBody>
                             </Table>
                         </ScrollArea>
 
