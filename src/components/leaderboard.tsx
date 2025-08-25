@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -41,7 +42,7 @@ const durationOptions = [
 ];
 
 export default function Leaderboard() {
-    const { user, refreshLeaderboardData, setMode, setSpeedChallenge } = useMathTrainer();
+    const { user, refreshLeaderboardData, setMode, setSpeedChallenge, leaderboardVersion } = useMathTrainer();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
@@ -60,6 +61,11 @@ export default function Leaderboard() {
         try {
             const data = await getLeaderboardData({ level: levelFilter, difficulty: difficultyFilter, duration: durationFilter, secret });
             setLeaderboardData(data);
+            if (!data.user) {
+                setIsSettingName(true);
+            } else {
+                setIsSettingName(false);
+            }
         } catch (error) {
             console.error("Failed to fetch leaderboard", error);
             toast({ title: "Error", description: "Could not load leaderboard data.", variant: "destructive" });
@@ -69,7 +75,7 @@ export default function Leaderboard() {
 
     useEffect(() => {
         fetchLeaderboard();
-    }, [fetchLeaderboard]);
+    }, [fetchLeaderboard, leaderboardVersion]);
 
 
     const handleCreateUser = async () => {

@@ -40,7 +40,7 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
         const createResult = await createUser({ name: nameInput, secret });
         
         if (createResult.success && createResult.user) {
-            toast({ title: "Success!", description: `Welcome, ${nameInput}! Your name is now saved.` });
+            toast({ title: "Success!", description: `Welcome, ${nameInput}! Your score has been saved.` });
 
             // Now submit the score
             await submitScore({
