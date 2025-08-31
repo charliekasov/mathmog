@@ -96,7 +96,6 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
 
 const LevelUpDialog = () => {
   const { adaptiveData, handleLevelUp, speedChallenge } = useMathTrainer();
-  const { pendingLevelUp } = adaptiveData;
   const [isCreateUserOpen, setCreateUserOpen] = useState(false);
 
   useEffect(() => {
@@ -106,13 +105,15 @@ const LevelUpDialog = () => {
   }, [speedChallenge.results]);
 
 
-  if (!pendingLevelUp && !speedChallenge.results?.isNewUser) return null;
+  if (!adaptiveData.pendingLevelUp && !speedChallenge.results?.isNewUser) return null;
 
   if (speedChallenge.results?.isNewUser) {
       return <CreateUserDialog isOpen={isCreateUserOpen} onOpenChange={setCreateUserOpen} />;
   }
 
-  if (!pendingLevelUp) return null;
+  if (!adaptiveData.pendingLevelUp) return null;
+  const { pendingLevelUp } = adaptiveData;
+
 
   return (
     <Dialog open={!!pendingLevelUp} onOpenChange={(open) => !open && handleLevelUp(false)}>
