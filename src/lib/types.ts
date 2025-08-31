@@ -65,6 +65,6 @@ export interface LeaderboardUser {
 
 export interface LeaderboardData {
     scores: LeaderboardScore[];
-    user: { id: string; name: string } | null;
+    user: LeaderboardUser | null;
     userScore: { score: number; rank: number } | null;
 }
