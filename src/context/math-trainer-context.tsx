@@ -28,6 +28,7 @@ interface MathTrainerContextType {
   speedChallenge: SpeedChallengeState;
   setSpeedChallenge: Dispatch<SetStateAction<SpeedChallengeState>>;
   user: LeaderboardUser | null;
+  leaderboardVersion: number;
   handleCheckAnswer: (answerToCheck: string) => void;
   handleNewProblem: (level?: number, difficulty?: Difficulty) => void;
   handleLevelDifficultyChange: (level: number, difficulty: Difficulty) => void;
@@ -83,7 +84,11 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [darkMode, setDarkMode] = useState(false);
   const { toast } = useToast();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const secret = getSecret();
+  const [secret, setSecret] = useState('');
+
+  useEffect(() => {
+    setSecret(getSecret());
+  }, []);
 
   const refreshLeaderboardData = useCallback(async (newUser?: LeaderboardUser) => {
     if (newUser) {
@@ -127,10 +132,11 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [currentLevel, currentDifficulty, problemHistory, toast]);
 
   useEffect(() => {
+    // Only run on client
     const isDark = document.documentElement.classList.contains('dark');
     setDarkMode(isDark);
     handleNewProblem(1, 'Medium');
-  }, []);
+  }, [handleNewProblem]);
 
   useEffect(() => {
     if (darkMode) {
@@ -344,6 +350,8 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     const handleChallengeEnd = async () => {
         if(timerRef.current) clearInterval(timerRef.current);
         setCurrentProblem(null);
+        
+        if (!secret) return;
         
         let isNewUser = !user;
         

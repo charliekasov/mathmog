@@ -19,6 +19,9 @@ import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
 
 const getSecret = (): string => {
+    if (typeof window === 'undefined') {
+        return '';
+    }
     let secret = localStorage.getItem('mathmog-secret');
     if (!secret) {
         secret = uuidv4();
@@ -54,9 +57,14 @@ export default function Leaderboard() {
     const [durationFilter, setDurationFilter] = useState<number>(1);
     
     const { toast } = useToast();
-    const secret = getSecret();
+    const [secret, setSecret] = useState('');
+
+    useEffect(() => {
+        setSecret(getSecret());
+    }, []);
 
     const fetchLeaderboard = useCallback(async () => {
+        if (!secret) return;
         setIsLoading(true);
         try {
             const data = await getLeaderboardData({ level: levelFilter, difficulty: difficultyFilter, duration: durationFilter, secret });
@@ -74,8 +82,10 @@ export default function Leaderboard() {
     }, [levelFilter, difficultyFilter, durationFilter, secret, toast]);
 
     useEffect(() => {
-        fetchLeaderboard();
-    }, [fetchLeaderboard, leaderboardVersion]);
+        if (secret) {
+            fetchLeaderboard();
+        }
+    }, [fetchLeaderboard, leaderboardVersion, secret]);
 
 
     const handleCreateUser = async () => {
@@ -118,7 +128,7 @@ export default function Leaderboard() {
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-xl md:text-2xl">Speed Challenge High Scores</CardTitle>
+                        <CardTitle className="text-xl md:text-2xl">Scores</CardTitle>
                         <CardDescription>View the top scores by mode, difficulty, and duration.</CardDescription>
                     </div>
                     <Button onClick={fetchLeaderboard} variant="ghost" size="icon" disabled={isLoading}>

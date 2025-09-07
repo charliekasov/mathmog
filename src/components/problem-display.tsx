@@ -31,12 +31,16 @@ const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenCha
     const { toast } = useToast();
     const { setMode, speedChallenge, currentLevel, currentDifficulty, refreshLeaderboardData, clearSpeedChallengeResults } = useMathTrainer();
     const { results } = speedChallenge;
+    const [secret, setSecret] = useState('');
+
+    useEffect(() => {
+        setSecret(getSecret());
+    }, []);
 
     const handleCreateUser = async () => {
-        if (!results) return;
+        if (!results || !secret) return;
 
         setIsSubmitting(true);
-        const secret = getSecret();
         const createResult = await createUser({ name: nameInput, secret });
         
         if (createResult.success && createResult.user) {
