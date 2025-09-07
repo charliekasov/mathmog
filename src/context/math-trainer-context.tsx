@@ -87,7 +87,9 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [secret, setSecret] = useState('');
 
   useEffect(() => {
-    setSecret(getSecret());
+    if (typeof window !== 'undefined') {
+        setSecret(getSecret());
+    }
   }, []);
 
   const refreshLeaderboardData = useCallback(async (newUser?: LeaderboardUser) => {
@@ -104,45 +106,51 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
     const levelToUse = level || currentLevel;
     const difficultyToUse = difficulty || currentDifficulty;
     
-    while (!problemGenerated && attempt < 10) {
-      try {
-        const newProblem = generateProblem(levelToUse, difficultyToUse, problemHistory);
-        setProblemHistory(prev => {
-            const newHistory = [...prev, newProblem.question.toString()];
-            if (newHistory.length > HISTORY_LIMIT) {
-                return newHistory.slice(newHistory.length - HISTORY_LIMIT);
-            }
-            return newHistory;
-        });
-        setCurrentProblem(newProblem);
-        problemGenerated = true;
-      } catch (error) {
-        console.error("Error generating problem, retrying...", error);
-        attempt++;
-      }
-    }
-    if (!problemGenerated) {
-        toast({ title: "Error", description: "Could not generate a new problem. Please try changing the level or difficulty.", variant: "destructive" });
-    }
+    setProblemHistory(prev => {
+        let newProblem: Problem;
+        while (!problemGenerated && attempt < 10) {
+          try {
+            newProblem = generateProblem(levelToUse, difficultyToUse, prev);
+            setCurrentProblem(newProblem);
+            problemGenerated = true;
+             const newHistory = [...prev, newProblem!.question.toString()];
+             if (newHistory.length > HISTORY_LIMIT) {
+                 return newHistory.slice(newHistory.length - HISTORY_LIMIT);
+             }
+             return newHistory;
+          } catch (error) {
+            console.error("Error generating problem, retrying...", error);
+            attempt++;
+          }
+        }
+        if (!problemGenerated) {
+            toast({ title: "Error", description: "Could not generate a new problem. Please try changing the level or difficulty.", variant: "destructive" });
+        }
+        return prev;
+    });
     
     setUserAnswer('');
     setFeedback('');
     setShowAnswer(false);
     setIsLoading(false);
-  }, [currentLevel, currentDifficulty, problemHistory, toast]);
+  }, [currentLevel, currentDifficulty, toast]);
 
   useEffect(() => {
     // Only run on client
-    const isDark = document.documentElement.classList.contains('dark');
-    setDarkMode(isDark);
-    handleNewProblem(1, 'Medium');
+    if (typeof window !== 'undefined') {
+        const isDark = document.documentElement.classList.contains('dark');
+        setDarkMode(isDark);
+        handleNewProblem(1, 'Medium');
+    }
   }, [handleNewProblem]);
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    if (typeof window !== 'undefined') {
+        if (darkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
     }
   }, [darkMode]);
 
