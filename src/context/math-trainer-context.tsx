@@ -40,7 +40,9 @@ interface MathTrainerContextType {
 }
 
 const getSecret = (): string => {
-    if (typeof window === 'undefined') return '';
+    if (typeof window === 'undefined') {
+        return '';
+    }
     let secret = localStorage.getItem('mathmog-secret');
     if (!secret) {
         secret = uuidv4();
@@ -87,9 +89,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   const [secret, setSecret] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-        setSecret(getSecret());
-    }
+    setSecret(getSecret());
   }, []);
 
   const refreshLeaderboardData = useCallback(async (newUser?: LeaderboardUser) => {
@@ -101,32 +101,35 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
 
   const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
     setIsLoading(true);
-    let problemGenerated = false;
-    let attempt = 0;
     const levelToUse = level || currentLevel;
     const difficultyToUse = difficulty || currentDifficulty;
     
     setProblemHistory(prev => {
-        let newProblem: Problem;
+        let problemGenerated = false;
+        let attempt = 0;
+        let newProblem: Problem | null = null;
+        
         while (!problemGenerated && attempt < 10) {
           try {
             newProblem = generateProblem(levelToUse, difficultyToUse, prev);
-            setCurrentProblem(newProblem);
             problemGenerated = true;
-             const newHistory = [...prev, newProblem!.question.toString()];
-             if (newHistory.length > HISTORY_LIMIT) {
-                 return newHistory.slice(newHistory.length - HISTORY_LIMIT);
-             }
-             return newHistory;
           } catch (error) {
             console.error("Error generating problem, retrying...", error);
             attempt++;
           }
         }
-        if (!problemGenerated) {
+
+        if (newProblem) {
+            setCurrentProblem(newProblem);
+            const newHistory = [...prev, newProblem.question.toString()];
+            if (newHistory.length > HISTORY_LIMIT) {
+                return newHistory.slice(newHistory.length - HISTORY_LIMIT);
+            }
+            return newHistory;
+        } else {
             toast({ title: "Error", description: "Could not generate a new problem. Please try changing the level or difficulty.", variant: "destructive" });
+            return prev;
         }
-        return prev;
     });
     
     setUserAnswer('');
@@ -136,16 +139,15 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
   }, [currentLevel, currentDifficulty, toast]);
 
   useEffect(() => {
-    // Only run on client
-    if (typeof window !== 'undefined') {
-        const isDark = document.documentElement.classList.contains('dark');
-        setDarkMode(isDark);
+    if (secret) {
         handleNewProblem(1, 'Medium');
     }
-  }, [handleNewProblem]);
+  }, [secret]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+        const isDark = document.documentElement.classList.contains('dark');
+        setDarkMode(isDark);
         if (darkMode) {
           document.documentElement.classList.add('dark');
         } else {
@@ -361,18 +363,18 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
         
         if (!secret) return;
         
-        let isNewUser = !user;
-        
+        let shouldPromptForNewUser = !user;
+
         try {
             const data = await getLeaderboardData({ level: currentLevel, difficulty: currentDifficulty, duration: speedChallenge.duration, secret });
             if (data.user) {
               setUser(data.user);
-              isNewUser = false;
-            }
-            
-            if (!isNewUser && score.correct > 0) {
-                await submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret, duration: speedChallenge.duration });
-                await refreshLeaderboardData();
+              shouldPromptForNewUser = false;
+               // If the user exists, submit the score here.
+               if (score.correct > 0) {
+                    await submitScore({ level: currentLevel, difficulty: currentDifficulty, score: score.correct, secret, duration: speedChallenge.duration });
+                    await refreshLeaderboardData();
+               }
             }
         } catch (error) {
             console.error("Error checking user status or submitting score", error);
@@ -384,7 +386,7 @@ export const MathTrainerProvider = ({ children }: { children: ReactNode }) => {
             results: { 
                 correct: score.correct, 
                 total: score.total,
-                isNewUser: isNewUser && score.correct > 0
+                isNewUser: shouldPromptForNewUser && score.correct > 0
             } 
         }));
     };
@@ -419,3 +421,5 @@ export const useMathTrainer = () => {
   }
   return context;
 };
+
+    
