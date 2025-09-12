@@ -2,13 +2,13 @@ import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  "projectId": "mathmog",
-  "appId": "1:477043430209:web:e2675f6b56a2cb5eabc7c0",
-  "storageBucket": "mathmog.firebasestorage.app",
-  "apiKey": "AIzaSyB5JaQ4n8ui18IEnbU31Eark-050DRvU8Q",
-  "authDomain": "mathmog.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "477043430209"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
