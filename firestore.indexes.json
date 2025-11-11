@@ -1,0 +1,27 @@
+{
+    "indexes": [
+      {
+        "collectionGroup": "scores",
+        "queryScope": "COLLECTION",
+        "fields": [
+          {
+            "fieldPath": "level",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "difficulty", 
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "duration",
+            "order": "ASCENDING"
+          },
+          {
+            "fieldPath": "score",
+            "order": "DESCENDING"
+          }
+        ]
+      }
+    ],
+    "fieldOverrides": []
+  }

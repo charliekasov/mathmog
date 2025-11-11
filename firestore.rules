@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Scores collection: Allow anyone to read (needed for leaderboards)
+    // Only allow authenticated writes (we'll improve this later)
+    match /scores/{scoreId} {
+      allow read: if true;  // Public leaderboards
+      allow write: if true; // Temporarily open for testing
+    }
+    
+    // Users collection: Allow read/write for now (we'll secure later)
+    match /users/{userId} {
+      allow read, write: if true;  // Temporarily open for testing
+    }
+    
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

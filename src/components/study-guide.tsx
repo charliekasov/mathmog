@@ -5,7 +5,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { commonFractionConversions, perfectCubes, perfectSquares } from "@/lib/math-problems";
-import { useMathTrainer } from '@/context/math-trainer-context';
+import { useUI } from '@/context/ui-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -522,7 +522,7 @@ const DifficultyScalingContent = () => (
 
 
 export default function StudyGuide() {
-  const { studyTab, setStudyTab } = useMathTrainer();
+  const { studyTab, setStudyTab } = useUI();
   return (
     <div className="space-y-6">
       <div className="text-center">

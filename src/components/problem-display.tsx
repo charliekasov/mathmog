@@ -1,124 +1,25 @@
-
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
-import { useMathTrainer } from '@/context/math-trainer-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useRef } from 'react';
+import { useProblem } from '@/context/problem-context';
+import { useUI } from '@/context/ui-context';
+import { useSpeedChallenge } from '@/context/speed-challenge-context';
+import { useUser } from '@/context/user-context';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowRight, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { createUser, submitScore } from '@/ai/flows/leaderboard-flow';
-import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from 'uuid';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Check, ArrowRight } from 'lucide-react';
 
-
-const getSecret = (): string => {
-    if (typeof window === 'undefined') return '';
-    let secret = localStorage.getItem('mathmog-secret');
-    if (!secret) {
-        secret = uuidv4();
-        localStorage.setItem('mathmog-secret', secret);
-    }
-    return secret;
-}
-
-const CreateUserDialog = ({ isOpen, onOpenChange }: { isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
-    const [nameInput, setNameInput] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { toast } = useToast();
-    const { setMode, speedChallenge, currentLevel, currentDifficulty, refreshLeaderboardData, clearSpeedChallengeResults } = useMathTrainer();
-    const { results } = speedChallenge;
-    const [secret, setSecret] = useState('');
-
-    useEffect(() => {
-        setSecret(getSecret());
-    }, []);
-
-    const handleCreateUser = async () => {
-        if (!results || !secret) return;
-
-        setIsSubmitting(true);
-        const createResult = await createUser({ name: nameInput, secret });
-        
-        if (createResult.success && createResult.user) {
-            toast({ title: "Success!", description: `Welcome, ${nameInput}! Your score has been saved.` });
-
-            // Now submit the score
-            await submitScore({
-                level: currentLevel,
-                difficulty: currentDifficulty,
-                duration: speedChallenge.duration,
-                score: results.correct,
-                secret
-            });
-
-            await refreshLeaderboardData(createResult.user); // This will update the user state globally
-            onOpenChange(false);
-            clearSpeedChallengeResults();
-            setMode('leaderboard');
-
-        } else {
-            toast({ title: "Oops!", description: createResult.message, variant: "destructive" });
-        }
-        setIsSubmitting(false);
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle className="text-center text-2xl">
-                        <div className="text-4xl mb-4">🏆</div>
-                        <span className="font-extrabold text-lg block">You got a high score!</span>
-                    </DialogTitle>
-                    <DialogDescription className="text-center pt-2">
-                        Set your name to appear on the scoreboard. Your name is saved to this browser for future scores.
-                    </DialogDescription>
-                </DialogHeader>
-                 <div className="flex gap-2 pt-4">
-                    <Input
-                        value={nameInput}
-                        onChange={(e) => setNameInput(e.target.value)}
-                        maxLength={12}
-                        placeholder="3-12 characters"
-                        disabled={isSubmitting}
-                        onKeyPress={(e) => { if (e.key === 'Enter') handleCreateUser() }}
-                    />
-                    <Button onClick={handleCreateUser} disabled={isSubmitting || nameInput.length < 3}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save & View Scores
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-};
-
-
+// LevelUpDialog component with proper null checks
 const LevelUpDialog = () => {
-  const { adaptiveData, handleLevelUp, speedChallenge } = useMathTrainer();
-  const [isCreateUserOpen, setCreateUserOpen] = useState(false);
-
-  useEffect(() => {
-      if (speedChallenge.results && speedChallenge.results.isNewUser) {
-          setCreateUserOpen(true);
-      }
-  }, [speedChallenge.results]);
-
-
-  if (!adaptiveData.pendingLevelUp && !speedChallenge.results?.isNewUser) return null;
-
-  if (speedChallenge.results?.isNewUser) {
-      return <CreateUserDialog isOpen={isCreateUserOpen} onOpenChange={setCreateUserOpen} />;
-  }
-
-  if (!adaptiveData.pendingLevelUp) return null;
+  const { adaptiveData, handleLevelUp } = useProblem();
   const { pendingLevelUp } = adaptiveData;
-
-
+  
+  if (!pendingLevelUp) return null;
+  
   return (
     <Dialog open={!!pendingLevelUp} onOpenChange={(open) => !open && handleLevelUp(false)}>
       <DialogContent>
@@ -126,7 +27,9 @@ const LevelUpDialog = () => {
           <DialogTitle className="text-center text-2xl">
             <div className="text-4xl mb-4">{pendingLevelUp.emojis}</div>
             <span className="font-extrabold text-lg block">{pendingLevelUp.title}</span>
-            {pendingLevelUp.allCapsTitle && <span className="font-extrabold text-lg block">{pendingLevelUp.allCapsTitle}</span>}
+            {pendingLevelUp.allCapsTitle && (
+              <span className="font-extrabold text-lg block">{pendingLevelUp.allCapsTitle}</span>
+            )}
           </DialogTitle>
           <DialogDescription className="text-center pt-2 text-primary font-semibold text-lg">
             {pendingLevelUp.subtitle}
@@ -145,66 +48,102 @@ const LevelUpDialog = () => {
   );
 };
 
-const MultiTextInput = ({ questionParts, onComplete, onCheck, disabled }: { questionParts: string[], onComplete: (val: string) => void, onCheck: () => void, disabled: boolean }) => {
-    const [answers, setAnswers] = useState<string[]>(['', '', '']);
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+// MultiTextInput component - keep as is
+const MultiTextInput = ({ questionParts, onComplete, onCheck, disabled }: { 
+  questionParts: string[], 
+  onComplete: (val: string) => void, 
+  onCheck: () => void, 
+  disabled: boolean 
+}) => {
+  const [answers, setAnswers] = useState<string[]>(['', '', '']);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    useEffect(() => {
-        setAnswers(['', '', '']);
-        if (inputRefs.current[0]) {
-            inputRefs.current[0].focus();
-        }
-    }, [questionParts]);
+  useEffect(() => {
+    setAnswers(['', '', '']);
+    if (inputRefs.current[0]) {
+      inputRefs.current[0].focus();
+    }
+  }, [questionParts]);
 
-    useEffect(() => {
-        onComplete(answers.join(','));
-    }, [answers, onComplete]);
+  useEffect(() => {
+    onComplete(answers.join(','));
+  }, [answers, onComplete]);
 
-    const handleChange = (index: number, value: string) => {
-        const newAnswers = [...answers];
-        newAnswers[index] = value;
-        setAnswers(newAnswers);
-    };
+  const handleChange = (index: number, value: string) => {
+    const newAnswers = [...answers];
+    newAnswers[index] = value;
+    setAnswers(newAnswers);
+  };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-        if (e.key === 'Tab' && !e.shiftKey && index < 2) {
-            e.preventDefault();
-            inputRefs.current[index + 1]?.focus();
-        } else if (e.key === 'Tab' && e.shiftKey && index > 0) {
-            e.preventDefault();
-            inputRefs.current[index - 1]?.focus();
-        } else if (e.key === 'Enter') {
-            onCheck();
-        }
-    };
-    
-    return (
-         <div className="flex flex-wrap items-center justify-center gap-2 text-xl md:text-2xl font-bold">
-            {questionParts.map((part, i) => (
-                <div key={i} className="contents">
-                    <span>{part}</span>
-                    {i < answers.length && (
-                         <Input
-                            ref={el => inputRefs.current[i] = el}
-                            type="number"
-                            value={answers[i]}
-                            onChange={(e) => handleChange(i, e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, i)}
-                            className="w-20 text-center text-xl h-12"
-                            disabled={disabled}
-                         />
-                    )}
-                </div>
-            ))}
-        </div>
-    );
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'Enter') {
+      if (index < 2) {
+        inputRefs.current[index + 1]?.focus();
+      } else {
+        onCheck();
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="text-2xl md:text-3xl font-bold text-center space-y-2">
+        {questionParts[0]}
+        <Input
+          ref={(el) => { inputRefs.current[0] = el; }}
+          type="text"
+          value={answers[0]}
+          onChange={(e) => handleChange(0, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e, 0)}
+          className="w-20 h-14 text-xl text-center mx-2 inline-block"
+          disabled={disabled}
+          autoFocus
+        />
+        {questionParts[1]}
+        <Input
+          ref={(el) => { inputRefs.current[1] = el; }}
+          type="text"
+          value={answers[1]}
+          onChange={(e) => handleChange(1, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e, 1)}
+          className="w-20 h-14 text-xl text-center mx-2 inline-block"
+          disabled={disabled}
+        />
+        {questionParts[2]}
+        <Input
+          ref={(el) => { inputRefs.current[2] = el; }}
+          type="text"
+          value={answers[2]}
+          onChange={(e) => handleChange(2, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(e, 2)}
+          className="w-20 h-14 text-xl text-center mx-2 inline-block"
+          disabled={disabled}
+        />
+        {questionParts[3]}
+      </div>
+    </div>
+  );
 };
 
+// Main ProblemDisplay component
 export default function ProblemDisplay() {
-  const { isLoading, currentProblem, userAnswer, setUserAnswer, feedback, showAnswer, speedChallenge, handleCheckAnswer, handleNewProblem } = useMathTrainer();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const { isLoading } = useUser();
+  const { 
+    currentProblem, 
+    userAnswer, 
+    setUserAnswer, 
+    feedback, 
+    showAnswer, 
+    handleCheckAnswer, 
+    handleNewProblem 
+  } = useProblem();
+  const { speedChallenge } = useSpeedChallenge();
   
-  const onCheckAnswer = () => handleCheckAnswer(userAnswer);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const onCheckAnswer = () => {
+    handleCheckAnswer(userAnswer);
+  };
 
   useEffect(() => {
     if (feedback) return;
@@ -328,7 +267,8 @@ export default function ProblemDisplay() {
             )}
           </div>
         )}
-        <LevelUpDialog />
+       <LevelUpDialog />
+
       </CardContent>
     </Card>
   );
