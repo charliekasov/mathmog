@@ -2,7 +2,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useMathTrainer } from '@/context/math-trainer-context';
+import { useUI } from '@/context/ui-context';
+import { useUser } from '@/context/user-context';
+import { useSpeedChallenge } from '@/context/speed-challenge-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -45,7 +47,9 @@ const durationOptions = [
 ];
 
 export default function Leaderboard() {
-    const { user, refreshLeaderboardData, setMode, setSpeedChallenge, leaderboardVersion } = useMathTrainer();
+    const { setMode } = useUI();
+    const { user, refreshLeaderboardData, leaderboardVersion } = useUser();
+    const { setSpeedChallenge } = useSpeedChallenge();
     const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [nameInput, setNameInput] = useState('');
