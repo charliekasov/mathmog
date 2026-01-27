@@ -17,9 +17,10 @@ export interface SpeedChallengeState {
   duration: number; // in minutes
   timeLeft: number; // in seconds
   isActive: boolean;
-  results: {
-    correct: number;
+  results: { 
+    correct: number; 
     total: number;
+    isNewUser: boolean;
   } | null;
 }
 
@@ -44,20 +45,26 @@ export interface AdaptiveData {
 }
 
 export interface LeaderboardScore {
-  id?: string;
-  name: string;
-  score: number;
-  level: number;
-  difficulty: Difficulty;
-  duration: number; // in minutes
-  createdAt: Date;
+    id?: string;
+    userId: string;
+    name: string;
+    score: number;
+    level: number;
+    difficulty: Difficulty;
+    duration: number; // in minutes
+    createdAt: Date;
+    isCurrentUser?: boolean;
 }
 
-export interface MathmogDrillConfig {
-  level: number;
-  difficulty: Difficulty;
-  problemCount: number;
-  topic?: string;
-  isSpeedChallenge?: boolean;
-  duration?: number; // minutes (1, 2, or 3)
+export interface LeaderboardUser {
+    id?: string;
+    secret: string;
+    name: string;
+    createdAt: Date;
+}
+
+export interface LeaderboardData {
+    scores: LeaderboardScore[];
+    user: LeaderboardUser | null;
+    userScore: { score: number; rank: number } | null;
 }
