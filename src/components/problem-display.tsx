@@ -16,13 +16,15 @@ import { Check, ArrowRight } from 'lucide-react';
 // LevelUpDialog component with proper null checks
 const LevelUpDialog = () => {
   const { adaptiveData, handleLevelUp } = useProblem();
+  const { speedChallenge } = useSpeedChallenge();
   const { pendingLevelUp } = adaptiveData;
-  
-  if (!pendingLevelUp) return null;
+
+  // Don't show level-up dialog during active speed challenge
+  if (!pendingLevelUp || speedChallenge.isActive) return null;
   
   return (
     <Dialog open={!!pendingLevelUp} onOpenChange={(open) => !open && handleLevelUp(false)}>
-      <DialogContent>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">
             <div className="text-4xl mb-4">{pendingLevelUp.emojis}</div>
@@ -35,11 +37,11 @@ const LevelUpDialog = () => {
             {pendingLevelUp.subtitle}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="sm:justify-center gap-2 mt-4">
-          <Button type="button" onClick={() => handleLevelUp(false)} variant="secondary">
+        <DialogFooter className="flex-col sm:flex-row sm:justify-center gap-2 mt-4">
+          <Button type="button" onClick={() => handleLevelUp(false)} variant="secondary" className="w-full sm:w-auto">
             {pendingLevelUp.options.no}
           </Button>
-          <Button type="button" onClick={() => handleLevelUp(true)} className="bg-green-600 hover:bg-green-700">
+          <Button type="button" onClick={() => handleLevelUp(true)} className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
             {pendingLevelUp.options.yes}
           </Button>
         </DialogFooter>
@@ -156,6 +158,16 @@ export default function ProblemDisplay() {
     }
   }, [currentProblem, feedback]);
 
+  // Auto-advance to next problem during speed challenge
+  useEffect(() => {
+    if (speedChallenge.isActive && feedback) {
+      const timer = setTimeout(() => {
+        handleNewProblem();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [speedChallenge.isActive, feedback, handleNewProblem]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName.toLowerCase() === 'input') {
@@ -209,7 +221,7 @@ export default function ProblemDisplay() {
          <div className="mx-auto">
              <Badge variant="secondary">{currentProblem.type}</Badge>
          </div>
-         {currentProblem.inputType !== 'multi-text' && <CardTitle className="text-2xl md:text-3xl font-bold pt-2" dangerouslySetInnerHTML={{ __html: currentProblem.question as string}} />}
+         {currentProblem.inputType !== 'multi-text' && <CardTitle className="text-2xl md:text-3xl font-bold pt-2">{currentProblem.question as string}</CardTitle>}
       </CardHeader>
       <CardContent>
         <div className="max-w-md mx-auto px-4">
@@ -256,9 +268,9 @@ export default function ProblemDisplay() {
         </div>
         {feedback && !speedChallenge.isActive && (
           <div className="mt-6 space-y-3 text-center">
-            <div className={`text-lg font-semibold ${feedback.includes('✅') ? 'text-green-600' : 'text-red-600 dark:text-red-500'}`}>{feedback}</div>
+            <div className={`text-lg font-semibold ${feedback === 'correct' ? 'text-green-600' : 'text-red-600 dark:text-red-500'}`}>{feedback === 'correct' ? '✅ Correct!' : '❌ Incorrect'}</div>
             {showAnswer && (
-              <Alert variant={feedback.includes('✅') ? 'default' : 'destructive'} className="text-left">
+              <Alert variant={feedback === 'correct' ? 'default' : 'destructive'} className="text-left">
                   <AlertTitle>Explanation</AlertTitle>
                   <AlertDescription>
                       {currentProblem.explanation}
@@ -267,8 +279,7 @@ export default function ProblemDisplay() {
             )}
           </div>
         )}
-       <LevelUpDialog />
-
+        <LevelUpDialog />
       </CardContent>
     </Card>
   );

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMathTrainer } from '@/context/math-trainer-context';
+import { useSpeedChallenge } from '@/context/speed-challenge-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Timer } from 'lucide-react';
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 
 
 export default function SpeedChallengeReadyScreen() {
-    const { speedChallenge, setSpeedChallenge, handleStartSpeedChallenge } = useMathTrainer();
+    const { speedChallenge, setSpeedChallenge, handleStartSpeedChallenge } = useSpeedChallenge();
 
     const durationOptions = [
         { duration: 1, label: '⚡️ 1 min' },

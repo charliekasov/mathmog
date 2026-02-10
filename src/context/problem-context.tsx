@@ -7,6 +7,7 @@ import type { Difficulty, Problem, AdaptiveData, PendingLevelUp } from '@/lib/ty
 interface ProblemContextType {
   currentLevel: number;
   currentDifficulty: Difficulty;
+  currentTopic: string | undefined;
   currentProblem: Problem | null;
   userAnswer: string;
   setUserAnswer: Dispatch<SetStateAction<string>>;
@@ -16,8 +17,8 @@ interface ProblemContextType {
   adaptiveData: AdaptiveData;
   problemHistory: string[];
   handleCheckAnswer: (answerToCheck: string) => void;
-  handleNewProblem: (level?: number, difficulty?: Difficulty) => void;
-  handleLevelDifficultyChange: (level: number, difficulty: Difficulty) => void;
+  handleNewProblem: (level?: number, difficulty?: Difficulty, topic?: string) => void;
+  handleLevelDifficultyChange: (level: number, difficulty: Difficulty, topic?: string) => void;
   handleReset: () => void;
   handleLevelUp: (accept: boolean) => void;
 }
@@ -29,6 +30,7 @@ const HISTORY_LIMIT = 50;
 export function ProblemProvider({ children }: { children: ReactNode }) {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('Easy');
+  const [currentTopic, setCurrentTopic] = useState<string | undefined>(undefined);
   const [currentProblem, setCurrentProblem] = useState<Problem | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -41,23 +43,26 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     pendingLevelUp: null
   });
 
-  // Use ref to avoid dependency issues
+  // Use refs to avoid dependency issues
   const problemHistoryRef = useRef<string[]>([]);
-  
-  // Keep ref in sync
-  problemHistoryRef.current = problemHistory;
+  const currentTopicRef = useRef<string | undefined>(undefined);
 
-  const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty) => {
+  // Keep refs in sync
+  problemHistoryRef.current = problemHistory;
+  currentTopicRef.current = currentTopic;
+
+  const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty, topic?: string) => {
     const targetLevel = level ?? currentLevel;
     const targetDifficulty = difficulty ?? currentDifficulty;
-    
+    const targetTopic = topic !== undefined ? topic : currentTopicRef.current;
+
     try {
-      const newProblem = generateProblem(targetLevel, targetDifficulty, problemHistoryRef.current);
+      const newProblem = generateProblem(targetLevel, targetDifficulty, problemHistoryRef.current, targetTopic);
       setCurrentProblem(newProblem);
       setUserAnswer('');
       setFeedback('');
       setShowAnswer(false);
-      
+
       setProblemHistory(prev => {
         const newHistory = [...prev, newProblem.question.toString()];
         if (newHistory.length > HISTORY_LIMIT) {
@@ -68,7 +73,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Error generating problem:", error);
     }
-  }, [currentLevel, currentDifficulty]); // Removed problemHistory from deps
+  }, [currentLevel, currentDifficulty]);
 
   const handleCheckAnswer = useCallback((answerToCheck: string) => {
     if (!currentProblem) return;
@@ -108,6 +113,30 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
         ? currentProblem.answer.map(a => String(a).toLowerCase())
         : [String(currentProblem.answer).toLowerCase()];
       isCorrect = possibleAnswers.includes(userAnswerTrimmed);
+    } else if (currentProblem.inputType === 'number') {
+      // For number inputs, compare numerically to handle cases like ".2" vs "0.2"
+      const userNum = parseFloat(userAnswerTrimmed);
+      if (!isNaN(userNum)) {
+        // Handle array of acceptable answers (for repeating decimals like 1/3, 1/6)
+        if (Array.isArray(currentProblem.answer)) {
+          isCorrect = currentProblem.answer.some(acceptableAnswer => {
+            const correctNum = typeof acceptableAnswer === 'number'
+              ? acceptableAnswer
+              : parseFloat(String(acceptableAnswer));
+            return !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.0001;
+          });
+        } else {
+          const correctNum = typeof currentProblem.answer === 'number'
+            ? currentProblem.answer
+            : parseFloat(String(currentProblem.answer));
+          if (!isNaN(correctNum)) {
+            // Use small tolerance for floating point comparison
+            isCorrect = Math.abs(userNum - correctNum) < 0.0001;
+          }
+        }
+      } else {
+        isCorrect = userAnswerTrimmed === String(currentProblem.answer).toLowerCase();
+      }
     } else {
       isCorrect = userAnswerTrimmed === String(currentProblem.answer).toLowerCase();
     }
@@ -168,9 +197,10 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     }
   }, [currentProblem, currentDifficulty]);
 
-  const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty) => {
+  const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty, topic?: string) => {
     setCurrentLevel(level);
     setCurrentDifficulty(difficulty);
+    setCurrentTopic(topic);
     setProblemHistory([]);
     setAdaptiveData({
       consecutiveCorrect: 0,
@@ -178,7 +208,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       pendingLevelUp: null
     });
     setScore({ correct: 0, total: 0 });
-    handleNewProblem(level, difficulty);
+    handleNewProblem(level, difficulty, topic);
   }, [handleNewProblem]);
 
   const handleReset = useCallback(() => {
@@ -208,6 +238,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const value = {
     currentLevel,
     currentDifficulty,
+    currentTopic,
     currentProblem,
     userAnswer,
     setUserAnswer,

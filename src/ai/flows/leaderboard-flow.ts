@@ -1,129 +1,92 @@
-
 'use server';
 /**
- * @fileOverview A flow for handling leaderboard interactions.
+ * @fileOverview Server actions for arcade-style leaderboard.
  *
- * - getLeaderboardData - Fetches leaderboard and user data.
- * - createUser - Creates a new leaderboard user.
+ * - getLeaderboardData - Fetches leaderboard scores.
+ * - submitScore - Submits a score with name validation and profanity filtering.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-import {
-  getLeaderboard,
-  createLeaderboardUser as createDbUser,
-  addScore,
-} from '@/lib/leaderboard-service';
-import type { Difficulty, LeaderboardData, LeaderboardUser } from '@/lib/types';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getLeaderboard, addScore } from '@/lib/leaderboard-service';
+import type { Difficulty, LeaderboardScore } from '@/lib/types';
+import { Filter } from 'bad-words';
 
-const USERS_COLLECTION = 'users';
+const filter = new Filter();
 
-const GetLeaderboardInputSchema = z.object({
-  level: z.number(),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-  duration: z.number(),
-  secret: z.string(),
-});
-export type GetLeaderboardInput = z.infer<typeof GetLeaderboardInputSchema>;
+// Add some additional words that might slip through
+filter.addWords('ass', 'asses');
 
-const CreateUserInputSchema = z.object({
-  name: z.string(),
-  secret: z.string(),
-});
-export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
+export type GetLeaderboardInput = {
+  level: number;
+  difficulty: Difficulty;
+  duration: number;
+};
 
-const AddScoreInputSchema = z.object({
-  level: z.number(),
-  difficulty: z.enum(['Easy', 'Medium', 'Hard']),
-  duration: z.number(),
-  score: z.number(),
-  secret: z.string(),
-});
-export type AddScoreInput = z.infer<typeof AddScoreInputSchema>;
+export type SubmitScoreInput = {
+  name: string;
+  score: number;
+  level: number;
+  difficulty: Difficulty;
+  duration: number;
+};
 
-// Helper to find a user by their secret
-async function findUserBySecret(secret: string): Promise<LeaderboardUser | null> {
-  if (!secret) return null;
-  const usersRef = collection(db, USERS_COLLECTION);
-  const q = query(usersRef, where('secret', '==', secret), limit(1));
-  const querySnapshot = await getDocs(q);
+export type LeaderboardData = {
+  scores: LeaderboardScore[];
+};
 
-  if (querySnapshot.empty) {
-    return null;
+/**
+ * Validates a name for the leaderboard.
+ * - Must be 3-12 alphanumeric characters
+ * - Must not contain profanity
+ */
+function validateName(name: string): { valid: boolean; message?: string } {
+  const trimmed = name.trim();
+
+  // Check length
+  if (trimmed.length < 3 || trimmed.length > 12) {
+    return { valid: false, message: 'Name must be 3-12 characters' };
   }
-  const doc = querySnapshot.docs[0];
-  const data = doc.data();
-  return {
-    id: doc.id,
-    name: data.name,
-    secret: data.secret,
-    createdAt: data.createdAt.toDate(),
-  };
+
+  // Check alphanumeric
+  const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+  if (!alphanumericRegex.test(trimmed)) {
+    return { valid: false, message: 'Name must be letters and numbers only' };
+  }
+
+  // Check profanity
+  if (filter.isProfane(trimmed)) {
+    return { valid: false, message: 'Please choose an appropriate name' };
+  }
+
+  return { valid: true };
 }
 
-export const getLeaderboardData = ai.defineFlow(
-  {
-    name: 'getLeaderboardData',
-    inputSchema: GetLeaderboardInputSchema,
-    outputSchema: z.custom<LeaderboardData>(),
-  },
-  async ({ level, difficulty, duration, secret }): Promise<LeaderboardData> => {
-    const user = await findUserBySecret(secret);
+export async function getLeaderboardData({ level, difficulty, duration }: GetLeaderboardInput): Promise<LeaderboardData> {
+  try {
     const scores = await getLeaderboard(level, difficulty, duration);
-    
-    let userScore: { score: number; rank: number } | null = null;
-    
-    const scoresWithCurrentUser = scores.map((score, index) => {
-        const isCurrentUser = user ? score.userId === user.id : false;
-        if (isCurrentUser && !userScore) {
-            userScore = { score: score.score, rank: index + 1 };
-        }
-        return { ...score, isCurrentUser };
-    });
-
-    return {
-      scores: scoresWithCurrentUser,
-      user: user ? { id: user.id!, name: user.name, secret: user.secret, createdAt: user.createdAt } : null,
-      userScore,
-    };
+    return { scores };
+  } catch (error) {
+    console.error('Error fetching leaderboard data:', error);
+    return { scores: [] };
   }
-);
+}
 
-
-export const createUser = ai.defineFlow(
-    {
-        name: 'createLeaderboardUserFlow',
-        inputSchema: CreateUserInputSchema,
-        outputSchema: z.object({ 
-            success: z.boolean(), 
-            message: z.string(),
-            user: z.custom<LeaderboardUser>().optional()
-        }),
-    },
-    async ( { name, secret }) => {
-        const result = await createDbUser(name, secret);
-        if (result.success && result.userId) {
-            const newUser = await findUserBySecret(secret);
-            return { ...result, user: newUser! };
-        }
-        return { ...result, user: undefined };
-    }
-);
-
-export const submitScore = ai.defineFlow(
-  {
-    name: 'submitScoreFlow',
-    inputSchema: AddScoreInputSchema,
-    outputSchema: z.object({ success: z.boolean() }),
-  },
-  async ({ level, difficulty, duration, score, secret }) => {
-    const user = await findUserBySecret(secret);
-    if (user && user.id) {
-      await addScore(user.id, user.name, score, level, difficulty, duration);
-      return { success: true };
-    }
-    return { success: false };
+export async function submitScore({ name, score, level, difficulty, duration }: SubmitScoreInput): Promise<{ success: boolean; message?: string }> {
+  // Validate name
+  const validation = validateName(name);
+  if (!validation.valid) {
+    return { success: false, message: validation.message };
   }
-);
+
+  // Don't save scores of 0
+  if (score <= 0) {
+    return { success: false, message: 'Score must be greater than 0' };
+  }
+
+  try {
+    const result = await addScore(name.trim(), score, level, difficulty, duration);
+    return result;
+  } catch (error) {
+    console.error('Error submitting score:', error);
+    return { success: false, message: 'Failed to save score' };
+  }
+}

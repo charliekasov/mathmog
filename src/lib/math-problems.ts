@@ -11,48 +11,48 @@ export const simplifyFraction = (num: number, den: number) => {
 
 // Helper data for the fraction generator
 const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean, answers?: Record<number, number[]> }> = {
-    3: { 
-        numerators: [1, 2], 
-        precision: 2, 
+    3: {
+        numerators: [1, 2],
+        precision: 2,
         repeating: true,
         answers: {
-            1: [0.33],
-            2: [0.66, 0.67]
+            1: [0.3, 0.33, 0.333],
+            2: [0.6, 0.66, 0.67, 0.666, 0.667]
         }
     },
     4: { numerators: [1, 3], precision: 2, repeating: false },
     5: { numerators: [1, 2, 3, 4], precision: 1, repeating: false },
-    6: { 
-        numerators: [1, 5], 
-        precision: 3, 
+    6: {
+        numerators: [1, 5],
+        precision: 3,
         repeating: true,
         answers: {
-            1: [0.166, 0.167],
-            5: [0.833]
+            1: [0.16, 0.17, 0.166, 0.167, 0.1666, 0.1667],
+            5: [0.83, 0.833, 0.8333]
         }
     },
-    7: { 
-        numerators: [1, 2, 3, 4, 5, 6], 
-        precision: 3, 
+    7: {
+        numerators: [1, 2, 3, 4, 5, 6],
+        precision: 3,
         repeating: true,
         answers: {
-            1: [0.14, 0.142, 0.143],
-            2: [0.28, 0.285, 0.286],
-            3: [0.42, 0.428, 0.429],
-            4: [0.57, 0.571, 0.572],
-            5: [0.71, 0.714, 0.715],
-            6: [0.85, 0.857, 0.858],
+            1: [0.14, 0.142, 0.143, 0.1428, 0.1429],
+            2: [0.28, 0.29, 0.285, 0.286, 0.2857],
+            3: [0.42, 0.43, 0.428, 0.429, 0.4285, 0.4286],
+            4: [0.57, 0.571, 0.572, 0.5714],
+            5: [0.71, 0.714, 0.715, 0.7142, 0.7143],
+            6: [0.85, 0.86, 0.857, 0.858, 0.8571],
         }
     },
     8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
     9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true,
         answers: {
-            1: [0.11],
-            2: [0.22],
-            4: [0.44],
-            5: [0.55, 0.56],
-            7: [0.77, 0.78],
-            8: [0.88, 0.89],
+            1: [0.1, 0.11, 0.111],
+            2: [0.2, 0.22, 0.222],
+            4: [0.4, 0.44, 0.444],
+            5: [0.5, 0.55, 0.56, 0.555, 0.556],
+            7: [0.7, 0.77, 0.78, 0.777, 0.778],
+            8: [0.8, 0.88, 0.89, 0.888, 0.889],
         }
      },
 };
@@ -97,6 +97,14 @@ export const perfectSquares: Record<number, number> = {
 export const perfectCubes: Record<number, number> = {
     1: 1, 2: 8, 3: 27, 4: 64, 5: 125, 6: 216, 7: 343, 8: 512, 9: 729, 10: 1000,
     20: 8000, 30: 27000, 40: 64000, 50: 125000, 60: 216000, 70: 343000, 80: 512000, 90: 729000, 100: 1000000
+};
+
+export const perfectFourthPowers: Record<number, number> = {
+    1: 1, 2: 16, 3: 81, 4: 256, 5: 625, 6: 1296
+};
+
+export const perfectFifthPowers: Record<number, number> = {
+    1: 1, 2: 32, 3: 243, 4: 1024, 5: 3125
 };
 
 const superscriptMap: { [key: string]: string } = {
@@ -523,6 +531,107 @@ const generateFractionEstimationProblem = (difficulty: Difficulty): Problem => {
 };
 
 
+const generateRootEstimationProblem = (difficulty: Difficulty): Problem => {
+    let rootType: 'square' | 'cube' | 'fourth' | 'fifth';
+    if (difficulty === 'Hard') {
+        const types: ('square' | 'cube' | 'fourth' | 'fifth')[] = ['square', 'cube', 'fourth', 'fifth'];
+        rootType = types[Math.floor(Math.random() * types.length)];
+    } else {
+        rootType = 'square';
+    }
+
+    let table: Record<number, number>;
+    let symbol: string;
+    let powerLabel: string;
+    let questionWord = 'consecutive integers';
+
+    switch (rootType) {
+        case 'cube':
+            table = perfectCubes;
+            symbol = '∛';
+            powerLabel = '³';
+            break;
+        case 'fourth':
+            table = perfectFourthPowers;
+            symbol = '⁴√';
+            powerLabel = '⁴';
+            break;
+        case 'fifth':
+            table = perfectFifthPowers;
+            symbol = '⁵√';
+            powerLabel = '⁵';
+            break;
+        default:
+            table = perfectSquares;
+            symbol = '√';
+            powerLabel = '²';
+    }
+
+    const bases = Object.keys(table).map(Number).sort((a, b) => a - b);
+    let base: number;
+    let nextBase: number;
+
+    if (rootType === 'cube') {
+        const validBases = bases.filter(b => b <= 10 && b > 0);
+        const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+        base = validBases[baseIndex];
+        nextBase = validBases[baseIndex + 1];
+    } else if (rootType === 'fourth') {
+        const validBases = bases.filter(b => b > 1 && b <= 6);
+        const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+        base = validBases[baseIndex];
+        nextBase = validBases[baseIndex + 1];
+    } else if (rootType === 'fifth') {
+        const validBases = bases.filter(b => b > 1 && b <= 5);
+        const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+        base = validBases[baseIndex];
+        nextBase = validBases[baseIndex + 1];
+    } else { // square
+        if (difficulty === 'Easy') {
+            const validBases = bases.filter(b => b > 0 && b < 10);
+            const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+            base = validBases[baseIndex];
+            nextBase = validBases[baseIndex + 1];
+        } else if (difficulty === 'Medium') {
+            const validBases = bases.filter(b => b > 0 && b < 20);
+            const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+            base = validBases[baseIndex];
+            nextBase = validBases[baseIndex + 1];
+        } else {
+            const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
+            const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
+            base = validBases[baseIndex];
+            nextBase = validBases[baseIndex + 1];
+            questionWord = 'multiples of ten';
+        }
+    }
+
+    const lowerBound = table[base];
+    const upperBound = table[nextBase];
+    if (lowerBound === undefined || upperBound === undefined) {
+        return generateMultiplicationProblem(difficulty);
+    }
+
+    const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
+    const midPoint = (lowerBound + upperBound) / 2;
+    const closerInt = num < midPoint ? base : nextBase;
+
+    const questionTextParts = [`${symbol}${num} is between the ${questionWord}`, `and`, `, and is closer to`];
+    const answerText = `${base},${nextBase},${closerInt}`;
+
+    let actualRoot: number;
+    switch (rootType) {
+        case 'cube': actualRoot = Math.cbrt(num); break;
+        case 'fourth': actualRoot = Math.pow(num, 0.25); break;
+        case 'fifth': actualRoot = Math.pow(num, 0.2); break;
+        default: actualRoot = Math.sqrt(num);
+    }
+
+    const explanation = `${symbol}${num} ≈ ${actualRoot.toFixed(2)}. It's between ${base} (${base}${powerLabel}=${lowerBound}) and ${nextBase} (${nextBase}${powerLabel}=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
+
+    return { question: questionTextParts, answer: answerText, type: 'Root Estimation', explanation, inputType: 'multi-text', placeholder: "a,b,c" };
+};
+
 const generateLevel2Problem = (difficulty: Difficulty, history: string[]): Problem => {
     try {
         let problemTypes = ['multiplication', 'rootEstimation', 'percentage', 'fractionEstimation'];
@@ -533,57 +642,7 @@ const generateLevel2Problem = (difficulty: Difficulty, history: string[]): Probl
         let type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
 
         if (type === 'rootEstimation') {
-            const isCubeRoot = difficulty === 'Hard' && Math.random() < 0.5;
-            const table = isCubeRoot ? perfectCubes : perfectSquares;
-            const bases = Object.keys(table).map(Number).sort((a,b) => a - b);
-            
-            let base: number;
-            let nextBase: number;
-            let questionWord = 'consecutive integers';
-            
-            if (isCubeRoot) { // Cube roots (Hard)
-                 const validBases = bases.filter(b => b <= 10 && b > 0);
-                 const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
-                 base = validBases[baseIndex];
-                 nextBase = validBases[baseIndex + 1];
-            } else { // Square roots
-                if (difficulty === 'Easy') {
-                    const validBases = bases.filter(b => b > 0 && b < 10);
-                    const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
-                    base = validBases[baseIndex];
-                    nextBase = validBases[baseIndex + 1];
-                } else if (difficulty === 'Medium') {
-                    const validBases = bases.filter(b => b > 0 && b < 20);
-                    const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
-                    base = validBases[baseIndex];
-                    nextBase = validBases[baseIndex + 1];
-                } else { // Hard
-                    const validBases = bases.filter(b => b >= 20 && b % 10 === 0 && b < 100);
-                    const baseIndex = Math.floor(Math.random() * (validBases.length - 1));
-                    base = validBases[baseIndex];
-                    nextBase = validBases[baseIndex + 1]; // This will be base + 10
-                    questionWord = 'multiples of ten';
-                }
-            }
-
-            const lowerBound = table[base];
-            const upperBound = table[nextBase];
-            if (lowerBound === undefined || upperBound === undefined) {
-                 return generateMultiplicationProblem(difficulty);
-            }
-
-            const num = Math.floor(Math.random() * (upperBound - lowerBound - 2)) + lowerBound + 1;
-            
-            const midPoint = (lowerBound + upperBound) / 2;
-            const closerInt = num < midPoint ? base : nextBase;
-            
-            const questionTextParts = [`${isCubeRoot ? '∛' : '√'}${num} is between the ${questionWord}`, `and`, `, and is closer to`];
-            const answerText = `${base},${nextBase},${closerInt}`;
-            const explanation = isCubeRoot 
-                ? `∛${num} ≈ ${Math.cbrt(num).toFixed(2)}. It's between ${base} (${base}³=${lowerBound}) and ${nextBase} (${nextBase}³=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`
-                : `√${num} ≈ ${Math.sqrt(num).toFixed(2)}. It's between ${base} (${base}²=${lowerBound}) and ${nextBase} (${nextBase}²=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
-            
-            return { question: questionTextParts, answer: answerText, type: `Root Estimation`, explanation, inputType: 'multi-text', placeholder: "a,b,c" };
+            return generateRootEstimationProblem(difficulty);
         } else if (type === 'percentage') {
             return generatePercentageProblem(difficulty);
         } else if (type === 'fractionEstimation') {
@@ -785,7 +844,341 @@ const generateLevel3Problem = (difficulty: Difficulty, history: string[]): Probl
     }
 };
 
-export const generateProblem = (level: number, difficulty: Difficulty, history: string[]): Problem => {
+// --- Targeted generators for drill topics ---
+
+const generatePerfectSquareProblem_targeted = (): Problem => {
+    const num = Math.floor(Math.random() * 20) + 1;
+    const answer = num * num;
+    const explanation = `${num}² = ${num}×${num} = ${answer}`;
+    return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
+};
+
+const generatePerfectCubeProblem_targeted = (): Problem => {
+    const num = Math.floor(Math.random() * 10) + 1;
+    const answer = num * num * num;
+    const explanation = `${num}³ = ${num}×${num}×${num} = ${answer}`;
+    return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
+};
+
+const generateFractionProblem_allDenominators = (): Problem => {
+    const allDenominators = [3, 4, 5, 6, 7, 8, 9];
+    const den = allDenominators[Math.floor(Math.random() * allDenominators.length)];
+    const availableNumerators = fractionBasesByDenominator[den].numerators;
+    const num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
+
+    const { precision, repeating, answers: specificAnswers } = fractionBasesByDenominator[den];
+
+    let conversionTypes = ['fracToDec', 'fracToPerc', 'decToFrac', 'percToFrac'];
+    if (repeating) {
+        conversionTypes = ['fracToDec', 'fracToPerc', 'percToFrac'];
+    }
+
+    const conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
+    const decimalValue = num / den;
+    const percentValue = decimalValue * 100;
+
+    if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
+        return generateFractionProblem_allDenominators();
+    }
+
+    switch (conversionType) {
+        case 'fracToDec': {
+            const places = den === 7 ? 3 : precision;
+            const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
+            const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(places)}`;
+            let answer: number | number[];
+            if (specificAnswers && specificAnswers[num]) {
+                answer = specificAnswers[num];
+            } else if (repeating) {
+                const rounded = parseFloat(decimalValue.toFixed(precision));
+                const truncated = parseFloat(decimalValue.toString().substring(0, 2 + precision));
+                answer = [rounded, truncated].filter((v, i, a) => a.indexOf(v) === i);
+            } else {
+                answer = parseFloat(decimalValue.toFixed(precision));
+            }
+            return { question: questionText, answer, type: 'Fraction to Decimal', explanation, inputType: 'number' };
+        }
+        case 'decToFrac': {
+            const simplified = simplifyFraction(num, den);
+            const questionDecimal = parseFloat(decimalValue.toFixed(precision));
+            return { question: `Convert ${questionDecimal} to a fraction`, answer: simplified, type: 'Decimal to Fraction', explanation: `${questionDecimal} is the decimal for ${simplified}`, inputType: 'text' };
+        }
+        case 'fracToPerc': {
+            const percentPrecision = den === 7 || den === 6 ? 1 : Math.max(0, precision - 2);
+            const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
+            const explanation = `${num}/${den} = ${decimalValue} ≈ ${percentValue.toFixed(percentPrecision)}%`;
+            let answer: number | number[];
+            if (specificAnswers && specificAnswers[num]) {
+                answer = specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)));
+            } else if (repeating) {
+                const rounded = parseFloat(percentValue.toFixed(percentPrecision));
+                const truncatedNum = parseFloat(percentValue.toString().slice(0, (percentPrecision > 0 ? 3 : 2) + percentPrecision));
+                answer = [rounded, truncatedNum].filter((v, i, a) => a.indexOf(v) === i);
+            } else {
+                answer = parseFloat(percentValue.toFixed(percentPrecision));
+            }
+            return { question: questionText, answer, type: 'Fraction to Percent', explanation, inputType: 'number' };
+        }
+        case 'percToFrac': {
+            const simplified = simplifyFraction(num, den);
+            const places = Math.min(4, Math.max(2, precision));
+            const questionPercent = parseFloat(percentValue.toFixed(places));
+            return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
+        }
+        default:
+            return generateFractionProblem_allDenominators();
+    }
+};
+
+const generateAdvancedSquareProblem_targeted = (): Problem => {
+    const bases = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const num = bases[Math.floor(Math.random() * bases.length)];
+    const answer = num * num;
+    const base = num / 10;
+    const explanation = `(${num})² = (${base}×10)² = ${base}²×100 = ${base * base}×100 = ${answer}`;
+    return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
+};
+
+const generateAdvancedCubeProblem_targeted = (): Problem => {
+    const bases = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    const num = bases[Math.floor(Math.random() * bases.length)];
+    const answer = num * num * num;
+    const base = num / 10;
+    const explanation = `(${num})³ = (${base}×10)³ = ${base}³×1000 = ${base * base * base}×1000 = ${answer}`;
+    return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
+};
+
+const generateHigherPowersProblem_all = (): Problem => {
+    const allProblems: { [key: string]: number } = {
+        '2^4': 16, '2^5': 32, '2^6': 64, '2^7': 128, '2^8': 256, '2^9': 512,
+        '3^4': 81, '3^5': 243, '3^6': 729,
+        '4^4': 256, '5^4': 625, '6^4': 1296,
+    };
+    const questions = Object.keys(allProblems);
+    const questionStr = questions[Math.floor(Math.random() * questions.length)];
+    const answer = allProblems[questionStr];
+    const [base, exponent] = questionStr.split('^').map(Number);
+    const formattedExponent = toSuperscript(exponent);
+    const formattedQuestion = `${base}${formattedExponent} = ?`;
+    const explanation = `${base}${formattedExponent} = ${answer}. This is a key power to have memorized.`;
+    return { question: formattedQuestion, answer, type: 'Higher Powers & Squares', explanation, inputType: 'number' };
+};
+
+const generateCommonMultiplesProblem_all = (): Problem => {
+    const allPools = [
+        { n1: [13, 14, 16, 17, 18, 19], n2: [2, 3] },
+        { n1: [15], n2: [3, 4, 5, 6, 7, 8, 9] },
+        { n1: [14, 16, 18], n2: [4, 5] },
+        { n1: [24], n2: [2, 3, 4, 5] },
+        { n1: [13, 14, 17, 18, 19], n2: [3, 4, 5] },
+        { n1: [16], n2: [2, 3, 4, 5, 6, 7, 8, 9] },
+        { n1: [36], n2: [3, 4, 5] },
+        { n1: [27, 32], n2: [3, 4, 5] },
+    ];
+    const selectedPool = allPools[Math.floor(Math.random() * allPools.length)];
+    let num1 = selectedPool.n1[Math.floor(Math.random() * selectedPool.n1.length)];
+    let num2 = selectedPool.n2[Math.floor(Math.random() * selectedPool.n2.length)];
+    if (num1 < num2) [num1, num2] = [num2, num1];
+    const answer = num1 * num2;
+    const explanation = `${num1} × ${num2} = ${answer}. This is a useful multiplication to have memorized.`;
+    return { question: `${num1} × ${num2} = ?`, answer, type: 'Memorized Multiplication', explanation, inputType: 'number' };
+};
+
+// --- Targeted generators for Level 3 topics ---
+
+const generateStrategicMulDivProblem = (difficulty: Difficulty): Problem => {
+    let ops: string[];
+    if (difficulty === 'Easy') {
+        ops = ['mul_4', 'div_4', 'mul_5', 'div_5', 'mul_9'];
+    } else if (difficulty === 'Medium') {
+        ops = ['mul_8', 'div_8', 'mul_12_15', 'div_4_rem', 'div_5_rem'];
+    } else {
+        ops = ['mul_9_11_19_99', 'div_8_rem', 'div_12', 'mul_25', 'square_ending_5', 'comp_mul'];
+    }
+    const type = ops[Math.floor(Math.random() * ops.length)];
+    // Re-use the Level 3 generator but force the operation type
+    return generateLevel3ProblemByType(type);
+};
+
+const generateLevel3ProblemByType = (type: string): Problem => {
+    switch (type) {
+        case 'mul_4': {
+            const num = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
+            const answer = num * 4;
+            const explanation = `${num} × 4 = ${num}×2×2 = ${num*2}×2 = ${answer}`;
+            return { question: `${num} × 4 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_4': {
+            const num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 4;
+            const answer = num / 4;
+            const explanation = `${num} ÷ 4 = ${num}÷2÷2 = ${num/2}÷2 = ${answer}`;
+            return { question: `${num} ÷ 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'div_4_rem': {
+            let num;
+            do { num = Math.floor(Math.random() * (200 - 50 + 1)) + 50; } while (num % 4 === 0);
+            const answer = num / 4;
+            const explanation = `${num} ÷ 4 = ${num}÷2÷2 = ${num/2}÷2 = ${answer}`;
+            return { question: `${num} ÷ 4 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'mul_5': {
+            const num = (Math.floor(Math.random() * (100 - 20 + 1)) + 20) * 2;
+            const answer = num * 5;
+            const explanation = `${num} × 5 = ${num} × 10 ÷ 2 = ${num * 10} ÷ 2 = ${answer}`;
+            return { question: `${num} × 5 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_5': {
+            const num = (Math.floor(Math.random() * (50 - 10 + 1)) + 10) * 10;
+            const answer = num / 5;
+            const explanation = `${num} ÷ 5 = (${num} ÷ 10) × 2 = ${num / 10} × 2 = ${answer}`;
+            return { question: `${num} ÷ 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'div_5_rem': {
+            let num;
+            do { num = Math.floor(Math.random() * (200 - 50 + 1)) + 50; } while (num % 5 === 0);
+            const answer = num / 5;
+            const explanation = `${num} ÷ 5 = (${num} * 2) ÷ 10 = ${num*2} ÷ 10 = ${answer}`;
+            return { question: `${num} ÷ 5 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'mul_9': {
+            const num = Math.floor(Math.random() * (99 - 10 + 1)) + 10;
+            const answer = num * 9;
+            const explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
+            return { question: `${num} × 9 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'mul_8': {
+            const num = Math.floor(Math.random() * (99 - 13 + 1)) + 13;
+            const answer = num * 8;
+            const explanation = `${num} × 8 = ${num}×2×2×2 = ${num*2}×2×2 = ${num*4}×2 = ${answer}`;
+            return { question: `${num} × 8 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_8': {
+            const factor = Math.floor(Math.random() * (999 / 8 - 100 / 8 + 1)) + 100 / 8;
+            const num = Math.floor(factor * 8);
+            const answer = num / 8;
+            const explanation = `${num} ÷ 8 = ${num}÷2÷2÷2 = ${num/2}÷2÷2 = ${num/4}÷2 = ${answer}`;
+            return { question: `${num} ÷ 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'div_8_rem': {
+            let num;
+            do { num = Math.floor(Math.random() * (999 - 100 + 1)) + 100; } while (num % 8 === 0);
+            const answer = num / 8;
+            const explanation = `${num} ÷ 8 = ${num} ÷ 2 ÷ 2 ÷ 2 = ${num/2} ÷ 2 ÷ 2 = ${num/4} ÷ 2 = ${answer}`;
+            return { question: `${num} ÷ 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'mul_12_15': {
+            const multiplier = [12, 15][Math.floor(Math.random() * 2)];
+            const num = Math.floor(Math.random() * (70 - 30 + 1)) + 30;
+            const answer = num * multiplier;
+            let explanation = `${num} × ${multiplier} = ${answer}`;
+            if (multiplier === 12) explanation = `${num} × 12 = ${num} × (10 + 2) = ${num*10} + ${num*2} = ${answer}`;
+            if (multiplier === 15) explanation = `${num} × 15 = ${num} × (10 + 5) = ${num*10} + (${num*10} / 2) = ${answer}`;
+            return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'div_12': {
+            const factor = Math.floor(Math.random() * (999 / 12 - 100 / 12 + 1)) + 100 / 12;
+            const num = Math.floor(factor * 12);
+            const answer = num / 12;
+            const explanation = `${num} ÷ 12 = ${num} ÷ 3 ÷ 4 = ${num/3} ÷ 4 = ${answer}`;
+            return { question: `${num} ÷ 12 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };
+        }
+        case 'mul_9_11_19_99': {
+            const multiplier = [9, 11, 19, 99][Math.floor(Math.random() * 4)];
+            const num = Math.floor(Math.random() * (100 - 50 + 1)) + 50;
+            const answer = num * multiplier;
+            let explanation = `${num} × ${multiplier} = ${answer}`;
+            if (multiplier === 9) explanation = `${num} × 9 = ${num} × (10 - 1) = ${num*10} - ${num} = ${answer}`;
+            if (multiplier === 11) explanation = `${num} × 11 = ${num*10} + ${num} = ${answer}`;
+            if (multiplier === 19) explanation = `${num} × 19 = ${num} × (20 - 1) = ${num*20} - ${num} = ${answer}`;
+            if (multiplier === 99) explanation = `${num} × 99 = ${num} × (100 - 1) = ${num*100} - ${num} = ${answer}`;
+            return { question: `${num} × ${multiplier} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'mul_25': {
+            const num = (Math.floor(Math.random() * (40 - 12 + 1)) + 12) * 4;
+            const answer = num * 25;
+            const explanation = `${num} × 25 = ${num} × 100 ÷ 4 = ${num * 100} ÷ 4 = ${answer}`;
+            return { question: `${num} × 25 = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        case 'square_ending_5': {
+            const tens = Math.floor(Math.random() * 8) + 2;
+            const num = tens * 10 + 5;
+            const answer = num * num;
+            const explanation = `${num}²: Take the tens digit (${tens}), multiply by the next one (${tens+1}), which is ${tens * (tens + 1)}. Then append 25. Result: ${answer}`;
+            return { question: `${num}² = ?`, answer, type: 'Strategic Squaring', explanation, inputType: 'number' };
+        }
+        case 'comp_mul': {
+            const midpoint = (Math.floor(Math.random() * 8) + 2) * 10 + 5;
+            const diff = Math.floor(Math.random() * 4) + 1;
+            const num1 = midpoint - diff;
+            const num2 = midpoint + diff;
+            const answer = num1 * num2;
+            const explanation = `${num1} × ${num2} is a complementary multiplication problem. It's (${midpoint} - ${diff}) × (${midpoint} + ${diff}), which simplifies to ${midpoint}² - ${diff}². That is ${midpoint*midpoint} - ${diff * diff} = ${answer}.`;
+            return { question: `${num1} × ${num2} = ?`, answer, type: 'Strategic Multiplication', explanation, inputType: 'number' };
+        }
+        default:
+            return { question: '0 + 0 = ?', answer: 0, type: 'Fallback', explanation: 'Fallback problem', inputType: 'number' };
+    }
+};
+
+const generateDivisibilityProblem_grouped = (divisors: number[], difficulty: Difficulty): Problem => {
+    const divisor = divisors[Math.floor(Math.random() * divisors.length)];
+    let min: number, max: number;
+
+    if (difficulty === 'Easy') {
+        min = 100; max = 999;
+    } else if (difficulty === 'Medium') {
+        min = 1000; max = 9999;
+    } else {
+        min = 10000; max = 99999;
+    }
+
+    const evenOnlyDivisors = [4, 6, 8, 12];
+    let testNum = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (evenOnlyDivisors.includes(divisor) && testNum % 2 !== 0) {
+        testNum += 1;
+    }
+
+    const isDivisible = testNum % divisor === 0;
+    const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
+    return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? 'yes' : 'no', type: 'Divisibility', explanation, inputType: 'buttons', options: ['yes', 'no'] };
+};
+
+// --- Topic routing ---
+
+const generateTopicProblem = (topic: string, difficulty: Difficulty): Problem => {
+    switch (topic) {
+        // Level 1 topics (ignore difficulty)
+        case 'perfect_squares': return generatePerfectSquareProblem_targeted();
+        case 'perfect_cubes': return generatePerfectCubeProblem_targeted();
+        case 'fraction_conversions': return generateFractionProblem_allDenominators();
+        case 'advanced_squares': return generateAdvancedSquareProblem_targeted();
+        case 'advanced_cubes': return generateAdvancedCubeProblem_targeted();
+        case 'higher_powers': return generateHigherPowersProblem_all();
+        case 'common_multiples': return generateCommonMultiplesProblem_all();
+
+        // Level 2 topics (use difficulty)
+        case 'multiplication_estimation': return generateMultiplicationProblem(difficulty);
+        case 'root_estimation': return generateRootEstimationProblem(difficulty);
+        case 'fraction_estimation': return generateFractionEstimationProblem(difficulty);
+        case 'percentage_calculations': return generatePercentageProblem(difficulty);
+
+        // Level 3 topics (use difficulty)
+        case 'strategic_mul_div': return generateStrategicMulDivProblem(difficulty);
+        case 'divisibility_3_6_9': return generateDivisibilityProblem_grouped([3, 6, 9], difficulty);
+        case 'divisibility_4_8': return generateDivisibilityProblem_grouped([4, 8], difficulty);
+        case 'divisibility_7': return generateDivisibilityProblem_grouped([7], difficulty);
+
+        default:
+            throw new Error(`Unknown drill topic: ${topic}`);
+    }
+};
+
+export const generateProblem = (level: number, difficulty: Difficulty, history: string[], topic?: string): Problem => {
+    if (topic) {
+        const generator = () => generateTopicProblem(topic, difficulty);
+        return createUniqueProblem(generator, history);
+    }
+
     let generatorFunction: (difficulty: Difficulty, history: string[]) => Problem;
 
     switch (level) {

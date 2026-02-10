@@ -44,14 +44,13 @@ export const SpeedChallengeProvider = ({ children }: { children: ReactNode }) =>
     } else if (speedChallenge.timeLeft <= 0 && speedChallenge.isActive) {
       // Challenge ended - just set results to show completion
       // TODO: Re-enable leaderboard submission after refactoring
-      setSpeedChallenge(prev => ({ 
-        ...prev, 
-        isActive: false, 
-        results: { 
+      setSpeedChallenge(prev => ({
+        ...prev,
+        isActive: false,
+        results: {
           correct: 0, // Will be updated by the component that tracks score
-          total: 0,
-          isNewUser: false
-        } 
+          total: 0
+        }
       }));
     }
 

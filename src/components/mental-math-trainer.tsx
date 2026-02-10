@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUI } from '@/context/ui-context';
 import { useProblem } from '@/context/problem-context';
 import { useSpeedChallenge } from '@/context/speed-challenge-context';
@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from '@/components/ui/button';
-import { Brain, Moon, Sun, ArrowRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Brain, Moon, Sun, ArrowRight, Trophy, Loader2 } from 'lucide-react';
 import DifficultySelector from '@/components/difficulty-selector';
 import ProblemDisplay from '@/components/problem-display';
 import ScoreDisplay from '@/components/score-display';
@@ -18,6 +19,8 @@ import SpeedChallengeControls from '@/components/speed-challenge-controls';
 import SpeedChallengeReadyScreen from '@/components/speed-challenge-ready-screen';
 import StudyGuide from '@/components/study-guide';
 import Leaderboard from '@/components/leaderboard';
+import { submitScore } from '@/ai/flows/leaderboard-flow';
+import { useToast } from '@/hooks/use-toast';
 
 // Inline components
 const HowToPractice = () => (
@@ -30,35 +33,35 @@ const HowToPractice = () => (
         <AccordionContent className="pt-4">
           <ul className="space-y-3">
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Choose a Mode</strong> - Start with <strong>Memorize</strong> to build a foundation, 
-              then move to <strong>Estimate</strong> to develop intuition, and finally <strong>Get Crafty</strong> to 
+              <strong>Choose a Mode</strong> - Start with <strong>Memorize</strong> to build a foundation,
+              then move to <strong>Estimate</strong> to develop intuition, and finally <strong>Get Crafty</strong> to
               learn advanced strategies.
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Start with Medium</strong> - If it's too hard, drop to Easy. If it's too easy, 
+              <strong>Start with Medium</strong> - If it's too hard, drop to Easy. If it's too easy,
               the app will suggest moving to Hard.
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Use the Study Guide</strong> - The study guide provides reference tables for memorization, 
+              <strong>Use the Study Guide</strong> - The study guide provides reference tables for memorization,
               estimation strategies, and tricks for multiplication and division.
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Don't Show Your Work</strong> - The point of this is to practice everything in your head. 
+              <strong>Don't Show Your Work</strong> - The point of this is to practice everything in your head.
               So throw out your pencil, paper, and calculator or donate them to charity.
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Build speed before advancing</strong> - Once you feel like you can handle a difficulty level 
-              in your head, use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly, 
+              <strong>Build speed before advancing</strong> - Once you feel like you can handle a difficulty level
+              in your head, use <strong>Speed Challenge</strong> to develop automaticity—getting answers quickly,
               not just correctly.
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Make it second nature:</strong> The goal is automaticity. When you see your Aunt Rita, 
-              you don't have to consciously figure out who she is—your brain just serves up "Aunt Rita." 
-              Basic calculations like <code>5³</code> or <code>16×5</code> should feel the same way. 
+              <strong>Make it second nature:</strong> The goal is automaticity. When you see your Aunt Rita,
+              you don't have to consciously figure out who she is—your brain just serves up "Aunt Rita."
+              Basic calculations like <code>5³</code> or <code>16×5</code> should feel the same way.
               This frees up mental energy for more complex problems.
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Pro-Tip: Use your keyboard</strong> - For text answers, press `Enter` to check your answer 
+              <strong>Pro-Tip: Use your keyboard</strong> - For text answers, press `Enter` to check your answer
               and again for the next problem. For "Yes/No" questions, use the `y` and `n` keys.
             </li>
           </ul>
@@ -78,19 +81,19 @@ const HowToStudy = () => (
         <AccordionContent className="pt-4">
           <ul className="space-y-3">
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Chunk information</strong> - Break complex topics into smaller pieces. 
+              <strong>Chunk information</strong> - Break complex topics into smaller pieces.
               Master 1²-5² before adding 6²-10².
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Practice active recall</strong> - Close the study guide and test yourself. 
+              <strong>Practice active recall</strong> - Close the study guide and test yourself.
               Can you recite all perfect squares 1²-10² from memory?
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Alternate study and practice</strong> - Study a chunk (like 1²-5²), 
+              <strong>Alternate study and practice</strong> - Study a chunk (like 1²-5²),
               then immediately practice Easy problems using those squares.
             </li>
             <li className="p-3 bg-secondary/50 rounded-md border border-secondary">
-              <strong>Use spaced repetition (2,3,5,7 method)</strong> - Study today, then review 2 days later, 
+              <strong>Use spaced repetition (2,3,5,7 method)</strong> - Study today, then review 2 days later,
               then 3 days after that, then 5 days, then 7 days. This spacing helps move information into long-term memory.
               <div className="mt-2 p-3 rounded-md font-mono text-xs bg-muted text-muted-foreground">
                 <strong>Schedule:</strong> Day 1: Study → Day 3: Review → Day 6: Review → Day 11: Review → Day 18: Review
@@ -103,12 +106,55 @@ const HowToStudy = () => (
   </div>
 );
 
-const ChallengeResults = () => {
+interface ChallengeResultsProps {
+  challengeParams: { level: number; difficulty: string; duration: number };
+}
+
+const ChallengeResults = ({ challengeParams }: ChallengeResultsProps) => {
   const { handleNewProblem } = useProblem();
-  const { speedChallenge } = useSpeedChallenge();
+  const { speedChallenge, clearSpeedChallengeResults } = useSpeedChallenge();
+  const { refreshLeaderboardData } = useUser();
+  const { toast } = useToast();
   const { results } = speedChallenge;
 
+  const [nameInput, setNameInput] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
   if (!speedChallenge.enabled || speedChallenge.isActive || !results) return null;
+
+  const handleStartNewChallenge = () => {
+    clearSpeedChallengeResults();
+    setNameInput('');
+    setHasSubmitted(false);
+    handleNewProblem();
+  };
+
+  const handleSubmitScore = async () => {
+    if (!nameInput.trim() || results.correct === 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await submitScore({
+        name: nameInput.trim(),
+        score: results.correct,
+        level: challengeParams.level,
+        difficulty: challengeParams.difficulty as 'Easy' | 'Medium' | 'Hard',
+        duration: challengeParams.duration,
+      });
+
+      if (result.success) {
+        toast({ title: "Score submitted!", description: `${nameInput} is now on the leaderboard!` });
+        setHasSubmitted(true);
+        refreshLeaderboardData();
+      } else {
+        toast({ title: "Couldn't save score", description: result.message, variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to submit score", variant: "destructive" });
+    }
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="mt-6">
@@ -119,9 +165,42 @@ const ChallengeResults = () => {
           <span className='font-bold'>{results.total}</span> correct.
         </AlertDescription>
       </Alert>
-      <div className="mt-4 flex justify-center">
-        <Button onClick={() => handleNewProblem()}>
-          <ArrowRight className="w-5 h-5 mr-2" /> Start New Challenge
+
+      {/* Arcade-style name entry */}
+      {results.correct > 0 && !hasSubmitted && (
+        <div className="mt-4 p-4 bg-secondary/50 rounded-lg">
+          <div className="text-center mb-3">
+            <Trophy className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+            <p className="font-semibold">Enter your name for the leaderboard!</p>
+            <p className="text-sm text-muted-foreground">3-12 characters, letters and numbers only</p>
+          </div>
+          <div className="flex gap-2 max-w-sm mx-auto">
+            <Input
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value.toUpperCase())}
+              maxLength={12}
+              placeholder="AAA"
+              className="text-center font-mono text-lg uppercase"
+              disabled={isSubmitting}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitScore(); }}
+              autoFocus
+            />
+            <Button onClick={handleSubmitScore} disabled={isSubmitting || nameInput.trim().length < 3}>
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {hasSubmitted && (
+        <div className="mt-4 p-4 bg-green-500/10 rounded-lg text-center">
+          <p className="font-semibold text-green-600">Score saved to leaderboard!</p>
+        </div>
+      )}
+
+      <div className="mt-4 flex justify-center gap-2">
+        <Button onClick={handleStartNewChallenge} variant={hasSubmitted ? "default" : "outline"}>
+          <ArrowRight className="w-5 h-5 mr-2" /> {hasSubmitted ? "Play Again" : "Skip & Play Again"}
         </Button>
       </div>
     </div>
@@ -139,9 +218,22 @@ const levelToTab = (level: number) => {
 
 export default function MentalMathTrainer() {
   const { mode, setMode, darkMode, setDarkMode, studyTab, setStudyTab } = useUI();
-  const { currentLevel, handleNewProblem } = useProblem();
-  const { speedChallenge } = useSpeedChallenge();
+  const { currentLevel, currentDifficulty, handleNewProblem, score, handleReset } = useProblem();
+  const { speedChallenge, setSpeedChallenge } = useSpeedChallenge();
   const { isLoading } = useUser();
+  const prevIsActive = useRef(speedChallenge.isActive);
+  const scoreRef = useRef(score);
+  const [challengeParams, setChallengeParams] = useState({ level: currentLevel, difficulty: currentDifficulty, duration: speedChallenge.duration });
+
+  // Keep scoreRef in sync
+  scoreRef.current = score;
+
+  // Capture challenge params when challenge starts
+  useEffect(() => {
+    if (speedChallenge.isActive && !prevIsActive.current) {
+      setChallengeParams({ level: currentLevel, difficulty: currentDifficulty, duration: speedChallenge.duration });
+    }
+  }, [speedChallenge.isActive, currentLevel, currentDifficulty, speedChallenge.duration]);
 
   // Initialize first problem on mount
   useEffect(() => {
@@ -149,6 +241,25 @@ export default function MentalMathTrainer() {
       handleNewProblem();
     }
   }, [isLoading, handleNewProblem]);
+
+  // Handle speed challenge state changes
+  useEffect(() => {
+    // When speed challenge starts, reset score and generate new problem
+    if (speedChallenge.isActive && !prevIsActive.current) {
+      handleReset();
+    }
+    // When speed challenge ends, capture the score
+    if (!speedChallenge.isActive && prevIsActive.current) {
+      setSpeedChallenge(prev => ({
+        ...prev,
+        results: {
+          correct: scoreRef.current.correct,
+          total: scoreRef.current.total
+        }
+      }));
+    }
+    prevIsActive.current = speedChallenge.isActive;
+  }, [speedChallenge.isActive, handleReset, setSpeedChallenge]);
 
   const handleModeChange = (newMode: 'practice' | 'study' | 'leaderboard') => {
     if (newMode === 'study') {
@@ -184,9 +295,9 @@ export default function MentalMathTrainer() {
 
         <Card className="shadow-xl">
           <CardContent className="p-4 sm:p-6">
-            <Tabs 
-              value={mode} 
-              onValueChange={(value) => handleModeChange(value as 'practice' | 'study' | 'leaderboard')} 
+            <Tabs
+              value={mode}
+              onValueChange={(value) => handleModeChange(value as 'practice' | 'study' | 'leaderboard')}
               className="w-full"
             >
               <TabsList className="grid w-full grid-cols-3 mb-6">
@@ -198,7 +309,7 @@ export default function MentalMathTrainer() {
               <TabsContent value="practice" className="mt-0">
                 <HowToPractice />
                 <SpeedChallengeControls />
-                
+
                 {showPracticeContent ? (
                   <>
                     <DifficultySelector />
@@ -208,7 +319,7 @@ export default function MentalMathTrainer() {
                 ) : (
                   <SpeedChallengeReadyScreen />
                 )}
-                <ChallengeResults />
+                <ChallengeResults challengeParams={challengeParams} />
               </TabsContent>
 
               <TabsContent value="study" className="mt-0">
