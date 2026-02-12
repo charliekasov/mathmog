@@ -163,7 +163,7 @@ export default function ProblemDisplay() {
     if (speedChallenge.isActive && feedback) {
       const timer = setTimeout(() => {
         handleNewProblem();
-      }, 300);
+      }, 50);
       return () => clearTimeout(timer);
     }
   }, [speedChallenge.isActive, feedback, handleNewProblem]);
