@@ -216,7 +216,7 @@ export default function ProblemDisplay() {
   }
 
   return (
-    <Card className="transition-all duration-500">
+    <Card className={speedChallenge.isActive ? '' : 'transition-all duration-500'}>
       <CardHeader className="text-center">
          <div className="mx-auto">
              <Badge variant="secondary">{currentProblem.type}</Badge>
