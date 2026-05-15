@@ -1,0 +1,27 @@
+/* @peakprep/mathmog — animation classes
+ *
+ * Consumer imports once (e.g. in app/layout.tsx or a global stylesheet):
+ *   import '@peakprep/mathmog/styles.css';
+ *
+ * These two classes are emitted by the package's ProblemDisplay component
+ * when an answer is judged correct/incorrect. Without this CSS, the
+ * components still function but the visual flash effect is missing.
+ */
+
+@keyframes mog-correctFlash {
+  0%   { box-shadow: 0 0 0 0 rgb(34 197 94 / 0.4); }
+  50%  { box-shadow: 0 0 0 4px rgb(34 197 94 / 0.2); }
+  100% { box-shadow: 0 0 0 0 rgb(34 197 94 / 0); }
+}
+.animate-mog-correctFlash {
+  animation: mog-correctFlash 600ms ease-out;
+}
+
+@keyframes mog-incorrectFlash {
+  0%   { box-shadow: 0 0 0 0 rgb(239 68 68 / 0.4); }
+  50%  { box-shadow: 0 0 0 4px rgb(239 68 68 / 0.2); }
+  100% { box-shadow: 0 0 0 0 rgb(239 68 68 / 0); }
+}
+.animate-mog-incorrectFlash {
+  animation: mog-incorrectFlash 600ms ease-out;
+}
