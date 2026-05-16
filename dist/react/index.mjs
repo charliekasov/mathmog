@@ -1666,14 +1666,11 @@ var DRILL_TOPIC_REGISTRY = [
   { id: "divisibility_7", label: "Advanced Divisibility (7, 11)", level: 3, hasDifficulty: true, description: "Multiply-last-digit method (7); alternating digit sum (11)" }
 ];
 function getTopicsForLevel(level) {
-  return DRILL_TOPIC_REGISTRY.filter((t) => t.level === level);
-}
-function getTopicInfo(topicId) {
-  return DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
+  return DRILL_TOPIC_REGISTRY.filter((t) => t.level === level).map((t) => ({ ...t }));
 }
 function topicHasDifficulty(topicId) {
-  const topic = getTopicInfo(topicId);
-  return topic ? topic.hasDifficulty : true;
+  const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
+  return topic ? topic.hasDifficulty : false;
 }
 var levels = [
   { level: 1, name: "Memorize", Icon: Brain },

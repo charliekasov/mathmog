@@ -170,13 +170,12 @@ describe('getTopicsForLevel', () => {
     expect(getTopicsForLevel(-1)).toEqual([]);
   });
 
-  it('returns references to the registry entries (not clones)', () => {
-    // Pinning the current (non-defensive) behavior: callers receive the same
-    // object references as DRILL_TOPIC_REGISTRY. Mutating a returned entry
-    // would mutate the registry. Documented here so a future refactor that
-    // adds cloning is a conscious choice.
+  it('returns defensive copies of registry entries (mutations do not corrupt the registry)', () => {
     const [first] = getTopicsForLevel(1);
-    expect(first).toBe(DRILL_TOPIC_REGISTRY[0]);
+    expect(first).not.toBe(DRILL_TOPIC_REGISTRY[0]);
+    expect(first).toEqual(DRILL_TOPIC_REGISTRY[0]);
+    first.label = 'mutated';
+    expect(DRILL_TOPIC_REGISTRY[0].label).not.toBe('mutated');
   });
 });
 
@@ -208,10 +207,12 @@ describe('getTopicInfo', () => {
     expect(info?.level).toBe(3);
   });
 
-  it('returns the same object reference as DRILL_TOPIC_REGISTRY', () => {
-    // Pinning non-defensive behavior — see equivalent test on getTopicsForLevel.
+  it('returns a defensive copy of the matching entry (mutations do not corrupt the registry)', () => {
     const info = getTopicInfo('perfect_squares');
-    expect(info).toBe(DRILL_TOPIC_REGISTRY[0]);
+    expect(info).not.toBe(DRILL_TOPIC_REGISTRY[0]);
+    expect(info).toEqual(DRILL_TOPIC_REGISTRY[0]);
+    info!.label = 'mutated';
+    expect(DRILL_TOPIC_REGISTRY[0].label).not.toBe('mutated');
   });
 
   it('returns undefined for an unknown topic id', () => {
@@ -329,27 +330,18 @@ describe('topicHasDifficulty', () => {
 
   // --- unknown topic: pinned suspect behavior ---
 
-  it("returns TRUE for 'not_a_topic' (unknown id defaults to has-difficulty)", () => {
-    // PINNED SUSPECT BEHAVIOR — contract §1.3 + Phase 5 minimum coverage.
-    // Implementation: `getTopicInfo(id)?.hasDifficulty ?? true`. Unknown
-    // topics fall through the `?? true` branch, so the UI ends up showing
-    // the difficulty selector for typos / stale topic IDs. Documented as
-    // "by design — unknown-topic default is 'treat as has-difficulty'".
-    //
-    // Triage disposition: PIN (Medium-confidence suspect). If this should
-    // instead default to `false` or throw, file as a follow-up bug and
-    // update this test in the same commit. See triage doc.
-    expect(topicHasDifficulty('not_a_topic')).toBe(true);
+  it("returns false for 'not_a_topic' (unknown topic ids are honest about being unknown)", () => {
+    // Matches the other helpers (`getTopicInfo` → undefined, `getTopicsForLevel`
+    // → []): unknown topics should signal "not found" rather than silently
+    // inventing a has-difficulty default.
+    expect(topicHasDifficulty('not_a_topic')).toBe(false);
   });
 
-  it('returns TRUE for the empty string (unknown id default applies)', () => {
-    // Same fall-through: empty string isn't in the registry.
-    expect(topicHasDifficulty('')).toBe(true);
+  it('returns false for the empty string', () => {
+    expect(topicHasDifficulty('')).toBe(false);
   });
 
-  it('returns TRUE for a similar-but-wrong topic id (case mismatch)', () => {
-    // Confirms the unknown-id default also catches casing typos — relevant
-    // because IDs are sometimes hand-typed in admin tools.
-    expect(topicHasDifficulty('Perfect_Squares')).toBe(true);
+  it('returns false for a similar-but-wrong topic id (case mismatch)', () => {
+    expect(topicHasDifficulty('Perfect_Squares')).toBe(false);
   });
 });

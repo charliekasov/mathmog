@@ -47,14 +47,15 @@ export const DRILL_TOPIC_REGISTRY: DrillTopicInfo[] = [
 ];
 
 export function getTopicsForLevel(level: number): DrillTopicInfo[] {
-  return DRILL_TOPIC_REGISTRY.filter(t => t.level === level);
+  return DRILL_TOPIC_REGISTRY.filter(t => t.level === level).map(t => ({ ...t }));
 }
 
 export function getTopicInfo(topicId: string): DrillTopicInfo | undefined {
-  return DRILL_TOPIC_REGISTRY.find(t => t.id === topicId);
+  const found = DRILL_TOPIC_REGISTRY.find(t => t.id === topicId);
+  return found ? { ...found } : undefined;
 }
 
 export function topicHasDifficulty(topicId: string): boolean {
-  const topic = getTopicInfo(topicId);
-  return topic ? topic.hasDifficulty : true;
+  const topic = DRILL_TOPIC_REGISTRY.find(t => t.id === topicId);
+  return topic ? topic.hasDifficulty : false;
 }
