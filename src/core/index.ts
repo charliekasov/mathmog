@@ -2,7 +2,6 @@
 
 export type {
   Difficulty,
-  Mode,
   Problem,
   SpeedChallengeState,
   PendingLevelUp,

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ComponentType, ReactNode, MouseEvent, ForwardRefExoticComponent, InputHTMLAttributes, RefAttributes, Dispatch, SetStateAction } from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { b as Mode, D as Difficulty, c as Problem, A as AdaptiveData, M as MissedMathmogProblem, S as SpeedChallengeState } from '../miss-types-BQYLsiXe.js';
+import { D as Difficulty, b as Problem, A as AdaptiveData, M as MissedMathmogProblem, S as SpeedChallengeState } from '../miss-types-C9l4wUtK.js';
 
 /**
  * Generic data-attribute passthrough. Allows package components to anchor
@@ -212,8 +212,6 @@ declare function MathmogUIProvider({ ui, children, }: {
 declare function useMathmogUI(): UIPrimitiveBag;
 
 interface TrainerStateContextValue {
-    mode: Mode;
-    setMode: Dispatch<SetStateAction<Mode>>;
     studyTab: string;
     setStudyTab: Dispatch<SetStateAction<string>>;
     darkMode: boolean;

@@ -24,12 +24,9 @@ function useMathmogUI() {
 }
 var TrainerStateContext = createContext(void 0);
 var TrainerStateProvider = ({ children }) => {
-  const [mode, setMode] = useState("practice");
   const [studyTab, setStudyTab] = useState("memorize");
   const [darkMode, setDarkMode] = useState(false);
   const value = {
-    mode,
-    setMode,
     studyTab,
     setStudyTab,
     darkMode,

@@ -2,15 +2,6 @@
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
-/**
- * Trainer mode toggle.
- *
- * NOTE: `'study'` is currently dead in the trainer (no path sets it); both
- * portal and demo only ever use `'practice'`. Kept on the type to preserve
- * the public contract; an audit + trim can happen in a follow-up PR.
- */
-export type Mode = 'practice' | 'study';
-
 export interface Problem {
   question: string | string[];
   answer: any;

@@ -58,7 +58,7 @@ describe('Phase 3 React scaffolding', () => {
       const tm = useTrainerMode();
       const tmo = useTrainerModeOptional();
       seen.ui = !!ui.Card;
-      seen.ts = typeof ts.setMode === 'function';
+      seen.ts = typeof ts.setStudyTab === 'function';
       seen.prob = typeof prob.handleCheckAnswer === 'function';
       seen.sc = typeof sc.handleStartSpeedChallenge === 'function';
       seen.tm = typeof tm.startDrill === 'function';
