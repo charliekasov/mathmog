@@ -1493,11 +1493,7 @@ var SpeedChallengeProvider = ({ children }) => {
       setSpeedChallenge((prev) => ({
         ...prev,
         isActive: false,
-        results: {
-          correct: 0,
-          // Will be updated by the component that tracks score
-          total: 0
-        }
+        results: { ended: true }
       }));
     }
     return () => {

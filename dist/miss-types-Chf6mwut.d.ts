@@ -20,9 +20,14 @@ interface SpeedChallengeState {
     duration: number;
     timeLeft: number;
     isActive: boolean;
+    /**
+     * Tagged "challenge-ended" signal. Truthy iff the round timer ran out;
+     * cleared back to null when the next round starts or the user resets.
+     * Does NOT carry the score — read the live score from the problem
+     * context (`useProblem().score`).
+     */
     results: {
-        correct: number;
-        total: number;
+        ended: true;
     } | null;
 }
 interface PendingLevelUp {

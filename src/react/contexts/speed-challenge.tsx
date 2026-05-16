@@ -42,15 +42,12 @@ export const SpeedChallengeProvider = ({ children }: { children: ReactNode }) =>
         setSpeedChallenge(prev => ({ ...prev, timeLeft: prev.timeLeft - 1 }));
       }, 1000);
     } else if (speedChallenge.timeLeft <= 0 && speedChallenge.isActive) {
-      // Challenge ended - just set results to show completion
-      // TODO: Re-enable leaderboard submission after refactoring
+      // Challenge ended — set the tagged completion signal. Consumers read
+      // the live score from the problem context, not from this field.
       setSpeedChallenge(prev => ({
         ...prev,
         isActive: false,
-        results: {
-          correct: 0, // Will be updated by the component that tracks score
-          total: 0
-        }
+        results: { ended: true },
       }));
     }
 

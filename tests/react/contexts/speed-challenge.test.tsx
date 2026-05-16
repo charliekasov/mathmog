@@ -83,7 +83,7 @@ describe('handleStartSpeedChallenge', () => {
       result.current.setSpeedChallenge(prev => ({
         ...prev,
         duration: 3,
-        results: { correct: 9, total: 10 },
+        results: { ended: true },
       }));
     });
 
@@ -143,7 +143,7 @@ describe('clearSpeedChallengeResults', () => {
         duration: 4,
         timeLeft: 30,
         isActive: false,
-        results: { correct: 7, total: 8 },
+        results: { ended: true },
       }));
     });
 
@@ -277,8 +277,7 @@ describe('end-of-round transition (results !== null && !isActive)', () => {
     ).toBe(true);
   });
 
-  // PINNED — TODO clean up in follow-up (see contract §2.2)
-  it('emits a placeholder results object with correct=0 and total=0 (orchestrator overwrites)', () => {
+  it('emits the tagged ended-signal when the round timer expires', () => {
     const { result } = mountHook();
     act(() => {
       result.current.setSpeedChallenge(prev => ({ ...prev, duration: 1 })); // 60s
@@ -293,10 +292,9 @@ describe('end-of-round transition (results !== null && !isActive)', () => {
       vi.advanceTimersByTime(0);
     });
 
-    // Suspect behavior: the context exposes a zero-zero placeholder, which leaks
-    // to any consumer that reads .correct/.total eagerly instead of waiting for the
-    // orchestrator (problem-context score) to overwrite. Pinning current behavior.
-    expect(result.current.speedChallenge.results).toEqual({ correct: 0, total: 0 });
+    // results is a tag — it signals "the round ended" without claiming to
+    // carry the score. Consumers read the live score from useProblem().
+    expect(result.current.speedChallenge.results).toEqual({ ended: true });
   });
 
   it('does not transition to finished when isActive is false even if timeLeft <= 0', () => {
@@ -386,7 +384,7 @@ describe('setSpeedChallenge (raw setter exposure)', () => {
     expect(result.current.speedChallenge.enabled).toBe(true);
   });
 
-  it('allows callers to overwrite results directly (orchestrator pattern)', () => {
+  it('allows callers to clear results directly via the raw setter', () => {
     const { result } = mountHook();
 
     // Drive the timer to the end of the round.
@@ -403,18 +401,15 @@ describe('setSpeedChallenge (raw setter exposure)', () => {
       vi.advanceTimersByTime(0);
     });
 
-    // Orchestrator overwrites the placeholder with real score.
+    expect(result.current.speedChallenge.results).toEqual({ ended: true });
+
+    // Orchestrators can clear results back to null (e.g. on a level-up
+    // accept or on returning to the ready screen).
     act(() => {
-      result.current.setSpeedChallenge(prev => ({
-        ...prev,
-        results: { correct: 12, total: 15 },
-      }));
+      result.current.setSpeedChallenge(prev => ({ ...prev, results: null }));
     });
 
-    expect(result.current.speedChallenge.results).toEqual({
-      correct: 12,
-      total: 15,
-    });
+    expect(result.current.speedChallenge.results).toBeNull();
     expect(result.current.speedChallenge.isActive).toBe(false);
   });
 

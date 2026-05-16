@@ -24,10 +24,13 @@ export interface SpeedChallengeState {
   duration: number; // in minutes
   timeLeft: number; // in seconds
   isActive: boolean;
-  results: {
-    correct: number;
-    total: number;
-  } | null;
+  /**
+   * Tagged "challenge-ended" signal. Truthy iff the round timer ran out;
+   * cleared back to null when the next round starts or the user resets.
+   * Does NOT carry the score — read the live score from the problem
+   * context (`useProblem().score`).
+   */
+  results: { ended: true } | null;
 }
 
 export interface PendingLevelUp {
