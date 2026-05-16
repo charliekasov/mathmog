@@ -1886,6 +1886,21 @@ function checkRetry(miss, retry) {
     }
     return { isCorrect: Math.abs(userNum - miss.correctAnswerNumeric) < 1e-4 };
   }
+  if (kind === "multi-text") {
+    const alternatives = miss.correctAnswer.split(" or ").map((s) => s.trim().toLowerCase()).filter((s) => s !== "");
+    return { isCorrect: alternatives.includes(trimmed) };
+  }
+  if (kind === "root-estimation") {
+    const userParts = trimmed.split(",").map((s) => s.trim());
+    const correctParts = miss.correctAnswer.split(",").map((s) => s.trim().toLowerCase());
+    if (userParts.length !== correctParts.length || userParts.length < 3) {
+      return { isCorrect: false };
+    }
+    const userBetween = [userParts[0], userParts[1]].sort();
+    const correctBetween = [correctParts[0], correctParts[1]].sort();
+    const betweenMatch = userBetween[0] === correctBetween[0] && userBetween[1] === correctBetween[1];
+    return { isCorrect: betweenMatch && userParts[2] === correctParts[2] };
+  }
   return { isCorrect: trimmed === miss.correctAnswer.toLowerCase() };
 }
 function PerMiss({ miss, onAdvance }) {
@@ -1979,24 +1994,17 @@ function PerMiss({ miss, onAdvance }) {
 }
 function MissesReviewScreen({ misses, onDone }) {
   const ui = useMathmogUI();
-  const reviewable = React__namespace.useMemo(
-    () => misses.filter(
-      (m) => m.validationKind !== "multi-text" && m.validationKind !== "root-estimation"
-    ),
-    [misses]
-  );
-  const skippedCount = misses.length - reviewable.length;
   const [index, setIndex] = React__namespace.useState(0);
   const [keyEpoch, setKeyEpoch] = React__namespace.useState(0);
   const handleAdvance = React__namespace.useCallback(() => {
-    if (index + 1 >= reviewable.length) {
+    if (index + 1 >= misses.length) {
       onDone();
       return;
     }
     setIndex((i) => i + 1);
     setKeyEpoch((k) => k + 1);
-  }, [index, reviewable.length, onDone]);
-  if (reviewable.length === 0) {
+  }, [index, misses.length, onDone]);
+  if (misses.length === 0) {
     return /* @__PURE__ */ jsxRuntime.jsxs(
       "div",
       {
@@ -2004,14 +2012,14 @@ function MissesReviewScreen({ misses, onDone }) {
         "data-tour": "mathmog-misses-review",
         className: "text-center space-y-4 py-8 max-w-md mx-auto",
         children: [
-          /* @__PURE__ */ jsxRuntime.jsx("h2", { className: "text-xl font-semibold", children: "Nothing to replay" }),
-          /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground", children: "Your misses used answer formats this review can't replay. Take a look at the explanations on the drill if you want a second pass." }),
+          /* @__PURE__ */ jsxRuntime.jsx("h2", { className: "text-xl font-semibold", children: "Nothing to review" }),
+          /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground", children: "No misses from this drill. Nice work." }),
           /* @__PURE__ */ jsxRuntime.jsx(ui.Button, { onClick: onDone, children: "Done" })
         ]
       }
     );
   }
-  const currentMiss = reviewable[index];
+  const currentMiss = misses[index];
   return /* @__PURE__ */ jsxRuntime.jsxs(
     "div",
     {
@@ -2023,13 +2031,7 @@ function MissesReviewScreen({ misses, onDone }) {
           "Reviewing miss ",
           index + 1,
           " of ",
-          reviewable.length,
-          skippedCount > 0 && /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "block text-xs mt-1", children: [
-            skippedCount,
-            " miss",
-            skippedCount === 1 ? "" : "es",
-            " skipped \u2014 these used answer formats the review can't replay."
-          ] })
+          misses.length
         ] }),
         /* @__PURE__ */ jsxRuntime.jsx(PerMiss, { miss: currentMiss, onAdvance: handleAdvance }, keyEpoch)
       ]

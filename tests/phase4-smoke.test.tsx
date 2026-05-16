@@ -115,12 +115,12 @@ describe('Phase 4 component smoke', () => {
     expect(container.querySelector('[data-tour="mathmog-speed-duration-1"]')).toBeNull();
   });
 
-  it('MissesReviewScreen shows the "nothing to replay" path on empty input', () => {
+  it('MissesReviewScreen shows the "nothing to review" empty path on empty input', () => {
     const onDone = () => {};
     const { container } = render(
       withProviders(<MissesReviewScreen misses={[]} onDone={onDone} />)
     );
-    expect(container.textContent).toMatch(/Nothing to replay/);
+    expect(container.textContent).toMatch(/Nothing to review/);
   });
 
   it('LevelUpDialog mounts (renders null since no pendingLevelUp yet)', () => {

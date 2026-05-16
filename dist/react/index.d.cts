@@ -356,8 +356,7 @@ interface MissesReviewScreenProps {
 }
 /**
  * Inline review surface that walks the student through each miss with
- * an optional retry attempt + reveal. Filters out kinds whose retry
- * validation we can't safely re-implement (multi-text, root-estimation).
+ * an optional retry attempt + reveal.
  *
  * Reused by both the free-practice Drill flow (inserted between the
  * end of the drill and the quiet completion screen) and the homework

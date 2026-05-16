@@ -161,56 +161,27 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Filter behavior (PINNED per §0 locked decision)
+// All validation kinds are reviewable
 // ---------------------------------------------------------------------------
 
-describe('MissesReviewScreen — kind filtering', () => {
-  it("filters out 'multi-text' and 'root-estimation' kinds from the review queue", async () => {
-    // PINNED — TODO clean up in follow-up (see contract §3.8, locked decision §0)
-    // multi-text + root-estimation are silently filtered. Only the
-    // non-filtered miss should appear, and the skipped count should announce
-    // the two omitted ones.
+describe('MissesReviewScreen — every validation kind is reviewable', () => {
+  it("includes 'multi-text' and 'root-estimation' kinds in the review queue", () => {
     const misses: MissedMathmogProblem[] = [
       makeMiss({ prompt: 'multi-text prompt', validationKind: 'multi-text', correctAnswer: 'a' }),
-      makeMiss({ prompt: 'root-est prompt', validationKind: 'root-estimation', correctAnswer: '5,6' }),
+      makeMiss({ prompt: 'root-est prompt', validationKind: 'root-estimation', correctAnswer: '5,6,5' }),
       makeMiss({ prompt: 'reviewable prompt', validationKind: 'number', correctAnswer: '4', correctAnswerNumeric: 4 }),
     ];
     render(<MissesReviewScreen misses={misses} onDone={vi.fn()} />);
 
-    expect(screen.getByText('reviewable prompt')).toBeInTheDocument();
-    expect(screen.queryByText('multi-text prompt')).not.toBeInTheDocument();
-    expect(screen.queryByText('root-est prompt')).not.toBeInTheDocument();
-    // "Reviewing miss 1 of 1" — only one reviewable.
-    expect(screen.getByText(/Reviewing miss 1 of 1/)).toBeInTheDocument();
+    // First miss (multi-text) is shown immediately.
+    expect(screen.getByText('multi-text prompt')).toBeInTheDocument();
+    expect(screen.getByText(/Reviewing miss 1 of 3/)).toBeInTheDocument();
   });
 
-  it('announces a skipped count when filtered kinds are present (plural form)', () => {
-    // PINNED — TODO clean up in follow-up (see contract §3.8, locked decision §0)
+  it('never renders a skipped-count notice', () => {
     const misses: MissedMathmogProblem[] = [
       makeMiss({ validationKind: 'multi-text', correctAnswer: 'a' }),
-      makeMiss({ validationKind: 'root-estimation', correctAnswer: 'b' }),
-      makeMiss({ validationKind: 'number', correctAnswer: '4', correctAnswerNumeric: 4 }),
-    ];
-    render(<MissesReviewScreen misses={misses} onDone={vi.fn()} />);
-    expect(
-      screen.getByText(/2 misses skipped — these used answer formats the review can't replay\./)
-    ).toBeInTheDocument();
-  });
-
-  it('uses singular "1 miss skipped" when exactly one is filtered', () => {
-    // PINNED — TODO clean up in follow-up (see contract §3.8, locked decision §0)
-    const misses: MissedMathmogProblem[] = [
-      makeMiss({ validationKind: 'multi-text', correctAnswer: 'a' }),
-      makeMiss({ validationKind: 'number', correctAnswer: '4', correctAnswerNumeric: 4 }),
-    ];
-    render(<MissesReviewScreen misses={misses} onDone={vi.fn()} />);
-    expect(
-      screen.getByText(/1 miss skipped — these used answer formats the review can't replay\./)
-    ).toBeInTheDocument();
-  });
-
-  it('does not announce a skipped count when none were filtered', () => {
-    const misses: MissedMathmogProblem[] = [
+      makeMiss({ validationKind: 'root-estimation', correctAnswer: '5,6,5' }),
       makeMiss({ validationKind: 'number', correctAnswer: '4', correctAnswerNumeric: 4 }),
     ];
     render(<MissesReviewScreen misses={misses} onDone={vi.fn()} />);
@@ -219,30 +190,18 @@ describe('MissesReviewScreen — kind filtering', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Empty / all-filtered state
+// Empty state (defensive — callers normally gate this behind length > 0)
 // ---------------------------------------------------------------------------
 
-describe('MissesReviewScreen — empty / fully-filtered state', () => {
-  it('renders the "Nothing to replay" empty state when reviewable.length === 0', () => {
+describe('MissesReviewScreen — empty state', () => {
+  it('renders the "Nothing to review" empty state when misses=[]', () => {
     const onDone = vi.fn();
     render(<MissesReviewScreen misses={[]} onDone={onDone} />);
-    expect(screen.getByText('Nothing to replay')).toBeInTheDocument();
+    expect(screen.getByText('Nothing to review')).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Your misses used answer formats this review can't replay/
-      )
+      screen.getByText(/No misses from this drill/)
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
-  });
-
-  it('renders the empty state when every miss is a filtered kind', () => {
-    // PINNED — TODO clean up in follow-up (see contract §3.8, locked decision §0)
-    const misses: MissedMathmogProblem[] = [
-      makeMiss({ validationKind: 'multi-text', correctAnswer: 'a' }),
-      makeMiss({ validationKind: 'root-estimation', correctAnswer: 'b' }),
-    ];
-    render(<MissesReviewScreen misses={misses} onDone={vi.fn()} />);
-    expect(screen.getByText('Nothing to replay')).toBeInTheDocument();
   });
 
   it('calls onDone when the empty-state "Done" button is clicked', async () => {
@@ -651,6 +610,80 @@ describe('MissesReviewScreen — validationKind dispatch (observable behavior)',
     await user.type(screen.getByPlaceholderText('Try the answer again...'), '  CAT  ');
     await user.click(screen.getByRole('button', { name: /Try again/ }));
     expect(screen.getByText(/Correct — nice recovery!/)).toBeInTheDocument();
+  });
+
+  it("'multi-text' branch: accepts a case-insensitive match against any 'a or b or c' alternative", async () => {
+    const user = userEvent.setup();
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({
+            correctAnswer: '1 or 2 or 3',
+            validationKind: 'multi-text',
+          }),
+        ]}
+        onDone={vi.fn()}
+      />
+    );
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '2');
+    await user.click(screen.getByRole('button', { name: /Try again/ }));
+    expect(screen.getByText(/Correct — nice recovery!/)).toBeInTheDocument();
+  });
+
+  it("'multi-text' branch: rejects input that matches no alternative", async () => {
+    const user = userEvent.setup();
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({
+            correctAnswer: '1 or 2 or 3',
+            validationKind: 'multi-text',
+          }),
+        ]}
+        onDone={vi.fn()}
+      />
+    );
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '99');
+    await user.click(screen.getByRole('button', { name: /Try again/ }));
+    expect(screen.queryByText(/Correct — nice recovery!/)).not.toBeInTheDocument();
+  });
+
+  it("'root-estimation' branch: accepts the between-pair in either order with matching 'closer to'", async () => {
+    const user = userEvent.setup();
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({
+            correctAnswer: '5,6,5',
+            validationKind: 'root-estimation',
+          }),
+        ]}
+        onDone={vi.fn()}
+      />
+    );
+    // 6,5,5 — between pair reversed, closer-to still 5.
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '6,5,5');
+    await user.click(screen.getByRole('button', { name: /Try again/ }));
+    expect(screen.getByText(/Correct — nice recovery!/)).toBeInTheDocument();
+  });
+
+  it("'root-estimation' branch: rejects when 'closer to' is wrong", async () => {
+    const user = userEvent.setup();
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({
+            correctAnswer: '5,6,5',
+            validationKind: 'root-estimation',
+          }),
+        ]}
+        onDone={vi.fn()}
+      />
+    );
+    // Between pair correct but closer-to=6 (correct was 5).
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '5,6,6');
+    await user.click(screen.getByRole('button', { name: /Try again/ }));
+    expect(screen.queryByText(/Correct — nice recovery!/)).not.toBeInTheDocument();
   });
 });
 

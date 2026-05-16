@@ -14,15 +14,10 @@ interface MissesReviewScreenProps {
 /**
  * Self-contained retry validator. Dispatches on the `validationKind`
  * captured at miss-time (problem-context.tsx's six-branch validation).
- * Multi-text and root-estimation kinds are filtered out at the queue
- * level — they're not safe to re-implement here.
  *
  * Returns `{ isCorrect, deviationPercent? }`. `deviationPercent` is set
  * only for the 'estimation' branch, mirroring the live validator's
  * behavior.
- *
- * PINNED: the `multi-text` and `root-estimation` filter (below) is current
- * behavior — extension is deferred to a follow-up PR.
  */
 function checkRetry(
   miss: MissedMathmogProblem,
@@ -57,6 +52,32 @@ function checkRetry(
       return { isCorrect: trimmed === miss.correctAnswer.toLowerCase() };
     }
     return { isCorrect: Math.abs(userNum - miss.correctAnswerNumeric) < 0.0001 };
+  }
+
+  if (kind === 'multi-text') {
+    // miss.correctAnswer was formatted as "a or b or c" at capture time
+    // (formatProblemAnswer joins arrays with ' or '). Match case-insensitively
+    // against any of the listed alternatives.
+    const alternatives = miss.correctAnswer
+      .split(' or ')
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s !== '');
+    return { isCorrect: alternatives.includes(trimmed) };
+  }
+
+  if (kind === 'root-estimation') {
+    // Live validator format: "between_lower, between_upper, closer_to".
+    // The between pair is order-insensitive; "closer to" must match exactly.
+    const userParts = trimmed.split(',').map((s) => s.trim());
+    const correctParts = miss.correctAnswer.split(',').map((s) => s.trim().toLowerCase());
+    if (userParts.length !== correctParts.length || userParts.length < 3) {
+      return { isCorrect: false };
+    }
+    const userBetween = [userParts[0], userParts[1]].sort();
+    const correctBetween = [correctParts[0], correctParts[1]].sort();
+    const betweenMatch =
+      userBetween[0] === correctBetween[0] && userBetween[1] === correctBetween[1];
+    return { isCorrect: betweenMatch && userParts[2] === correctParts[2] };
   }
 
   // default / number-fallback / pre-Slice-2a records without validationKind
@@ -196,8 +217,7 @@ function PerMiss({ miss, onAdvance }: PerMissProps) {
 
 /**
  * Inline review surface that walks the student through each miss with
- * an optional retry attempt + reveal. Filters out kinds whose retry
- * validation we can't safely re-implement (multi-text, root-estimation).
+ * an optional retry attempt + reveal.
  *
  * Reused by both the free-practice Drill flow (inserted between the
  * end of the drill and the quiet completion screen) and the homework
@@ -205,45 +225,37 @@ function PerMiss({ miss, onAdvance }: PerMissProps) {
  */
 export function MissesReviewScreen({ misses, onDone }: MissesReviewScreenProps) {
   const ui = useMathmogUI();
-  const reviewable = React.useMemo(
-    () =>
-      misses.filter(
-        (m) => m.validationKind !== 'multi-text' && m.validationKind !== 'root-estimation'
-      ),
-    [misses]
-  );
-  const skippedCount = misses.length - reviewable.length;
   const [index, setIndex] = React.useState(0);
   const [keyEpoch, setKeyEpoch] = React.useState(0);
 
   const handleAdvance = React.useCallback(() => {
-    if (index + 1 >= reviewable.length) {
+    if (index + 1 >= misses.length) {
       onDone();
       return;
     }
     setIndex((i) => i + 1);
     setKeyEpoch((k) => k + 1);
-  }, [index, reviewable.length, onDone]);
+  }, [index, misses.length, onDone]);
 
-  if (reviewable.length === 0) {
-    // Everything was filtered out — show an honest note and bail.
+  if (misses.length === 0) {
+    // Defensive fallback — callers normally gate this screen behind
+    // missedProblems.length > 0.
     return (
       <div
         data-noah="mathmog-misses-review"
         data-tour="mathmog-misses-review"
         className="text-center space-y-4 py-8 max-w-md mx-auto"
       >
-        <h2 className="text-xl font-semibold">Nothing to replay</h2>
+        <h2 className="text-xl font-semibold">Nothing to review</h2>
         <p className="text-sm text-muted-foreground">
-          Your misses used answer formats this review can&apos;t replay. Take a
-          look at the explanations on the drill if you want a second pass.
+          No misses from this drill. Nice work.
         </p>
         <ui.Button onClick={onDone}>Done</ui.Button>
       </div>
     );
   }
 
-  const currentMiss = reviewable[index];
+  const currentMiss = misses[index];
 
   return (
     <div
@@ -252,12 +264,7 @@ export function MissesReviewScreen({ misses, onDone }: MissesReviewScreenProps) 
       className="space-y-4"
     >
       <div className="text-center text-sm text-muted-foreground">
-        Reviewing miss {index + 1} of {reviewable.length}
-        {skippedCount > 0 && (
-          <span className="block text-xs mt-1">
-            {skippedCount} miss{skippedCount === 1 ? '' : 'es'} skipped — these used answer formats the review can&apos;t replay.
-          </span>
-        )}
+        Reviewing miss {index + 1} of {misses.length}
       </div>
       <PerMiss key={keyEpoch} miss={currentMiss} onAdvance={handleAdvance} />
     </div>
