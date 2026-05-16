@@ -368,8 +368,25 @@ export function ProblemDisplay({
                   </>
                 )}
               </div>
+            ) : estimationTier === 'outside' && feedback === 'correct' ? (
+              // Outside the 10% display band but still within the problem's
+              // wider tolerance (e.g. 20% for multiplication estimation,
+              // 25% for fraction estimation). Acknowledge correctness while
+              // nudging toward tighter estimates.
+              <div className="text-lg font-semibold text-green-600">
+                <span className="text-2xl">✅</span> Correct!
+                <br />
+                <span className="text-base font-medium">
+                  Your estimate was{' '}
+                  {estimationDeviation !== null
+                    ? `${estimationDeviation.toFixed(1)}%`
+                    : 'more than 10%'}{' '}
+                  off — keep pushing to land inside 10%
+                </span>
+              </div>
             ) : estimationTier === 'outside' ? (
-              // Estimation answer outside 10% — warm/constructive
+              // Estimation answer outside 10% AND outside the problem's
+              // tolerance — warm/constructive.
               <div className="text-lg font-semibold text-amber-600 dark:text-amber-500">
                 <span className="text-2xl">💪</span> Keep at it!
                 <br />

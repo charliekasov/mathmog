@@ -1,5 +1,5 @@
-import { D as Difficulty, b as Problem } from '../miss-types-C9l4wUtK.js';
-export { A as AdaptiveData, M as MissedMathmogProblem, a as MissedMathmogProblemKind, P as PendingLevelUp, S as SpeedChallengeState } from '../miss-types-C9l4wUtK.js';
+import { D as Difficulty, b as Problem } from '../miss-types-D3IJmRap.js';
+export { A as AdaptiveData, M as MissedMathmogProblem, a as MissedMathmogProblemKind, P as PendingLevelUp, S as SpeedChallengeState } from '../miss-types-D3IJmRap.js';
 import { ClassValue } from 'clsx';
 
 declare const simplifyFraction: (num: number, den: number) => string;

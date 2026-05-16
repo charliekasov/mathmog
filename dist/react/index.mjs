@@ -1273,7 +1273,7 @@ function ProblemProvider({ children }) {
         } else {
           setEstimationTier("outside");
         }
-        isCorrect = deviation <= 0.1;
+        isCorrect = deviation <= (currentProblem.tolerance ?? 0.1);
       }
     } else if (currentProblem.inputType === "multi-text") {
       validationKind = "multi-text";
@@ -2357,8 +2357,26 @@ function ProblemDisplay({
                   /* @__PURE__ */ jsx("span", { className: "text-base font-medium", children: "Within 10% of the exact answer" })
                 ] })
               ] })
+            ) : estimationTier === "outside" && feedback === "correct" ? (
+              // Outside the 10% display band but still within the problem's
+              // wider tolerance (e.g. 20% for multiplication estimation,
+              // 25% for fraction estimation). Acknowledge correctness while
+              // nudging toward tighter estimates.
+              /* @__PURE__ */ jsxs("div", { className: "text-lg font-semibold text-green-600", children: [
+                /* @__PURE__ */ jsx("span", { className: "text-2xl", children: "\u2705" }),
+                " Correct!",
+                /* @__PURE__ */ jsx("br", {}),
+                /* @__PURE__ */ jsxs("span", { className: "text-base font-medium", children: [
+                  "Your estimate was",
+                  " ",
+                  estimationDeviation !== null ? `${estimationDeviation.toFixed(1)}%` : "more than 10%",
+                  " ",
+                  "off \u2014 keep pushing to land inside 10%"
+                ] })
+              ] })
             ) : estimationTier === "outside" ? (
-              // Estimation answer outside 10% — warm/constructive
+              // Estimation answer outside 10% AND outside the problem's
+              // tolerance — warm/constructive.
               /* @__PURE__ */ jsxs("div", { className: "text-lg font-semibold text-amber-600 dark:text-amber-500", children: [
                 /* @__PURE__ */ jsx("span", { className: "text-2xl", children: "\u{1F4AA}" }),
                 " Keep at it!",

@@ -320,16 +320,15 @@ describe('Level 2 silent fallback (PINNED suspect behavior)', () => {
 });
 
 // -----------------------------------------------------------------------------
-// PINNED suspect behavior: tolerance field set but unused at validation time
+// Problem.tolerance field
 // -----------------------------------------------------------------------------
 
-describe('Problem.tolerance field (PINNED suspect behavior)', () => {
-  // PINNED — TODO clean up in follow-up (contract §1.2 medium-confidence:
-  // generators set `tolerance` on the Problem (0.20 for multiplication, 0.20
-  // for percentage, 0.25 for fraction estimation), but the validator in
-  // problem-context.tsx uses a hardcoded 0.10 — so this field is *currently*
-  // dead at validation time. We pin only that generators emit the field, since
-  // that's the publicly-observable contract of THIS module.
+describe('Problem.tolerance field', () => {
+  // Generators set `tolerance` on the Problem (0.20 for multiplication, 0.20
+  // for percentage, 0.25 for fraction estimation). The validator in
+  // react/contexts/problem.tsx reads this field to widen the correctness
+  // window for estimation problems; this module's contract is just that the
+  // field is emitted with the documented per-topic values.
 
   let randomSpy: ReturnType<typeof vi.spyOn>;
   beforeEach(() => {

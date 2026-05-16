@@ -504,16 +504,25 @@ describe('handleCheckAnswer — six-branch cascade (first match wins)', () => {
     expect(result.current.feedback).toBe('correct');
   });
 
-  it('estimation — tolerance field on Problem is IGNORED (PINNED suspect)', () => {
-    // PINNED — TODO clean up in follow-up (see contract §2.1 + locked decisions §0).
-    // `Problem.tolerance` is currently unused at validation time. The
-    // deviation ladder hard-codes 0.001 / 0.02 / 0.05 / 0.10. Setting
-    // tolerance to 0.5 does NOT widen the correctness window — 30% off
-    // is still 'outside' and incorrect.
+  it('estimation — tolerance field on Problem widens the correctness window', () => {
+    // Problem.tolerance now gates correctness. The display tiers (exact /
+    // within2 / within5 / within10) keep their fixed 0/2/5/10% thresholds
+    // and describe estimate quality independently of correctness. A 30%-off
+    // estimate falls into the 'outside' tier but is marked correct when
+    // tolerance allows it.
     queueProblems([estimationProblem(100, { tolerance: 0.5 })]);
     const { result } = renderHook(() => useProblem(), { wrapper });
     act(() => result.current.handleNewProblem());
-    act(() => result.current.handleCheckAnswer('70')); // 30% off
+    act(() => result.current.handleCheckAnswer('70')); // 30% off, tolerance 0.5
+    expect(result.current.feedback).toBe('correct');
+    expect(result.current.estimationTier).toBe('outside');
+  });
+
+  it('estimation — without a Problem.tolerance, the validator falls back to 10%', () => {
+    queueProblems([estimationProblem(100)]); // no tolerance field
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() => result.current.handleNewProblem());
+    act(() => result.current.handleCheckAnswer('85')); // 15% off
     expect(result.current.feedback).toBe('incorrect');
     expect(result.current.estimationTier).toBe('outside');
   });

@@ -164,7 +164,12 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
           setEstimationTier('outside');
         }
 
-        isCorrect = deviation <= 0.10;
+        // Correctness gate: prefer the problem's per-instance tolerance if
+        // it's set (multiplication/percentage estimation = 0.20, fraction
+        // estimation = 0.25), fall back to 10%. The display tiers above are
+        // fixed at 0/2/5/10% — they describe estimate quality, not
+        // correctness — so 'outside' can be correct when tolerance > 0.10.
+        isCorrect = deviation <= (currentProblem.tolerance ?? 0.10);
       }
     } else if (currentProblem.inputType === 'multi-text') {
       validationKind = 'multi-text';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ComponentType, ReactNode, MouseEvent, ForwardRefExoticComponent, InputHTMLAttributes, RefAttributes, Dispatch, SetStateAction } from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { D as Difficulty, b as Problem, A as AdaptiveData, M as MissedMathmogProblem, S as SpeedChallengeState } from '../miss-types-C9l4wUtK.js';
+import { D as Difficulty, b as Problem, A as AdaptiveData, M as MissedMathmogProblem, S as SpeedChallengeState } from '../miss-types-D3IJmRap.js';
 
 /**
  * Generic data-attribute passthrough. Allows package components to anchor

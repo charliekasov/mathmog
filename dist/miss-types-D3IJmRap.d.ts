@@ -7,11 +7,10 @@ interface Problem {
     inputType: 'number' | 'text' | 'buttons' | 'multi-text';
     options?: string[];
     /**
-     * NOTE: this field is currently unused at validation time — the answer
-     * validator in `problem-context.tsx` uses fixed tolerances per validation
-     * branch (e.g. 0.0001 absolute for floats, 10% relative for estimations)
-     * rather than reading `tolerance`. Kept on the type for backwards-compat
-     * with generators that set it; either wire or drop in a follow-up PR.
+     * Maximum acceptable relative deviation for estimation problems (e.g. 0.20
+     * = 20% off still counts as correct). Read by the estimation branch of the
+     * answer validator in `react/contexts/problem.tsx`. Falls back to 0.10
+     * (10%) when omitted. Has no effect on non-estimation problems.
      */
     tolerance?: number;
     placeholder?: string;
