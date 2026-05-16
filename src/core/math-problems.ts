@@ -417,10 +417,12 @@ const generateMultiplicationProblem = (difficulty: Difficulty): Problem => {
     if (difficulty === 'Hard') { aMin=51; aMax=149; bMin=21; bMax=79; }
     
     const generateNonMultipleOf10 = (min: number, max: number) => {
-        let num;
+        let num = 0;
+        let attempt = 0;
         do {
             num = Math.floor(Math.random() * (max - min + 1)) + min;
-        } while (num % 10 === 0);
+            attempt++;
+        } while (num % 10 === 0 && attempt < 50);
         return num;
     };
 
@@ -458,15 +460,19 @@ const generatePercentageProblem = (difficulty: Difficulty): Problem => {
         base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
         questionText = `What is ${percent}% of ${base}?`;
     } else if (difficulty === 'Medium') {
+        let attempt = 0;
         do {
             percent = Math.floor(Math.random() * 89) + 11; // 11-99
-        } while (percent % 10 === 0 || percent % 5 === 0);
+            attempt++;
+        } while ((percent % 10 === 0 || percent % 5 === 0) && attempt < 50);
         base = (Math.floor(Math.random() * 15) + 2) * 100; // 200, 300... 1600
         questionText = `What is ${percent}% of ${base}?`;
     } else { // Hard
-         do {
+        let attempt = 0;
+        do {
             percent = Math.floor(Math.random() * 89) + 11; // 11-99
-        } while (percent % 10 === 0);
+            attempt++;
+        } while (percent % 10 === 0 && attempt < 50);
         base = Math.floor(Math.random() * 900) + 100; // 100-999
         if (base % 100 === 0) base += 1;
         questionText = `Estimate: ${percent}% of ${base}`;
@@ -653,7 +659,11 @@ const generateLevel3CaseByType = (type: string, difficulty: Difficulty): Problem
                 answer = factor;
                 explanation = `${num} ÷ 5 = (${num} ÷ 10) × 2 = ${num / 10} × 2 = ${answer}`;
             } else {
-                do { num = Math.floor(Math.random() * (199 - 50 + 1)) + 50; } while (num % 5 === 0);
+                let attempt = 0;
+                do {
+                    num = Math.floor(Math.random() * (199 - 50 + 1)) + 50;
+                    attempt++;
+                } while (num % 5 === 0 && attempt < 50);
                 answer = num / 5;
                 explanation = `${num} ÷ 5 = (${num} × 2) ÷ 10 = ${num*2} ÷ 10 = ${answer}`;
             }
@@ -682,7 +692,11 @@ const generateLevel3CaseByType = (type: string, difficulty: Difficulty): Problem
         }
         case 'div_8_rem': {
             let num: number;
-            do { num = Math.floor(Math.random() * (999 - 100 + 1)) + 100; } while (num % 8 === 0);
+            let attempt = 0;
+            do {
+                num = Math.floor(Math.random() * (999 - 100 + 1)) + 100;
+                attempt++;
+            } while (num % 8 === 0 && attempt < 50);
             const answer = num / 8;
             const explanation = `${num} ÷ 8 = ${num} ÷ 2 ÷ 2 ÷ 2 = ${num/2} ÷ 2 ÷ 2 = ${num/4} ÷ 2 = ${answer}`;
             return { question: `${num} ÷ 8 = ?`, answer, type: 'Strategic Division', explanation, inputType: 'number' };

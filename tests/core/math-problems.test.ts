@@ -111,20 +111,10 @@ describe('simplifyFraction', () => {
 describe('generateProblem — level + difficulty matrix', () => {
   // Reset Math.random between cases. Each case uses a fixed stub so a single
   // failure is reproducible.
-  //
-  // SAFE-SEED NOTE (surfaced during Phase-5 lift, 2026-05-15):
-  // The source's `generateNonMultipleOf10` (math-problems.ts:419-425) and four
-  // sibling rejection loops at lines 463/469/656/685 have no iteration cap.
-  // If `Math.random` is mocked to a constant that the rejection condition is
-  // always true for, the loop spins forever and the `vi.spyOn` call-history
-  // recorder grows the heap until OOM. 0.5 was the staged seed and trips four
-  // of the five bands; 0.42 trips none of them. FLAGGED — not pinned: this is
-  // a real (but reachable only when Math.random is mocked) source defect to
-  // file as a follow-up alongside the other locked-pinned cleanups.
   let randomSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.42);
+    randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
   });
 
   afterEach(() => {
@@ -143,10 +133,7 @@ describe('generateProblem — level + difficulty matrix', () => {
   it('handles non-zero Math.random stub for each (level × difficulty) combo without throwing', () => {
     // Belt-and-suspenders: exercise the matrix across a few seed values to surface
     // any path that's gated on a different `Math.random()` range.
-    // Safe-seeds only — see SAFE-SEED NOTE above. The original [0.0, 0.1,
-    // 0.3, 0.7, 0.99] tripped the source's uncapped rejection loops on 3 of
-    // 5 values; the substituted seeds avoid every rejection band.
-    const seeds = [0.13, 0.42, 0.69, 0.83, 0.99];
+    const seeds = [0.0, 0.1, 0.3, 0.7, 0.99];
     for (const seed of seeds) {
       randomSpy.mockReturnValue(seed);
       for (const level of LEVELS) {
@@ -404,8 +391,6 @@ describe('Repeating-decimal answer encoding (PINNED suspect behavior)', () => {
     // (3, 6, 7, 9) under fracToDec emits an array of all accepted decimal
     // forms from specificAnswers — the live validator accepts any element.
     // Loop seeds until we deterministically observe a fracToDec emission.
-    // Safe-seeds only — see SAFE-SEED NOTE above. The original sweep
-    // included 0.0/0.1/0.3/0.5/etc which trip uncapped rejection loops.
     const seeds = [0.13, 0.27, 0.42, 0.69, 0.83, 0.91, 0.99];
     let sawArrayAnswer = false;
     for (const s of seeds) {
@@ -535,7 +520,6 @@ describe('Topic-specific Problem shapes', () => {
 
   it('decToFrac / percToFrac problems have inputType="text" with simplified string answer', () => {
     // Sweep seeds until we observe a text-input Fraction problem.
-    // Safe-seeds only — see SAFE-SEED NOTE.
     const seeds = [0.13, 0.27, 0.42, 0.69, 0.83, 0.91, 0.99];
     let sawTextFraction = false;
     for (const s of seeds) {
@@ -552,7 +536,7 @@ describe('Topic-specific Problem shapes', () => {
 
   it('perfect_squares topic always emits numeric question and numeric answer', () => {
     // Sweep multiple seeds to confirm.
-    const seeds = [0.05, 0.42, 0.95]; // 0.5 swapped to 0.42 per SAFE-SEED NOTE
+    const seeds = [0.05, 0.5, 0.95];
     for (const s of seeds) {
       randomSpy.mockReturnValue(s);
       const p = generateProblem(1, 'Easy', [], 'perfect_squares');
@@ -564,7 +548,7 @@ describe('Topic-specific Problem shapes', () => {
   });
 
   it('perfect_cubes topic always emits "X³ = ?" with answer = X*X*X', () => {
-    const seeds = [0.05, 0.42, 0.95]; // 0.5 swapped to 0.42 per SAFE-SEED NOTE
+    const seeds = [0.05, 0.5, 0.95];
     for (const s of seeds) {
       randomSpy.mockReturnValue(s);
       const p = generateProblem(1, 'Easy', [], 'perfect_cubes');
@@ -605,4 +589,61 @@ describe('history argument', () => {
       }
     }
   });
+});
+
+// -----------------------------------------------------------------------------
+// Rejection-loop iteration caps (regression)
+// -----------------------------------------------------------------------------
+// `generateNonMultipleOf10` and four sibling rejection loops previously had
+// no iteration cap. If `Math.random` returned a constant in the rejection
+// band, the loop spun forever. Each loop now bails after 50 attempts, returning
+// whatever the most recent draw produced (a degraded but well-formed Problem
+// is preferred over a hang).
+
+describe('Rejection-loop iteration caps (regression)', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    randomSpy = vi.spyOn(Math, 'random');
+  });
+  afterEach(() => {
+    randomSpy.mockRestore();
+  });
+
+  // The (11,29) multiplication band: Math.random=0.5 → 20 (multiple of 10).
+  // Without the cap, `generateNonMultipleOf10` spins forever on this seed.
+  it('multiplication_estimation Easy terminates when Math.random always trips the non-multiple-of-10 reject', () => {
+    randomSpy.mockReturnValue(0.5);
+    const p = generateProblem(1, 'Easy', [], 'multiplication_estimation');
+    expectProblemShape(p);
+  }, 1000);
+
+  // The (51,149) Hard multiplication band: Math.random=0.5 → 100 (multiple of 10).
+  it('multiplication_estimation Hard terminates when Math.random always trips the non-multiple-of-10 reject', () => {
+    randomSpy.mockReturnValue(0.5);
+    const p = generateProblem(1, 'Hard', [], 'multiplication_estimation');
+    expectProblemShape(p);
+  }, 1000);
+
+  // Percentage Medium band: Math.random=0.5 → percent=55 (multiple of 5) →
+  // trips the `% 5 === 0` reject.
+  it('percentage_calculations Medium terminates when Math.random always trips the % 5 reject', () => {
+    randomSpy.mockReturnValue(0.5);
+    const p = generateProblem(1, 'Medium', [], 'percentage_calculations');
+    expectProblemShape(p);
+  }, 1000);
+
+  // div_5 Hard band (50..199): Math.random=0 → num=50 (multiple of 5) → trips
+  // the `% 5 === 0` reject.
+  it('strategic_mul_div div_5 terminates when Math.random always trips the % 5 reject', () => {
+    // Force div_5 by seeding the case selector. The strategic_mul_div topic
+    // picks a case from a small array via Math.random; a 0-valued seed lands
+    // on the first entry. We can't directly pin which case is div_5 without
+    // peeking at the source, so sweep a few seed values: any case that has an
+    // uncapped reject loop would hang the whole test if the cap broke.
+    for (const seed of [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]) {
+      randomSpy.mockReturnValue(seed);
+      const p = generateProblem(1, 'Hard', [], 'strategic_mul_div');
+      expectProblemShape(p);
+    }
+  }, 2000);
 });

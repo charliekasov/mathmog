@@ -458,10 +458,12 @@ var generateMultiplicationProblem = (difficulty) => {
     bMax = 79;
   }
   const generateNonMultipleOf10 = (min, max) => {
-    let num;
+    let num = 0;
+    let attempt = 0;
     do {
       num = Math.floor(Math.random() * (max - min + 1)) + min;
-    } while (num % 10 === 0);
+      attempt++;
+    } while (num % 10 === 0 && attempt < 50);
     return num;
   };
   const a = generateNonMultipleOf10(aMin, aMax);
@@ -493,15 +495,19 @@ var generatePercentageProblem = (difficulty) => {
     base = (Math.floor(Math.random() * 15) + 2) * 100;
     questionText = `What is ${percent}% of ${base}?`;
   } else if (difficulty === "Medium") {
+    let attempt = 0;
     do {
       percent = Math.floor(Math.random() * 89) + 11;
-    } while (percent % 10 === 0 || percent % 5 === 0);
+      attempt++;
+    } while ((percent % 10 === 0 || percent % 5 === 0) && attempt < 50);
     base = (Math.floor(Math.random() * 15) + 2) * 100;
     questionText = `What is ${percent}% of ${base}?`;
   } else {
+    let attempt = 0;
     do {
       percent = Math.floor(Math.random() * 89) + 11;
-    } while (percent % 10 === 0);
+      attempt++;
+    } while (percent % 10 === 0 && attempt < 50);
     base = Math.floor(Math.random() * 900) + 100;
     if (base % 100 === 0) base += 1;
     questionText = `Estimate: ${percent}% of ${base}`;
@@ -654,9 +660,11 @@ var generateLevel3CaseByType = (type, difficulty) => {
         answer = factor;
         explanation = `${num} \xF7 5 = (${num} \xF7 10) \xD7 2 = ${num / 10} \xD7 2 = ${answer}`;
       } else {
+        let attempt = 0;
         do {
           num = Math.floor(Math.random() * (199 - 50 + 1)) + 50;
-        } while (num % 5 === 0);
+          attempt++;
+        } while (num % 5 === 0 && attempt < 50);
         answer = num / 5;
         explanation = `${num} \xF7 5 = (${num} \xD7 2) \xF7 10 = ${num * 2} \xF7 10 = ${answer}`;
       }
@@ -684,9 +692,11 @@ var generateLevel3CaseByType = (type, difficulty) => {
     }
     case "div_8_rem": {
       let num;
+      let attempt = 0;
       do {
         num = Math.floor(Math.random() * (999 - 100 + 1)) + 100;
-      } while (num % 8 === 0);
+        attempt++;
+      } while (num % 8 === 0 && attempt < 50);
       const answer = num / 8;
       const explanation = `${num} \xF7 8 = ${num} \xF7 2 \xF7 2 \xF7 2 = ${num / 2} \xF7 2 \xF7 2 = ${num / 4} \xF7 2 = ${answer}`;
       return { question: `${num} \xF7 8 = ?`, answer, type: "Strategic Division", explanation, inputType: "number" };
