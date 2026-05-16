@@ -2075,13 +2075,11 @@ function MultiTextInput({ questionParts, onComplete, onCheck, disabled }) {
       inputRefs.current[0].focus();
     }
   }, [questionParts]);
-  useEffect(() => {
-    onComplete(answers.join(","));
-  }, [answers, onComplete]);
   const handleChange = (index, value) => {
     const newAnswers = [...answers];
     newAnswers[index] = value;
     setAnswers(newAnswers);
+    onComplete(newAnswers.join(","));
   };
   const handleKeyDown = (e, index) => {
     if (e.key === "Enter") {

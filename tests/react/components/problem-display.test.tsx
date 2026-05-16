@@ -500,42 +500,37 @@ describe('ProblemDisplay — multi-text input', () => {
     expect(screen.getByText(/ALPHA/)).toBeInTheDocument();
   });
 
-  // PINNED — TODO clean up in follow-up (see contract §3.1 "Suspect
-  // behaviors", locked decision §0). The MultiTextInput effect on
-  // [answers, onComplete] fires on mount with the initial ['', '', '']
-  // state and emits ['', '', ''].join(',') === ",," via onComplete →
-  // setUserAnswer. This pre-populates userAnswer to ",," before the user
-  // has typed anything, and the "Check Answer" trim() === '' guard does
-  // NOT block a ",,"-only submission.
-  it('writes ",," to userAnswer on mount (pinned suspect behavior)', () => {
+  it('keeps userAnswer empty on mount until the user types', () => {
     queueProblems([multiTextProblem()]);
     render(<Providers />);
     act(() => handle!.problem.handleNewProblem());
 
-    expect(handle!.problem.userAnswer).toBe(',,');
+    expect(handle!.problem.userAnswer).toBe('');
   });
 
-  // PINNED — the trim()-empty guard is bypassed by the ",,"-on-mount write.
-  it('Check Answer button is NOT disabled by the trim() guard despite no user typing (",,") (pinned)', () => {
+  it('Check Answer button is disabled before the user has typed anything', () => {
     queueProblems([multiTextProblem()]);
     render(<Providers />);
     act(() => handle!.problem.handleNewProblem());
 
-    // userAnswer is ",,", whose trim() is ",," (non-empty), so the
-    // Check Answer button is enabled even though the user has typed nothing.
+    const btn = screen.getByRole('button', { name: /check answer/i });
+    expect(btn).toBeDisabled();
+  });
+
+  it('Check Answer becomes enabled and reports correct feedback after the user types a valid answer', async () => {
+    queueProblems([multiTextProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+
+    const inputs = screen.getAllByRole('textbox') as HTMLInputElement[];
+    fireEvent.change(inputs[0], { target: { value: '3' } });
+    fireEvent.change(inputs[1], { target: { value: '3' } });
+    fireEvent.change(inputs[2], { target: { value: '4' } });
+
     const btn = screen.getByRole('button', { name: /check answer/i });
     expect(btn).not.toBeDisabled();
-  });
-
-  // PINNED — pressing Check Answer here actually fires handleCheckAnswer(",,").
-  it('clicking Check Answer with the ",,"-on-mount value submits ",," and records feedback', async () => {
-    queueProblems([multiTextProblem()]);
-    render(<Providers />);
-    act(() => handle!.problem.handleNewProblem());
-
-    await userEvent.click(screen.getByRole('button', { name: /check answer/i }));
-    // ",," is NOT one of the acceptable answers; feedback resolves "incorrect".
-    expect(handle!.problem.feedback).toBe('incorrect');
+    await userEvent.click(btn);
+    expect(handle!.problem.feedback).toBe('correct');
   });
 
   it('Enter on the third input calls onCheck (submit)', () => {

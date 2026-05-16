@@ -26,18 +26,11 @@ function MultiTextInput({ questionParts, onComplete, onCheck, disabled }: MultiT
     }
   }, [questionParts]);
 
-  // PINNED: this effect fires on mount with the empty `['', '', '']` array,
-  // immediately emitting `","` (two empty parts joined by commas) up to the
-  // problem context as `userAnswer`. Cleanup is a follow-up PR — preserved
-  // verbatim so the extraction is a faithful move.
-  useEffect(() => {
-    onComplete(answers.join(','));
-  }, [answers, onComplete]);
-
   const handleChange = (index: number, value: string) => {
     const newAnswers = [...answers];
     newAnswers[index] = value;
     setAnswers(newAnswers);
+    onComplete(newAnswers.join(','));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
