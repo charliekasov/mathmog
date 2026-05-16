@@ -1427,11 +1427,11 @@ function ProblemProvider({ children }) {
     if (!adaptiveData.pendingLevelUp) return;
     if (accept) {
       if (adaptiveData.pendingLevelUp.action === "changeDifficulty" && adaptiveData.pendingLevelUp.to) {
-        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to);
+        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to, currentTopic);
       }
     }
     setAdaptiveData((prev) => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0, streakPure: true }));
-  }, [adaptiveData.pendingLevelUp, currentLevel, handleLevelDifficultyChange]);
+  }, [adaptiveData.pendingLevelUp, currentLevel, currentTopic, handleLevelDifficultyChange]);
   const taintStreak = React.useCallback(() => {
     setAdaptiveData((prev) => prev.streakPure ? { ...prev, streakPure: false } : prev);
   }, []);

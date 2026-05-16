@@ -324,13 +324,13 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
     if (accept) {
       if (adaptiveData.pendingLevelUp.action === 'changeDifficulty' && adaptiveData.pendingLevelUp.to) {
-        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to);
+        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to, currentTopic);
       }
     }
 
     // Streak boundary on accept-or-decline — re-purify.
     setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0, streakPure: true }));
-  }, [adaptiveData.pendingLevelUp, currentLevel, handleLevelDifficultyChange]);
+  }, [adaptiveData.pendingLevelUp, currentLevel, currentTopic, handleLevelDifficultyChange]);
 
   // One-way ratchet within a streak. Safe to call any time — when
   // consecutiveCorrect is already 0 this is a no-op (next reset site will

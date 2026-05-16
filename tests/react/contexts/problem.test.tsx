@@ -914,11 +914,9 @@ describe('handleLevelUp', () => {
     expect(result.current.adaptiveData.streakPure).toBe(true);
   });
 
-  it('accept (changeDifficulty) DROPS currentTopic (PINNED suspect)', () => {
-    // PINNED — TODO clean up in follow-up (see contract §2.1).
-    // handleLevelUp calls handleLevelDifficultyChange(currentLevel, to)
-    // without the topic arg, so a drill that was scoped to a topic loses
-    // that scope on accept.
+  it('accept (changeDifficulty) PRESERVES currentTopic across the difficulty bump', () => {
+    // Topic-scoped drills keep their topic scope on accept — handleLevelUp
+    // forwards currentTopic into handleLevelDifficultyChange.
     queueProblems([
       textProblem({ question: 'T0' }),
       ...Array.from({ length: 7 }, (_, i) => textProblem({ question: `Q${i}` })),
@@ -934,7 +932,7 @@ describe('handleLevelUp', () => {
     expect(result.current.adaptiveData.pendingLevelUp).not.toBeNull();
     act(() => result.current.handleLevelUp(true));
     expect(result.current.currentDifficulty).toBe('Medium');
-    expect(result.current.currentTopic).toBeUndefined();
+    expect(result.current.currentTopic).toBe('fractions');
   });
 
   it('accept (trySpeedChallenge) does NOT mutate level/difficulty/topic — only adaptiveData', () => {
