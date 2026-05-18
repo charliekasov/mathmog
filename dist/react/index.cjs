@@ -1708,7 +1708,7 @@ function DifficultySelector() {
       ),
       children: [
         /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "level-select", className: "mb-2 block", children: "Mode" }),
+          /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "level-select", className: "mb-2 block", children: "Skill" }),
           /* @__PURE__ */ jsxRuntime.jsxs(
             ui.Select,
             {

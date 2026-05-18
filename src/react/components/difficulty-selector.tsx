@@ -35,7 +35,7 @@ export function DifficultySelector() {
       >
         <div>
           <ui.Label htmlFor="level-select" className="mb-2 block">
-            Mode
+            Skill
           </ui.Label>
           <ui.Select
             value={String(currentLevel)}
