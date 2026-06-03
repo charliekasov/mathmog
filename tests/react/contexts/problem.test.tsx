@@ -23,9 +23,11 @@
  *     forwarding the topic into `handleLevelDifficultyChange`.
  *   - STILL PINNED: `handleNewProblem` silently swallows generator throws
  *     (only logs).
- *   - STILL PINNED: `generateProblem` throw leaves prior `currentProblem`
- *     AND flags (feedback/showAnswer/etc.) untouched, leaving a
- *     stale-over-stale risk.
+ *   - WIRED: `generateProblem` throw clears the four UI flags
+ *     (feedback / showAnswer / estimationTier / estimationDeviation) in
+ *     the catch. `currentProblem` and `problemHistory` are intentionally
+ *     left untouched so the previously-rendered problem stays on screen
+ *     while the next-problem attempt resets the per-problem UI state.
  *   - STILL PINNED: Repeating decimals. The validator does not "truncate";
  *     the number branch only matches within 0.0001 of an array entry, and
  *     the multi-text branch only matches an exact lowercased string entry.
@@ -316,11 +318,12 @@ describe('handleNewProblem', () => {
     errSpy.mockRestore();
   });
 
-  it('on generator throw AFTER an answered problem: stale feedback/showAnswer remain (PINNED suspect)', () => {
-    // PINNED — TODO clean up in follow-up (see contract §2.1).
-    // When generator throws, the provider does not clear the previous
-    // feedback/estimationTier/showAnswer — UX shows stale flags over a
-    // stale problem.
+  it('on generator throw AFTER an answered problem: clears feedback / showAnswer / estimation state', () => {
+    // The catch in `handleNewProblem` clears the four UI flags that the
+    // happy path also clears at the top of the try (feedback,
+    // estimationTier, estimationDeviation, showAnswer). `currentProblem`
+    // and `problemHistory` are intentionally left untouched — the
+    // companion test above pins that contract.
     const p1 = numberProblem();
     queueProblems([p1]);
     const { result } = renderHook(() => useProblem(), { wrapper });
@@ -336,8 +339,10 @@ describe('handleNewProblem', () => {
     act(() => result.current.handleNewProblem());
     errSpy.mockRestore();
 
-    expect(result.current.feedback).toBe('correct');
-    expect(result.current.showAnswer).toBe(true);
+    expect(result.current.feedback).toBe('');
+    expect(result.current.showAnswer).toBe(false);
+    expect(result.current.estimationTier).toBeNull();
+    expect(result.current.estimationDeviation).toBeNull();
   });
 });
 

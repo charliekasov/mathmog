@@ -103,6 +103,15 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error("Error generating problem:", error);
+      // Mirror the happy-path resets at the top of the try so a generator
+      // throw can't leave the previous problem's feedback / showAnswer /
+      // estimation flags on screen. `currentProblem` and `problemHistory`
+      // are intentionally not touched (companion test pins that contract).
+      setUserAnswer('');
+      setFeedback('');
+      setEstimationTier(null);
+      setEstimationDeviation(null);
+      setShowAnswer(false);
     }
   }, [currentLevel, currentDifficulty]); // Removed problemHistory from deps
 

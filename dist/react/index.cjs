@@ -1210,6 +1210,11 @@ function ProblemProvider({ children }) {
       });
     } catch (error) {
       console.error("Error generating problem:", error);
+      setUserAnswer("");
+      setFeedback("");
+      setEstimationTier(null);
+      setEstimationDeviation(null);
+      setShowAnswer(false);
     }
   }, [currentLevel, currentDifficulty]);
   const handleCheckAnswer = React.useCallback((answerToCheck) => {
