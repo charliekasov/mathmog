@@ -24,6 +24,7 @@ import {
   perfectCubes,
   perfectFourthPowers,
   perfectFifthPowers,
+  fractionBasesByDenominator,
 } from '../../src/core/math-problems';
 import type { Difficulty, Problem } from '../../src/core/types';
 
@@ -358,23 +359,39 @@ describe('Problem.tolerance field', () => {
 });
 
 // -----------------------------------------------------------------------------
-// PINNED suspect behavior: repeating-decimal truncation via substring/slice
+// Registry coverage — every repeating denominator must list specificAnswers
+// for every listed numerator. This invariant is what makes the
+// `else if (repeating)` truncation branch in fracToDec / fracToPerc unreachable
+// (A.1 #7 in HANDOFF-mathmog-cleanups.md). If a future edit adds a (denom,
+// numerator) pair to a repeating denominator without adding a specificAnswers
+// entry, this test fails — flagging that the truncation path is no longer dead.
 // -----------------------------------------------------------------------------
 
-describe('Repeating-decimal answer encoding (PINNED suspect behavior)', () => {
-  // PINNED — TODO clean up in follow-up (contract §1.2 medium-confidence:
-  // `parseFloat(decimalValue.toString().substring(0, 2 + precision))` couples
-  // generator correctness to JS number-stringification. Off-by-one risk if the
-  // value's string representation starts with anything other than `"0."`. For
-  // current generator inputs (always 0 < value < 1 for fracToDec, 0 < value <
-  // 100 for fracToPerc), the truncation produces the expected number of
-  // significant digits — but the formula is fragile.
-  //
-  // Most observable repeating-decimal cases route through `specificAnswers`
-  // (covers all currently-defined numerators for repeating denominators).
-  // We pin the specific-answers path here because that's what students actually
-  // see today; the dead truncation branch is documented in triage.
+describe('Repeating-denominator registry coverage', () => {
+  it('every (repeating denominator, listed numerator) pair has a specificAnswers entry', () => {
+    const dens = Object.keys(fractionBasesByDenominator).map(Number);
+    for (const den of dens) {
+      const entry = fractionBasesByDenominator[den];
+      if (!entry.repeating) continue;
+      expect(entry.answers, `den=${den} repeating but has no answers map`).toBeDefined();
+      for (const num of entry.numerators) {
+        const list = entry.answers?.[num];
+        expect(list, `den=${den} num=${num} missing specificAnswers entry`).toBeDefined();
+        expect(Array.isArray(list), `den=${den} num=${num} answers entry is not an array`).toBe(true);
+        expect((list as number[]).length, `den=${den} num=${num} answers entry is empty`).toBeGreaterThan(0);
+        for (const v of list as number[]) {
+          expect(typeof v, `den=${den} num=${num} answers contains non-number`).toBe('number');
+        }
+      }
+    }
+  });
+});
 
+// -----------------------------------------------------------------------------
+// Repeating-decimal answer encoding — answers come from specificAnswers.
+// -----------------------------------------------------------------------------
+
+describe('Repeating-decimal answer encoding', () => {
   let randomSpy: ReturnType<typeof vi.spyOn>;
   beforeEach(() => {
     randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.42);
@@ -384,10 +401,6 @@ describe('Repeating-decimal answer encoding (PINNED suspect behavior)', () => {
   });
 
   it('repeating-denominator fracToDec answers are number arrays of accepted forms', () => {
-    // PINNED: every fraction_conversions answer for a repeating denominator
-    // (3, 6, 7, 9) under fracToDec emits an array of all accepted decimal
-    // forms from specificAnswers — the live validator accepts any element.
-    // Loop seeds until we deterministically observe a fracToDec emission.
     const seeds = [0.13, 0.27, 0.42, 0.69, 0.83, 0.91, 0.99];
     let sawArrayAnswer = false;
     for (const s of seeds) {
@@ -395,7 +408,6 @@ describe('Repeating-decimal answer encoding (PINNED suspect behavior)', () => {
       const p = generateProblem(1, 'Easy', [], 'fraction_conversions');
       if (p.type === 'Fraction to Decimal' && Array.isArray(p.answer)) {
         sawArrayAnswer = true;
-        // Every element of the array is a number.
         for (const v of p.answer) {
           expect(typeof v).toBe('number');
         }
