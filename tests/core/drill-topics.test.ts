@@ -14,7 +14,12 @@
  *     type DrillTopicInfo,
  *   } from '@peakprep/mathmog/core';
  *
- * Triage: see ../../triage/drill-topics-triage.md
+ * History: the original Phase 5 triage doc lived at
+ * `.claude/mathmog-package-tests/triage/drill-topics-triage.md` in the portal repo.
+ * It is HISTORICAL — all four pinned suspect behaviors it described were
+ * un-pinned in package commit `6f565d4` (tagged v0.5.4, 2026-05-16). The
+ * assertions in this file have since been flipped to lock in the wired
+ * behavior. Do not consult the triage doc as live design.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -33,9 +38,9 @@ import {
 
 describe('DRILL_TOPIC_REGISTRY', () => {
   it('has exactly 15 entries', () => {
-    // Pinned per Phase 5 minimum coverage spec. The mathmog-core CLAUDE.md
-    // still says "16 topics" — that is documentation drift, not a bug in
-    // this module. See triage doc.
+    // Pinned per Phase 5 minimum coverage spec. (The pre-lift
+    // `mathmog-core/CLAUDE.md` "16 topics" doc drift was resolved when that
+    // file was deleted during the lift.)
     expect(DRILL_TOPIC_REGISTRY).toHaveLength(15);
   });
 
@@ -328,7 +333,7 @@ describe('topicHasDifficulty', () => {
     expect(topicHasDifficulty('common_multiples')).toBe(false);
   });
 
-  // --- unknown topic: pinned suspect behavior ---
+  // --- unknown topic: un-pinned in 6f565d4 (was the original A.2 #1) ---
 
   it("returns false for 'not_a_topic' (unknown topic ids are honest about being unknown)", () => {
     // Matches the other helpers (`getTopicInfo` → undefined, `getTopicsForLevel`

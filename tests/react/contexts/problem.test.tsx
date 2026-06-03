@@ -13,19 +13,22 @@
  * For now we read directly from the portal source so the tests are
  * self-contained while the package lift is in progress.
  *
- * Pinned suspect behaviors (per locked decisions §0 + contract §2.1):
- *   - `Problem.tolerance` field is unused at validation time. Estimation
- *     correctness is decided purely by the deviation ladder; the value in
- *     `tolerance` is ignored.
- *   - `handleLevelUp(true)` drops `currentTopic` because it calls
- *     `handleLevelDifficultyChange(currentLevel, to)` without the topic arg.
- *   - `handleNewProblem` silently swallows generator throws (only logs).
- *   - `generateProblem` throw leaves prior `currentProblem` AND flags
- *     (feedback/showAnswer/etc.) untouched — stale-over-stale risk.
- *   - Repeating decimals: the validator does not "truncate"; the number
- *     branch only matches within 0.0001 of an array entry, and the
- *     multi-text branch only matches an exact lowercased string entry.
- *     We pin both as-is.
+ * Behavioral inventory (mix of wired-now and still-pinned suspects;
+ * see locked decisions §0 + contract §2.1 for the original framing):
+ *   - WIRED: `Problem.tolerance` is read by the estimation correctness
+ *     gate via `currentProblem.tolerance ?? 0.10`. Display tiers (exact /
+ *     within2 / within5 / within10) stay fixed at 0/2/5/10% and describe
+ *     estimate quality independently of correctness.
+ *   - WIRED: `handleLevelUp(true)` preserves `currentTopic` on accept by
+ *     forwarding the topic into `handleLevelDifficultyChange`.
+ *   - STILL PINNED: `handleNewProblem` silently swallows generator throws
+ *     (only logs).
+ *   - STILL PINNED: `generateProblem` throw leaves prior `currentProblem`
+ *     AND flags (feedback/showAnswer/etc.) untouched, leaving a
+ *     stale-over-stale risk.
+ *   - STILL PINNED: Repeating decimals. The validator does not "truncate";
+ *     the number branch only matches within 0.0001 of an array entry, and
+ *     the multi-text branch only matches an exact lowercased string entry.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';

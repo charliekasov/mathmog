@@ -474,7 +474,10 @@ describe('ProblemDisplay — buttons inputType', () => {
 });
 
 // ===========================================================================
-// 4. Multi-text input — the ",,"-on-mount suspect behavior.
+// 4. Multi-text input. A.5 #1+#2 (mount-write `",,"` and the paired Check
+// Answer trim() guard) shipped in commit 8c73b1f. Tests below pin the
+// fixed behavior: userAnswer stays empty until the user types, and the
+// button is disabled until then.
 // ===========================================================================
 
 describe('ProblemDisplay — multi-text input', () => {
