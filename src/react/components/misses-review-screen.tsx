@@ -147,11 +147,6 @@ function PerMiss({ miss, onAdvance }: PerMissProps) {
               disabled={retryAttempted}
               autoFocus
             />
-            {retryFeedback && !retryFeedback.isCorrect && (
-              <div className="text-sm text-amber-700 dark:text-amber-500 text-center">
-                Not quite. Here&apos;s the answer.
-              </div>
-            )}
             {!retryAttempted && (
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 <ui.Button
@@ -168,6 +163,12 @@ function PerMiss({ miss, onAdvance }: PerMissProps) {
             )}
           </div>
         ) : null}
+
+        {retryFeedback && !retryFeedback.isCorrect && (
+          <div className="text-sm text-amber-700 dark:text-amber-500 text-center">
+            Not quite. Here&apos;s the answer.
+          </div>
+        )}
 
         {revealed && (
           <ui.Alert>

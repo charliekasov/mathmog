@@ -330,6 +330,9 @@ describe('MissesReviewScreen — single-retry-then-reveal flow', () => {
     // so the Answer Alert is not shown on a correct retry.
     expect(screen.queryByPlaceholderText('Try the answer again...')).not.toBeInTheDocument();
     expect(screen.queryByTestId('alert')).not.toBeInTheDocument();
+    // The amber "Not quite" lead-in only shows on a wrong retry; it must
+    // stay hidden on the correct-retry path.
+    expect(screen.queryByText(/Not quite\. Here's the answer\./)).not.toBeInTheDocument();
   });
 
   it('on a wrong retry: reveals the correct-answer Alert, disables the input, hides both action buttons', async () => {
@@ -348,13 +351,12 @@ describe('MissesReviewScreen — single-retry-then-reveal flow', () => {
     expect(within(alert).getByText('Answer')).toBeInTheDocument();
     expect(within(alert).getByText('4')).toBeInTheDocument();
 
-    // FLAGGED (lift discovery): the staged test expected "Not quite. Here's
-    // the answer." to appear, but in the actual source that amber line lives
-    // inside the same `!revealed && !retryFeedback?.isCorrect` conditional
-    // block that unmounts when `setRevealed(true)` fires in the same handler.
-    // The text is therefore dead code on the wrong-retry path and never
-    // appears. Pinning actual behavior here; file as a follow-up cleanup.
-    expect(screen.queryByText(/Not quite\. Here's the answer\./)).not.toBeInTheDocument();
+    // The amber "Not quite. Here's the answer." soft-fail line acts as a
+    // lead-in to the revealed Answer alert. Pre-A.5#3 it lived inside the
+    // `!revealed && !retryFeedback?.isCorrect` block and never rendered
+    // because setRevealed(true) fires in the same handler. Now hoisted to
+    // a sibling gated on `retryFeedback && !retryFeedback.isCorrect`.
+    expect(screen.getByText(/Not quite\. Here's the answer\./)).toBeInTheDocument();
 
     // Both action buttons are gone (retryAttempted hides their container).
     expect(screen.queryByRole('button', { name: /Try again/ })).not.toBeInTheDocument();

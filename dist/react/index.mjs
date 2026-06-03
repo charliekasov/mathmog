@@ -1923,7 +1923,6 @@ function PerMiss({ miss, onAdvance }) {
           autoFocus: true
         }
       ),
-      retryFeedback && !retryFeedback.isCorrect && /* @__PURE__ */ jsx("div", { className: "text-sm text-amber-700 dark:text-amber-500 text-center", children: "Not quite. Here's the answer." }),
       !retryAttempted && /* @__PURE__ */ jsxs("div", { className: "flex flex-col sm:flex-row gap-2 justify-center", children: [
         /* @__PURE__ */ jsxs(
           ui.Button,
@@ -1940,6 +1939,7 @@ function PerMiss({ miss, onAdvance }) {
         /* @__PURE__ */ jsx(ui.Button, { onClick: handleShowAnswer, variant: "outline", children: "Show answer" })
       ] })
     ] }) : null,
+    retryFeedback && !retryFeedback.isCorrect && /* @__PURE__ */ jsx("div", { className: "text-sm text-amber-700 dark:text-amber-500 text-center", children: "Not quite. Here's the answer." }),
     revealed && /* @__PURE__ */ jsxs(ui.Alert, { children: [
       /* @__PURE__ */ jsx(ui.AlertTitle, { children: "Answer" }),
       /* @__PURE__ */ jsx(ui.AlertDescription, { className: "font-medium", children: miss.correctAnswer })
