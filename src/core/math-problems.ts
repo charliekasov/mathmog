@@ -5,8 +5,14 @@ import type { Difficulty, Problem } from './types';
 // Helper for simplifying fractions
 const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
 export const simplifyFraction = (num: number, den: number) => {
-    const common = gcd(num, den);
-    return `${num / common}/${den / common}`;
+    if (den === 0) throw new RangeError('simplifyFraction: denominator must not be 0');
+    const sign = (num < 0) !== (den < 0) ? -1 : 1;
+    const absNum = Math.abs(num);
+    const absDen = Math.abs(den);
+    const common = gcd(absNum, absDen);
+    const reducedNum = absNum / common;
+    const reducedDen = absDen / common;
+    return `${reducedNum === 0 ? 0 : sign * reducedNum}/${reducedDen}`;
 };
 
 // Helper data for the fraction generator

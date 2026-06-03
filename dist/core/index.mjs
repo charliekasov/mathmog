@@ -4,8 +4,14 @@ import { twMerge } from 'tailwind-merge';
 // src/core/math-problems.ts
 var gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
 var simplifyFraction = (num, den) => {
-  const common = gcd(num, den);
-  return `${num / common}/${den / common}`;
+  if (den === 0) throw new RangeError("simplifyFraction: denominator must not be 0");
+  const sign = num < 0 !== den < 0 ? -1 : 1;
+  const absNum = Math.abs(num);
+  const absDen = Math.abs(den);
+  const common = gcd(absNum, absDen);
+  const reducedNum = absNum / common;
+  const reducedDen = absDen / common;
+  return `${reducedNum === 0 ? 0 : sign * reducedNum}/${reducedDen}`;
 };
 var fractionBasesByDenominator = {
   3: {

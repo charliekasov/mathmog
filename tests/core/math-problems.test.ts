@@ -92,15 +92,13 @@ describe('simplifyFraction', () => {
     expect(simplifyFraction(0, 5)).toBe('0/1');
   });
 
-  it('produces "1/0" when den=0 — no special-case handling (PINNED)', () => {
-    // PINNED — TODO clean up in follow-up (contract §1.2: gcd(num, 0) = num so num/num = 1, 0/num = 0; returns "1/0").
-    expect(simplifyFraction(5, 0)).toBe('1/0');
+  it('throws RangeError when denominator is 0', () => {
+    expect(() => simplifyFraction(5, 0)).toThrow(RangeError);
   });
 
-  it('does not normalize signs (PINNED)', () => {
-    // PINNED — TODO clean up in follow-up (contract §1.2: negative sign survives in numerator or denominator).
-    expect(simplifyFraction(-2, 4)).toBe('1/-2');
-    expect(simplifyFraction(2, -4)).toBe('1/-2');
+  it('canonicalizes sign to the numerator', () => {
+    expect(simplifyFraction(-2, 4)).toBe('-1/2');
+    expect(simplifyFraction(2, -4)).toBe('-1/2');
   });
 });
 
