@@ -227,6 +227,7 @@ interface ProblemContextValue {
     currentLevel: number;
     currentDifficulty: Difficulty;
     currentTopic: string | undefined;
+    currentScope: string | undefined;
     currentProblem: Problem | null;
     userAnswer: string;
     setUserAnswer: Dispatch<SetStateAction<string>>;
@@ -242,8 +243,8 @@ interface ProblemContextValue {
     problemHistory: string[];
     missedProblems: MissedMathmogProblem[];
     handleCheckAnswer: (answerToCheck: string) => void;
-    handleNewProblem: (level?: number, difficulty?: Difficulty, topic?: string) => void;
-    handleLevelDifficultyChange: (level: number, difficulty: Difficulty, topic?: string) => void;
+    handleNewProblem: (level?: number, difficulty?: Difficulty, topic?: string, scope?: string) => void;
+    handleLevelDifficultyChange: (level: number, difficulty: Difficulty, topic?: string, scope?: string) => void;
     handleReset: () => void;
     handleLevelUp: (accept: boolean) => void;
     taintStreak: () => void;

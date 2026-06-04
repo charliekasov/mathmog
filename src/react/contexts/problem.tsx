@@ -2,8 +2,24 @@
 
 import { createContext, useState, useCallback, useContext, useRef, type ReactNode, type Dispatch, type SetStateAction } from 'react';
 import { generateProblem, simplifyFraction } from '../../core/math-problems';
+import { getTopicInfo } from '../../core/drill-topics';
 import type { Difficulty, Problem, AdaptiveData, PendingLevelUp } from '../../core/types';
 import type { MissedMathmogProblem, MissedMathmogProblemKind } from '../../core/miss-types';
+
+// Phase 1.4: derive the default Scope id for a topic when none is provided.
+// Convention (from Phase 1.1's registry shape): the first entry of each
+// topic's `scopes` array is the `<prefix>_full` "everything" scope. Falling
+// back to `scopes[0]` keeps the helper resilient if a future scope set ever
+// drops the trailing `_full` suffix. Returns undefined for topics with no
+// scopes — the trainer state in that case is "no scope" (full topic range
+// is the only path).
+function defaultScopeForTopic(topicId: string | undefined): string | undefined {
+  if (!topicId) return undefined;
+  const info = getTopicInfo(topicId);
+  if (!info?.scopes || info.scopes.length === 0) return undefined;
+  const fullScope = info.scopes.find((s) => s.id.endsWith('_full'));
+  return fullScope?.id ?? info.scopes[0].id;
+}
 
 function formatProblemPrompt(question: Problem['question']): string {
   return Array.isArray(question) ? question.join(' ___ ') : String(question);
@@ -24,6 +40,12 @@ interface ProblemContextValue {
   currentLevel: number;
   currentDifficulty: Difficulty;
   currentTopic: string | undefined;
+  // Phase 1.4: optional narrowing of the current topic's generator pool.
+  // Defaults to `<prefix>_full` on topic selection when the topic has
+  // scopes; `undefined` when the topic has no scopes (no `scopes` field
+  // on its registry entry). See `defaultScopeForTopic` for the resolution
+  // rule. Threaded into `generateProblem(..., topic, scope)`.
+  currentScope: string | undefined;
   currentProblem: Problem | null;
   userAnswer: string;
   setUserAnswer: Dispatch<SetStateAction<string>>;
@@ -36,8 +58,8 @@ interface ProblemContextValue {
   problemHistory: string[];
   missedProblems: MissedMathmogProblem[];
   handleCheckAnswer: (answerToCheck: string) => void;
-  handleNewProblem: (level?: number, difficulty?: Difficulty, topic?: string) => void;
-  handleLevelDifficultyChange: (level: number, difficulty: Difficulty, topic?: string) => void;
+  handleNewProblem: (level?: number, difficulty?: Difficulty, topic?: string, scope?: string) => void;
+  handleLevelDifficultyChange: (level: number, difficulty: Difficulty, topic?: string, scope?: string) => void;
   handleReset: () => void;
   handleLevelUp: (accept: boolean) => void;
   // Marks the current streak as "tainted" — set to false by callers that
@@ -56,6 +78,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [currentDifficulty, setCurrentDifficulty] = useState<Difficulty>('Easy');
   const [currentTopic, setCurrentTopic] = useState<string | undefined>(undefined);
+  const [currentScope, setCurrentScope] = useState<string | undefined>(undefined);
   const [currentProblem, setCurrentProblem] = useState<Problem | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -75,18 +98,21 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   // Use ref to avoid dependency issues
   const problemHistoryRef = useRef<string[]>([]);
   const currentTopicRef = useRef<string | undefined>(undefined);
+  const currentScopeRef = useRef<string | undefined>(undefined);
 
   // Keep refs in sync
   problemHistoryRef.current = problemHistory;
   currentTopicRef.current = currentTopic;
+  currentScopeRef.current = currentScope;
 
-  const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty, topic?: string) => {
+  const handleNewProblem = useCallback((level?: number, difficulty?: Difficulty, topic?: string, scope?: string) => {
     const targetLevel = level ?? currentLevel;
     const targetDifficulty = difficulty ?? currentDifficulty;
     const targetTopic = topic !== undefined ? topic : currentTopicRef.current;
+    const targetScope = scope !== undefined ? scope : currentScopeRef.current;
 
     try {
-      const newProblem = generateProblem(targetLevel, targetDifficulty, problemHistoryRef.current, targetTopic);
+      const newProblem = generateProblem(targetLevel, targetDifficulty, problemHistoryRef.current, targetTopic, targetScope);
       setCurrentProblem(newProblem);
       setUserAnswer('');
       setFeedback('');
@@ -112,7 +138,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       // The structured context (`{ error, targetLevel, targetDifficulty,
       // targetTopic }`) gives production debug a self-contained record of
       // what generator call faulted.
-      console.error("ProblemProvider.handleNewProblem: generator threw, keeping previous problem", { error, targetLevel, targetDifficulty, targetTopic });
+      console.error("ProblemProvider.handleNewProblem: generator threw, keeping previous problem", { error, targetLevel, targetDifficulty, targetTopic, targetScope });
       setUserAnswer('');
       setFeedback('');
       setEstimationTier(null);
@@ -318,10 +344,18 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     }
   }, [currentProblem, currentDifficulty]);
 
-  const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty, topic?: string) => {
+  const handleLevelDifficultyChange = useCallback((level: number, difficulty: Difficulty, topic?: string, scope?: string) => {
     setCurrentLevel(level);
     setCurrentDifficulty(difficulty);
     setCurrentTopic(topic);
+    // Phase 1.4: resolve the scope alongside the topic. Explicit scope wins;
+    // otherwise default to <prefix>_full when the topic has scopes; otherwise
+    // undefined (topic has no scopes — generator ignores any prior scope).
+    // Keep refs in sync immediately so handleNewProblem reads the resolved
+    // value rather than the previous render's stale ref.
+    const resolvedScope = scope !== undefined ? scope : defaultScopeForTopic(topic);
+    setCurrentScope(resolvedScope);
+    currentScopeRef.current = resolvedScope;
     setProblemHistory([]);
     setAdaptiveData({
       consecutiveCorrect: 0,
@@ -331,7 +365,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     });
     setScore({ correct: 0, total: 0 });
     setMissedProblems([]);
-    handleNewProblem(level, difficulty, topic);
+    handleNewProblem(level, difficulty, topic, resolvedScope);
   }, [handleNewProblem]);
 
   const handleReset = useCallback(() => {
@@ -355,13 +389,13 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
 
     if (accept) {
       if (adaptiveData.pendingLevelUp.action === 'changeDifficulty' && adaptiveData.pendingLevelUp.to) {
-        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to, currentTopic);
+        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to, currentTopic, currentScope);
       }
     }
 
     // Streak boundary on accept-or-decline — re-purify.
     setAdaptiveData(prev => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0, streakPure: true }));
-  }, [adaptiveData.pendingLevelUp, currentLevel, currentTopic, handleLevelDifficultyChange]);
+  }, [adaptiveData.pendingLevelUp, currentLevel, currentTopic, currentScope, handleLevelDifficultyChange]);
 
   // One-way ratchet within a streak. Safe to call any time — when
   // consecutiveCorrect is already 0 this is a no-op (next reset site will
@@ -375,6 +409,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     currentLevel,
     currentDifficulty,
     currentTopic,
+    currentScope,
     currentProblem,
     userAnswer,
     setUserAnswer,

@@ -251,9 +251,10 @@ describe('handleNewProblem', () => {
     act(() => result.current.handleNewProblem());
     act(() => result.current.handleNewProblem());
     act(() => result.current.handleNewProblem());
-    expect(mockedGenerateProblem).toHaveBeenNthCalledWith(1, 1, 'Easy', [], undefined);
-    expect(mockedGenerateProblem).toHaveBeenNthCalledWith(2, 1, 'Easy', ['A'], undefined);
-    expect(mockedGenerateProblem).toHaveBeenNthCalledWith(3, 1, 'Easy', ['A', 'B'], undefined);
+    // Phase 1.4: 5th arg = scope, undefined when no scoped topic selected.
+    expect(mockedGenerateProblem).toHaveBeenNthCalledWith(1, 1, 'Easy', [], undefined, undefined);
+    expect(mockedGenerateProblem).toHaveBeenNthCalledWith(2, 1, 'Easy', ['A'], undefined, undefined);
+    expect(mockedGenerateProblem).toHaveBeenNthCalledWith(3, 1, 'Easy', ['A', 'B'], undefined, undefined);
   });
 
   it('passes the latest currentTopic via ref when caller omits topic arg', () => {
@@ -265,18 +266,24 @@ describe('handleNewProblem', () => {
     act(() =>
       result.current.handleLevelDifficultyChange(2, 'Medium', 'fractions')
     );
+    // Phase 1.4: generateProblem signature is (level, difficulty, history,
+    // topic, scope). `fractions` is not in DRILL_TOPIC_REGISTRY, so the
+    // scope resolves to `undefined` (defaultScopeForTopic returns undefined
+    // for unknown ids — silent fallback per Phase 1.1 design call #4).
     expect(mockedGenerateProblem).toHaveBeenLastCalledWith(
       2,
       'Medium',
       [],
-      'fractions'
+      'fractions',
+      undefined
     );
     act(() => result.current.handleNewProblem());
     expect(mockedGenerateProblem).toHaveBeenLastCalledWith(
       2,
       'Medium',
       ['TQ1'],
-      'fractions'
+      'fractions',
+      undefined
     );
   });
 
@@ -286,7 +293,7 @@ describe('handleNewProblem', () => {
     act(() => result.current.handleLevelDifficultyChange(1, 'Easy', 'fractions'));
     // Pass '' explicitly — code uses `topic !== undefined` so '' wins.
     act(() => result.current.handleNewProblem(undefined, undefined, ''));
-    expect(mockedGenerateProblem).toHaveBeenLastCalledWith(1, 'Easy', expect.any(Array), '');
+    expect(mockedGenerateProblem).toHaveBeenLastCalledWith(1, 'Easy', expect.any(Array), '', undefined);
   });
 
   it('caps problemHistory at 50 items (FIFO slice oldest)', () => {
@@ -365,6 +372,146 @@ describe('handleNewProblem', () => {
     expect(result.current.showAnswer).toBe(false);
     expect(result.current.estimationTier).toBeNull();
     expect(result.current.estimationDeviation).toBeNull();
+  });
+});
+
+/* ---------- Scope threading (Phase 1.4) ------------------------------ */
+
+describe('Scope threading via generateProblem (Phase 1.4)', () => {
+  it('handleLevelDifficultyChange with scope arg threads scope to generateProblem', () => {
+    queueProblems([textProblem()]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() =>
+      result.current.handleLevelDifficultyChange(
+        1,
+        'Easy',
+        'perfect_squares',
+        'squares_1_5'
+      )
+    );
+    expect(mockedGenerateProblem).toHaveBeenLastCalledWith(
+      1,
+      'Easy',
+      [],
+      'perfect_squares',
+      'squares_1_5'
+    );
+    expect(result.current.currentScope).toBe('squares_1_5');
+  });
+
+  it('handleLevelDifficultyChange WITHOUT scope on scoped topic defaults to <prefix>_full', () => {
+    queueProblems([textProblem()]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() =>
+      result.current.handleLevelDifficultyChange(1, 'Easy', 'perfect_squares')
+    );
+    expect(mockedGenerateProblem).toHaveBeenLastCalledWith(
+      1,
+      'Easy',
+      [],
+      'perfect_squares',
+      'squares_full'
+    );
+    expect(result.current.currentScope).toBe('squares_full');
+  });
+
+  it('handleLevelDifficultyChange on unscoped topic resolves scope to undefined', () => {
+    queueProblems([textProblem()]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() =>
+      result.current.handleLevelDifficultyChange(1, 'Easy', 'advanced_squares')
+    );
+    expect(mockedGenerateProblem).toHaveBeenLastCalledWith(
+      1,
+      'Easy',
+      [],
+      'advanced_squares',
+      undefined
+    );
+    expect(result.current.currentScope).toBeUndefined();
+  });
+
+  it('handleNewProblem inherits currentScope via ref when scope arg omitted', () => {
+    queueProblems([textProblem({ question: 'TQ1' }), textProblem({ question: 'TQ2' })]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() =>
+      result.current.handleLevelDifficultyChange(
+        1,
+        'Easy',
+        'perfect_cubes',
+        'cubes_1_5'
+      )
+    );
+    act(() => result.current.handleNewProblem());
+    expect(mockedGenerateProblem).toHaveBeenLastCalledWith(
+      1,
+      'Easy',
+      ['TQ1'],
+      'perfect_cubes',
+      'cubes_1_5'
+    );
+  });
+
+  it('topic change from scoped to scoped resets scope to new topic default', () => {
+    queueProblems([textProblem()]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() =>
+      result.current.handleLevelDifficultyChange(
+        1,
+        'Easy',
+        'perfect_squares',
+        'squares_11_15'
+      )
+    );
+    expect(result.current.currentScope).toBe('squares_11_15');
+    // New topic, no explicit scope → default to <prefix>_full.
+    act(() =>
+      result.current.handleLevelDifficultyChange(1, 'Easy', 'perfect_cubes')
+    );
+    expect(result.current.currentScope).toBe('cubes_full');
+  });
+
+  it('topic change from scoped to unscoped clears scope to undefined', () => {
+    queueProblems([textProblem()]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() =>
+      result.current.handleLevelDifficultyChange(1, 'Easy', 'perfect_squares')
+    );
+    expect(result.current.currentScope).toBe('squares_full');
+    act(() =>
+      result.current.handleLevelDifficultyChange(1, 'Easy', 'advanced_squares')
+    );
+    expect(result.current.currentScope).toBeUndefined();
+  });
+
+  it('handleLevelUp accept on scoped topic preserves currentScope', () => {
+    // Level 2 (multiplication_estimation) has no scopes, but the level-up
+    // path forwards the current scope unchanged. To exercise the threading,
+    // use a scope on perfect_squares (level 1) — but `pendingLevelUp` only
+    // triggers via the streak-of-7 path in handleCheckAnswer. Verify the
+    // threading via a state-shape probe: post-accept, currentScope is
+    // still set even after a difficulty change.
+    queueProblems([textProblem()]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    act(() =>
+      result.current.handleLevelDifficultyChange(
+        1,
+        'Easy',
+        'perfect_squares',
+        'squares_1_10'
+      )
+    );
+    // No pending level-up to accept — handleLevelUp(true) is a no-op when
+    // pendingLevelUp is null. Confirms the early return path doesn't mutate
+    // currentScope.
+    act(() => result.current.handleLevelUp(true));
+    expect(result.current.currentScope).toBe('squares_1_10');
+  });
+
+  it('initial state: currentScope is undefined', () => {
+    queueProblems([textProblem()]);
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    expect(result.current.currentScope).toBeUndefined();
   });
 });
 

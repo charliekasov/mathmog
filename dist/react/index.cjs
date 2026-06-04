@@ -1255,6 +1255,83 @@ var generateProblem = (level, difficulty, history, topic, scope) => {
   const generator = () => generatorFunction(difficulty, history);
   return createUniqueProblem(generator, history);
 };
+
+// src/core/drill-topics.ts
+var SCOPES_TIMES_TABLES = [
+  { id: "tt_full", label: "Full (2\xD7 through 12\xD7)", narrowerThan: ["tt_6_9"] },
+  { id: "tt_easy", label: "The easy ones (2\xD7, 5\xD7, 10\xD7)", widerThan: ["tt_2_5"] },
+  { id: "tt_2_5", label: "2\xD7 through 5\xD7", widerThan: ["tt_full"], narrowerThan: ["tt_easy"] },
+  { id: "tt_6_9", label: "6\xD7 through 9\xD7", widerThan: ["tt_full"], narrowerThan: ["tt_just_7"] },
+  { id: "tt_10_12", label: "10\xD7 through 12\xD7", widerThan: ["tt_full"] },
+  { id: "tt_just_6", label: "Just the 6\xD7 table", widerThan: ["tt_6_9"] },
+  { id: "tt_just_7", label: "Just the 7\xD7 table", widerThan: ["tt_6_9"] },
+  { id: "tt_just_8", label: "Just the 8\xD7 table", widerThan: ["tt_6_9"] },
+  { id: "tt_just_9", label: "Just the 9\xD7 table", widerThan: ["tt_6_9"] }
+];
+var SCOPES_PERFECT_SQUARES = [
+  { id: "squares_full", label: "Full (1\xB2 through 20\xB2)", narrowerThan: ["squares_1_10"] },
+  { id: "squares_1_5", label: "1\xB2 through 5\xB2", widerThan: ["squares_1_10"] },
+  { id: "squares_1_10", label: "1\xB2 through 10\xB2", widerThan: ["squares_full"], narrowerThan: ["squares_1_5"] },
+  { id: "squares_11_15", label: "11\xB2 through 15\xB2", widerThan: ["squares_11_20"] },
+  { id: "squares_11_20", label: "11\xB2 through 20\xB2", widerThan: ["squares_full"], narrowerThan: ["squares_11_15"] },
+  { id: "squares_16_20", label: "16\xB2 through 20\xB2", widerThan: ["squares_11_20"] }
+];
+var SCOPES_PERFECT_CUBES = [
+  { id: "cubes_full", label: "Full (1\xB3 through 10\xB3)", narrowerThan: ["cubes_1_5"] },
+  { id: "cubes_1_3", label: "1\xB3 through 3\xB3", widerThan: ["cubes_1_5"] },
+  { id: "cubes_1_5", label: "1\xB3 through 5\xB3", widerThan: ["cubes_full"], narrowerThan: ["cubes_1_3"] },
+  { id: "cubes_6_10", label: "6\xB3 through 10\xB3", widerThan: ["cubes_full"] }
+];
+var SCOPES_FRACTION_CONVERSIONS = [
+  { id: "fractions_full", label: "Full (all denominators)", narrowerThan: ["fractions_friendly"] },
+  { id: "fractions_friendly", label: "The friendly ones (halves, fourths, fifths)", widerThan: ["fractions_full"], narrowerThan: ["fractions_halves_fourths"] },
+  { id: "fractions_halves_fourths", label: "Halves and fourths (1/2, 1/4, 3/4)", widerThan: ["fractions_friendly"] },
+  { id: "fractions_fifths", label: "Fifths (1/5, 2/5, 3/5, 4/5)", widerThan: ["fractions_friendly"] },
+  { id: "fractions_eighths", label: "Eighths (1/8, 3/8, 5/8, 7/8)", widerThan: ["fractions_full"] },
+  { id: "fractions_thirds", label: "Thirds (1/3, 2/3)", widerThan: ["fractions_full"] },
+  { id: "fractions_sixths", label: "Sixths (1/6, 5/6)", widerThan: ["fractions_full"] },
+  { id: "fractions_sevenths", label: "Sevenths (1/7 \u2026 6/7)", widerThan: ["fractions_full"] },
+  { id: "fractions_ninths", label: "Ninths (1/9 \u2026 8/9)", widerThan: ["fractions_full"] }
+];
+var DRILL_TOPIC_REGISTRY = [
+  // Level 1: Memorize
+  { id: "times_tables", label: "Times Tables", level: 1, hasDifficulty: false, description: "Single-digit multiplication facts (2\xD7 through 12\xD7)", scopes: SCOPES_TIMES_TABLES },
+  { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20", scopes: SCOPES_PERFECT_SQUARES },
+  { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10", scopes: SCOPES_PERFECT_CUBES },
+  { id: "fraction_conversions", label: "Fractions \u2194 Decimals \u2194 Percents", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
+  { id: "advanced_squares", label: "Advanced Squares", level: 1, hasDifficulty: false, description: "Squares of 10, 20, 30...100" },
+  { id: "advanced_cubes", label: "Advanced Cubes", level: 1, hasDifficulty: false, description: "Cubes of 10, 20, 30...100" },
+  { id: "higher_powers", label: "Higher Powers", level: 1, hasDifficulty: false, description: "2^4-2^9, 3^4-3^6, 4^4, 5^4, 6^4" },
+  { id: "common_multiples", label: "Common Multiples", level: 1, hasDifficulty: false, description: "13-36 times various multipliers" },
+  // Level 2: Estimate
+  { id: "multiplication_estimation", label: "Multiplication Estimation", level: 2, hasDifficulty: true, description: "Estimate products of multi-digit numbers" },
+  { id: "root_estimation", label: "Root Estimation", level: 2, hasDifficulty: true, description: "Square roots, cube roots, and higher roots at Hard" },
+  { id: "fraction_estimation", label: "Fraction Estimation", level: 2, hasDifficulty: true, description: "Estimate fraction values with 2-digit or 3-digit denominators" },
+  { id: "percentage_calculations", label: "Percentage Estimation", level: 2, hasDifficulty: true, description: "Quick percentage estimates: tips, taxes, percent change" },
+  // Level 3: Get Crafty
+  { id: "strategic_mul_div", label: "Strategic Mult & Division", level: 3, hasDifficulty: true, description: "Multiply/divide by 4, 5, 8, 9, 11, 12, 15, 25, 19, 99; squaring X5; complementary" },
+  { id: "divisibility_3_6_9", label: "Divisibility by 3, 6, 9", level: 3, hasDifficulty: true, description: "Digit-sum divisibility rules" },
+  { id: "divisibility_4_8", label: "Divisibility by 4, 8", level: 3, hasDifficulty: true, description: "Last-digits and halving rules" },
+  { id: "divisibility_7", label: "Advanced Divisibility (7, 11)", level: 3, hasDifficulty: true, description: "Multiply-last-digit method (7); alternating digit sum (11)" }
+];
+function getTopicsForLevel(level) {
+  return DRILL_TOPIC_REGISTRY.filter((t) => t.level === level).map((t) => ({ ...t }));
+}
+function getTopicInfo(topicId) {
+  const found = DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
+  return found ? { ...found } : void 0;
+}
+function topicHasDifficulty(topicId) {
+  const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
+  return topic ? topic.hasDifficulty : false;
+}
+function defaultScopeForTopic(topicId) {
+  if (!topicId) return void 0;
+  const info = getTopicInfo(topicId);
+  if (!info?.scopes || info.scopes.length === 0) return void 0;
+  const fullScope = info.scopes.find((s) => s.id.endsWith("_full"));
+  return fullScope?.id ?? info.scopes[0].id;
+}
 function formatProblemPrompt(question) {
   return Array.isArray(question) ? question.join(" ___ ") : String(question);
 }
@@ -1268,6 +1345,7 @@ function ProblemProvider({ children }) {
   const [currentLevel, setCurrentLevel] = React.useState(1);
   const [currentDifficulty, setCurrentDifficulty] = React.useState("Easy");
   const [currentTopic, setCurrentTopic] = React.useState(void 0);
+  const [currentScope, setCurrentScope] = React.useState(void 0);
   const [currentProblem, setCurrentProblem] = React.useState(null);
   const [userAnswer, setUserAnswer] = React.useState("");
   const [feedback, setFeedback] = React.useState("");
@@ -1285,14 +1363,17 @@ function ProblemProvider({ children }) {
   });
   const problemHistoryRef = React.useRef([]);
   const currentTopicRef = React.useRef(void 0);
+  const currentScopeRef = React.useRef(void 0);
   problemHistoryRef.current = problemHistory;
   currentTopicRef.current = currentTopic;
-  const handleNewProblem = React.useCallback((level, difficulty, topic) => {
+  currentScopeRef.current = currentScope;
+  const handleNewProblem = React.useCallback((level, difficulty, topic, scope) => {
     const targetLevel = level ?? currentLevel;
     const targetDifficulty = difficulty ?? currentDifficulty;
     const targetTopic = topic !== void 0 ? topic : currentTopicRef.current;
+    const targetScope = scope !== void 0 ? scope : currentScopeRef.current;
     try {
-      const newProblem = generateProblem(targetLevel, targetDifficulty, problemHistoryRef.current, targetTopic);
+      const newProblem = generateProblem(targetLevel, targetDifficulty, problemHistoryRef.current, targetTopic, targetScope);
       setCurrentProblem(newProblem);
       setUserAnswer("");
       setFeedback("");
@@ -1307,7 +1388,7 @@ function ProblemProvider({ children }) {
         return newHistory;
       });
     } catch (error) {
-      console.error("ProblemProvider.handleNewProblem: generator threw, keeping previous problem", { error, targetLevel, targetDifficulty, targetTopic });
+      console.error("ProblemProvider.handleNewProblem: generator threw, keeping previous problem", { error, targetLevel, targetDifficulty, targetTopic, targetScope });
       setUserAnswer("");
       setFeedback("");
       setEstimationTier(null);
@@ -1463,10 +1544,13 @@ function ProblemProvider({ children }) {
       setAdaptiveData((prev) => ({ ...prev, consecutiveCorrect: 0, streakPure: true }));
     }
   }, [currentProblem, currentDifficulty]);
-  const handleLevelDifficultyChange = React.useCallback((level, difficulty, topic) => {
+  const handleLevelDifficultyChange = React.useCallback((level, difficulty, topic, scope) => {
     setCurrentLevel(level);
     setCurrentDifficulty(difficulty);
     setCurrentTopic(topic);
+    const resolvedScope = scope !== void 0 ? scope : defaultScopeForTopic(topic);
+    setCurrentScope(resolvedScope);
+    currentScopeRef.current = resolvedScope;
     setProblemHistory([]);
     setAdaptiveData({
       consecutiveCorrect: 0,
@@ -1476,7 +1560,7 @@ function ProblemProvider({ children }) {
     });
     setScore({ correct: 0, total: 0 });
     setMissedProblems([]);
-    handleNewProblem(level, difficulty, topic);
+    handleNewProblem(level, difficulty, topic, resolvedScope);
   }, [handleNewProblem]);
   const handleReset = React.useCallback(() => {
     setScore({ correct: 0, total: 0 });
@@ -1497,11 +1581,11 @@ function ProblemProvider({ children }) {
     if (!adaptiveData.pendingLevelUp) return;
     if (accept) {
       if (adaptiveData.pendingLevelUp.action === "changeDifficulty" && adaptiveData.pendingLevelUp.to) {
-        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to, currentTopic);
+        handleLevelDifficultyChange(currentLevel, adaptiveData.pendingLevelUp.to, currentTopic, currentScope);
       }
     }
     setAdaptiveData((prev) => ({ ...prev, pendingLevelUp: null, consecutiveCorrect: 0, streakPure: true }));
-  }, [adaptiveData.pendingLevelUp, currentLevel, currentTopic, handleLevelDifficultyChange]);
+  }, [adaptiveData.pendingLevelUp, currentLevel, currentTopic, currentScope, handleLevelDifficultyChange]);
   const taintStreak = React.useCallback(() => {
     setAdaptiveData((prev) => prev.streakPure ? { ...prev, streakPure: false } : prev);
   }, []);
@@ -1509,6 +1593,7 @@ function ProblemProvider({ children }) {
     currentLevel,
     currentDifficulty,
     currentTopic,
+    currentScope,
     currentProblem,
     userAnswer,
     setUserAnswer,
@@ -1730,72 +1815,6 @@ function SpeedChallengeControls({
 function cn(...inputs) {
   return tailwindMerge.twMerge(clsx.clsx(inputs));
 }
-
-// src/core/drill-topics.ts
-var SCOPES_TIMES_TABLES = [
-  { id: "tt_full", label: "Full (2\xD7 through 12\xD7)", narrowerThan: ["tt_6_9"] },
-  { id: "tt_easy", label: "The easy ones (2\xD7, 5\xD7, 10\xD7)", widerThan: ["tt_2_5"] },
-  { id: "tt_2_5", label: "2\xD7 through 5\xD7", widerThan: ["tt_full"], narrowerThan: ["tt_easy"] },
-  { id: "tt_6_9", label: "6\xD7 through 9\xD7", widerThan: ["tt_full"], narrowerThan: ["tt_just_7"] },
-  { id: "tt_10_12", label: "10\xD7 through 12\xD7", widerThan: ["tt_full"] },
-  { id: "tt_just_6", label: "Just the 6\xD7 table", widerThan: ["tt_6_9"] },
-  { id: "tt_just_7", label: "Just the 7\xD7 table", widerThan: ["tt_6_9"] },
-  { id: "tt_just_8", label: "Just the 8\xD7 table", widerThan: ["tt_6_9"] },
-  { id: "tt_just_9", label: "Just the 9\xD7 table", widerThan: ["tt_6_9"] }
-];
-var SCOPES_PERFECT_SQUARES = [
-  { id: "squares_full", label: "Full (1\xB2 through 20\xB2)", narrowerThan: ["squares_1_10"] },
-  { id: "squares_1_5", label: "1\xB2 through 5\xB2", widerThan: ["squares_1_10"] },
-  { id: "squares_1_10", label: "1\xB2 through 10\xB2", widerThan: ["squares_full"], narrowerThan: ["squares_1_5"] },
-  { id: "squares_11_15", label: "11\xB2 through 15\xB2", widerThan: ["squares_11_20"] },
-  { id: "squares_11_20", label: "11\xB2 through 20\xB2", widerThan: ["squares_full"], narrowerThan: ["squares_11_15"] },
-  { id: "squares_16_20", label: "16\xB2 through 20\xB2", widerThan: ["squares_11_20"] }
-];
-var SCOPES_PERFECT_CUBES = [
-  { id: "cubes_full", label: "Full (1\xB3 through 10\xB3)", narrowerThan: ["cubes_1_5"] },
-  { id: "cubes_1_3", label: "1\xB3 through 3\xB3", widerThan: ["cubes_1_5"] },
-  { id: "cubes_1_5", label: "1\xB3 through 5\xB3", widerThan: ["cubes_full"], narrowerThan: ["cubes_1_3"] },
-  { id: "cubes_6_10", label: "6\xB3 through 10\xB3", widerThan: ["cubes_full"] }
-];
-var SCOPES_FRACTION_CONVERSIONS = [
-  { id: "fractions_full", label: "Full (all denominators)", narrowerThan: ["fractions_friendly"] },
-  { id: "fractions_friendly", label: "The friendly ones (halves, fourths, fifths)", widerThan: ["fractions_full"], narrowerThan: ["fractions_halves_fourths"] },
-  { id: "fractions_halves_fourths", label: "Halves and fourths (1/2, 1/4, 3/4)", widerThan: ["fractions_friendly"] },
-  { id: "fractions_fifths", label: "Fifths (1/5, 2/5, 3/5, 4/5)", widerThan: ["fractions_friendly"] },
-  { id: "fractions_eighths", label: "Eighths (1/8, 3/8, 5/8, 7/8)", widerThan: ["fractions_full"] },
-  { id: "fractions_thirds", label: "Thirds (1/3, 2/3)", widerThan: ["fractions_full"] },
-  { id: "fractions_sixths", label: "Sixths (1/6, 5/6)", widerThan: ["fractions_full"] },
-  { id: "fractions_sevenths", label: "Sevenths (1/7 \u2026 6/7)", widerThan: ["fractions_full"] },
-  { id: "fractions_ninths", label: "Ninths (1/9 \u2026 8/9)", widerThan: ["fractions_full"] }
-];
-var DRILL_TOPIC_REGISTRY = [
-  // Level 1: Memorize
-  { id: "times_tables", label: "Times Tables", level: 1, hasDifficulty: false, description: "Single-digit multiplication facts (2\xD7 through 12\xD7)", scopes: SCOPES_TIMES_TABLES },
-  { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20", scopes: SCOPES_PERFECT_SQUARES },
-  { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10", scopes: SCOPES_PERFECT_CUBES },
-  { id: "fraction_conversions", label: "Fractions \u2194 Decimals \u2194 Percents", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
-  { id: "advanced_squares", label: "Advanced Squares", level: 1, hasDifficulty: false, description: "Squares of 10, 20, 30...100" },
-  { id: "advanced_cubes", label: "Advanced Cubes", level: 1, hasDifficulty: false, description: "Cubes of 10, 20, 30...100" },
-  { id: "higher_powers", label: "Higher Powers", level: 1, hasDifficulty: false, description: "2^4-2^9, 3^4-3^6, 4^4, 5^4, 6^4" },
-  { id: "common_multiples", label: "Common Multiples", level: 1, hasDifficulty: false, description: "13-36 times various multipliers" },
-  // Level 2: Estimate
-  { id: "multiplication_estimation", label: "Multiplication Estimation", level: 2, hasDifficulty: true, description: "Estimate products of multi-digit numbers" },
-  { id: "root_estimation", label: "Root Estimation", level: 2, hasDifficulty: true, description: "Square roots, cube roots, and higher roots at Hard" },
-  { id: "fraction_estimation", label: "Fraction Estimation", level: 2, hasDifficulty: true, description: "Estimate fraction values with 2-digit or 3-digit denominators" },
-  { id: "percentage_calculations", label: "Percentage Estimation", level: 2, hasDifficulty: true, description: "Quick percentage estimates: tips, taxes, percent change" },
-  // Level 3: Get Crafty
-  { id: "strategic_mul_div", label: "Strategic Mult & Division", level: 3, hasDifficulty: true, description: "Multiply/divide by 4, 5, 8, 9, 11, 12, 15, 25, 19, 99; squaring X5; complementary" },
-  { id: "divisibility_3_6_9", label: "Divisibility by 3, 6, 9", level: 3, hasDifficulty: true, description: "Digit-sum divisibility rules" },
-  { id: "divisibility_4_8", label: "Divisibility by 4, 8", level: 3, hasDifficulty: true, description: "Last-digits and halving rules" },
-  { id: "divisibility_7", label: "Advanced Divisibility (7, 11)", level: 3, hasDifficulty: true, description: "Multiply-last-digit method (7); alternating digit sum (11)" }
-];
-function getTopicsForLevel(level) {
-  return DRILL_TOPIC_REGISTRY.filter((t) => t.level === level).map((t) => ({ ...t }));
-}
-function topicHasDifficulty(topicId) {
-  const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
-  return topic ? topic.hasDifficulty : false;
-}
 var levels = [
   { level: 1, name: "Memorize", Icon: lucideReact.Brain },
   { level: 2, name: "Estimate", Icon: lucideReact.Gauge },
@@ -1804,77 +1823,99 @@ var levels = [
 var difficulties = ["Easy", "Medium", "Hard"];
 function TrainerConfigSelector() {
   const ui = useMathmogUI();
-  const { currentLevel, currentDifficulty, currentTopic, handleLevelDifficultyChange } = useProblem();
+  const {
+    currentLevel,
+    currentDifficulty,
+    currentTopic,
+    currentScope,
+    handleLevelDifficultyChange
+  } = useProblem();
   const { speedChallenge } = useSpeedChallenge();
   const availableTopics = getTopicsForLevel(currentLevel);
   const showDifficulty = !currentTopic || topicHasDifficulty(currentTopic);
   const topicValue = currentTopic ?? "all";
-  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "mb-6 space-y-4", children: /* @__PURE__ */ jsxRuntime.jsxs(
-    "div",
-    {
-      className: cn(
-        "grid grid-cols-1 gap-4",
-        showDifficulty ? "sm:grid-cols-3" : "sm:grid-cols-2"
-      ),
-      children: [
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "level-select", className: "mb-2 block", children: "Skill" }),
-          /* @__PURE__ */ jsxRuntime.jsxs(
-            ui.Select,
-            {
-              value: String(currentLevel),
-              onValueChange: (value) => handleLevelDifficultyChange(parseInt(value), currentDifficulty, void 0),
-              disabled: speedChallenge.isActive,
-              children: [
-                /* @__PURE__ */ jsxRuntime.jsx(ui.SelectTrigger, { id: "level-select", "data-tour": "mathmog-mode-select", children: /* @__PURE__ */ jsxRuntime.jsx(ui.SelectValue, {}) }),
-                /* @__PURE__ */ jsxRuntime.jsx(ui.SelectContent, { children: levels.map(({ level, name, Icon }) => /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: String(level), children: /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "flex items-center gap-2", children: [
-                  /* @__PURE__ */ jsxRuntime.jsx(Icon, { className: "w-4 h-4 text-muted-foreground" }),
-                  name
-                ] }) }, level)) })
-              ]
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "topic-select", className: "mb-2 block", children: "Topic" }),
-          /* @__PURE__ */ jsxRuntime.jsxs(
-            ui.Select,
-            {
-              value: topicValue,
-              onValueChange: (value) => handleLevelDifficultyChange(
-                currentLevel,
-                currentDifficulty,
-                value === "all" ? void 0 : value
-              ),
-              disabled: speedChallenge.isActive,
-              children: [
-                /* @__PURE__ */ jsxRuntime.jsx(ui.SelectTrigger, { id: "topic-select", "data-tour": "mathmog-topic-select", children: /* @__PURE__ */ jsxRuntime.jsx(ui.SelectValue, {}) }),
-                /* @__PURE__ */ jsxRuntime.jsxs(ui.SelectContent, { children: [
-                  /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: "all", children: "All topics" }),
-                  availableTopics.map((topic) => /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: topic.id, children: topic.label }, topic.id))
-                ] })
-              ]
-            }
-          )
-        ] }),
-        showDifficulty && /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "difficulty-select", className: "mb-2 block", children: "Difficulty" }),
-          /* @__PURE__ */ jsxRuntime.jsxs(
-            ui.Select,
-            {
-              value: currentDifficulty,
-              onValueChange: (value) => handleLevelDifficultyChange(currentLevel, value, currentTopic),
-              disabled: speedChallenge.isActive,
-              children: [
-                /* @__PURE__ */ jsxRuntime.jsx(ui.SelectTrigger, { id: "difficulty-select", "data-tour": "mathmog-difficulty-select", children: /* @__PURE__ */ jsxRuntime.jsx(ui.SelectValue, {}) }),
-                /* @__PURE__ */ jsxRuntime.jsx(ui.SelectContent, { children: difficulties.map((difficulty) => /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: difficulty, children: difficulty }, difficulty)) })
-              ]
-            }
-          )
-        ] })
-      ]
-    }
-  ) });
+  const topicInfo = currentTopic ? getTopicInfo(currentTopic) : void 0;
+  const topicScopes = topicInfo?.scopes ?? [];
+  const showScope = topicScopes.length > 0;
+  const visibleCount = 2 + (showScope ? 1 : 0) + (showDifficulty ? 1 : 0);
+  const gridColsClass = visibleCount === 4 ? "sm:grid-cols-4" : visibleCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
+  return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "mb-6 space-y-4", children: /* @__PURE__ */ jsxRuntime.jsxs("div", { className: cn("grid grid-cols-1 gap-4", gridColsClass), children: [
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "level-select", className: "mb-2 block", children: "Skill" }),
+      /* @__PURE__ */ jsxRuntime.jsxs(
+        ui.Select,
+        {
+          value: String(currentLevel),
+          onValueChange: (value) => handleLevelDifficultyChange(parseInt(value), currentDifficulty, void 0),
+          disabled: speedChallenge.isActive,
+          children: [
+            /* @__PURE__ */ jsxRuntime.jsx(ui.SelectTrigger, { id: "level-select", "data-tour": "mathmog-mode-select", children: /* @__PURE__ */ jsxRuntime.jsx(ui.SelectValue, {}) }),
+            /* @__PURE__ */ jsxRuntime.jsx(ui.SelectContent, { children: levels.map(({ level, name, Icon }) => /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: String(level), children: /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsxRuntime.jsx(Icon, { className: "w-4 h-4 text-muted-foreground" }),
+              name
+            ] }) }, level)) })
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "topic-select", className: "mb-2 block", children: "Topic" }),
+      /* @__PURE__ */ jsxRuntime.jsxs(
+        ui.Select,
+        {
+          value: topicValue,
+          onValueChange: (value) => handleLevelDifficultyChange(
+            currentLevel,
+            currentDifficulty,
+            value === "all" ? void 0 : value
+          ),
+          disabled: speedChallenge.isActive,
+          children: [
+            /* @__PURE__ */ jsxRuntime.jsx(ui.SelectTrigger, { id: "topic-select", "data-tour": "mathmog-topic-select", children: /* @__PURE__ */ jsxRuntime.jsx(ui.SelectValue, {}) }),
+            /* @__PURE__ */ jsxRuntime.jsxs(ui.SelectContent, { children: [
+              /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: "all", children: "All topics" }),
+              availableTopics.map((topic) => /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: topic.id, children: topic.label }, topic.id))
+            ] })
+          ]
+        }
+      )
+    ] }),
+    showScope && /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "scope-select", className: "mb-2 block", children: "Scope" }),
+      /* @__PURE__ */ jsxRuntime.jsxs(
+        ui.Select,
+        {
+          value: currentScope ?? topicScopes[0]?.id ?? "",
+          onValueChange: (value) => handleLevelDifficultyChange(
+            currentLevel,
+            currentDifficulty,
+            currentTopic,
+            value
+          ),
+          disabled: speedChallenge.isActive,
+          children: [
+            /* @__PURE__ */ jsxRuntime.jsx(ui.SelectTrigger, { id: "scope-select", "data-tour": "mathmog-scope-select", children: /* @__PURE__ */ jsxRuntime.jsx(ui.SelectValue, {}) }),
+            /* @__PURE__ */ jsxRuntime.jsx(ui.SelectContent, { children: topicScopes.map((scope) => /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: scope.id, children: scope.label }, scope.id)) })
+          ]
+        }
+      )
+    ] }),
+    showDifficulty && /* @__PURE__ */ jsxRuntime.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntime.jsx(ui.Label, { htmlFor: "difficulty-select", className: "mb-2 block", children: "Difficulty" }),
+      /* @__PURE__ */ jsxRuntime.jsxs(
+        ui.Select,
+        {
+          value: currentDifficulty,
+          onValueChange: (value) => handleLevelDifficultyChange(currentLevel, value, currentTopic, currentScope),
+          disabled: speedChallenge.isActive,
+          children: [
+            /* @__PURE__ */ jsxRuntime.jsx(ui.SelectTrigger, { id: "difficulty-select", "data-tour": "mathmog-difficulty-select", children: /* @__PURE__ */ jsxRuntime.jsx(ui.SelectValue, {}) }),
+            /* @__PURE__ */ jsxRuntime.jsx(ui.SelectContent, { children: difficulties.map((difficulty) => /* @__PURE__ */ jsxRuntime.jsx(ui.SelectItem, { value: difficulty, children: difficulty }, difficulty)) })
+          ]
+        }
+      )
+    ] })
+  ] }) });
 }
 var LEVEL_NAMES = {
   1: "Memorize",
