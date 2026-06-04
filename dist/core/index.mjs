@@ -609,7 +609,7 @@ var generateLevel2Problem = (difficulty, history) => {
     }
     return generateMultiplicationProblem(difficulty);
   } catch (error) {
-    console.error("Error generating Level 2 problem, falling back to multiplication", error);
+    console.error("generateLevel2Problem: generator threw, falling back to multiplication_estimation", { error, difficulty });
     return generateMultiplicationProblem(difficulty);
   }
 };

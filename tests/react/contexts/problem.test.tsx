@@ -21,8 +21,13 @@
  *     estimate quality independently of correctness.
  *   - WIRED: `handleLevelUp(true)` preserves `currentTopic` on accept by
  *     forwarding the topic into `handleLevelDifficultyChange`.
- *   - STILL PINNED: `handleNewProblem` silently swallows generator throws
- *     (only logs).
+ *   - WIRED: `handleNewProblem` swallows generator throws by policy
+ *     (Phase 0.6 sub-chat 6, A.1 #2 sister: soft fallback with loud
+ *     telemetry). The catch logs a structured context object via
+ *     `console.error` (so production debug has signal) and the previously
+ *     rendered problem stays on screen; the orchestrator does not install
+ *     error boundaries. See the companion WIRED line above for the UI-flag
+ *     reset half of the contract.
  *   - WIRED: `generateProblem` throw clears the four UI flags
  *     (feedback / showAnswer / estimationTier / estimationDeviation) in
  *     the catch. `currentProblem` and `problemHistory` are intentionally
@@ -301,7 +306,7 @@ describe('handleNewProblem', () => {
     expect(result.current.problemHistory[49]).toBe('Q50');
   });
 
-  it('on generator throw: logs to console.error and does NOT update currentProblem / history', () => {
+  it('on generator throw: logs structured context to console.error and does NOT update currentProblem / history', () => {
     const p1 = textProblem({ question: 'First' });
     queueProblems([p1]);
     const { result } = renderHook(() => useProblem(), { wrapper });
@@ -312,7 +317,13 @@ describe('handleNewProblem', () => {
       throw new Error('boom');
     });
     act(() => result.current.handleNewProblem());
-    expect(errSpy).toHaveBeenCalled();
+    // Catch-policy floor (A.1 #2 sister): the log carries enough context
+    // for production debug. Identifier names the function so future-grep
+    // finds it; context object includes the thrown error.
+    expect(errSpy).toHaveBeenCalledWith(
+      expect.stringContaining('handleNewProblem'),
+      expect.objectContaining({ error: expect.any(Error) })
+    );
     expect(result.current.currentProblem).toEqual(p1);
     expect(result.current.problemHistory).toEqual(['First']);
     errSpy.mockRestore();

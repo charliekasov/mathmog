@@ -610,7 +610,13 @@ const generateLevel2Problem = (difficulty: Difficulty, history: string[]): Probl
         
         return generateMultiplicationProblem(difficulty);
     } catch (error) {
-        console.error("Error generating Level 2 problem, falling back to multiplication", error);
+        // Catch policy (A.1 #2): soft fallback with loud structured
+        // telemetry. multiplication_estimation is a valid Level-2 problem
+        // type, so the student never sees a blank screen; the structured
+        // context lets a future maintainer locate the failing seed if this
+        // ever fires in production. See HANDOFF-mathmog-redesign-phase-0-6-f.md
+        // for the policy rationale (Option B over propagate / typed flag).
+        console.error("generateLevel2Problem: generator threw, falling back to multiplication_estimation", { error, difficulty });
         return generateMultiplicationProblem(difficulty);
     }
 };

@@ -102,11 +102,17 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
         return newHistory;
       });
     } catch (error) {
-      console.error("Error generating problem:", error);
-      // Mirror the happy-path resets at the top of the try so a generator
-      // throw can't leave the previous problem's feedback / showAnswer /
-      // estimation flags on screen. `currentProblem` and `problemHistory`
-      // are intentionally not touched (companion test pins that contract).
+      // Catch policy (A.1 #2 sister, sub-chat 6 of Phase 0.6): soft
+      // fallback with loud structured telemetry. The previously rendered
+      // problem stays on screen (we leave `currentProblem` and
+      // `problemHistory` untouched — companion test pins that contract),
+      // and the four UI flags reset to the happy-path defaults so stale
+      // feedback can't show next to the surviving problem. The orchestrator
+      // does not install error boundaries; the package owns this fallback.
+      // The structured context (`{ error, targetLevel, targetDifficulty,
+      // targetTopic }`) gives production debug a self-contained record of
+      // what generator call faulted.
+      console.error("ProblemProvider.handleNewProblem: generator threw, keeping previous problem", { error, targetLevel, targetDifficulty, targetTopic });
       setUserAnswer('');
       setFeedback('');
       setEstimationTier(null);

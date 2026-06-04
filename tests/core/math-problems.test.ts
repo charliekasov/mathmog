@@ -295,18 +295,22 @@ describe('createUniqueProblem retry cap (via generateProblem)', () => {
 });
 
 // -----------------------------------------------------------------------------
-// PINNED suspect behavior: Level-2 silent fallback to multiplication
+// Level-2 catch policy: soft fallback to multiplication_estimation with
+// loud structured telemetry (A.1 #2 / Phase 0.6 sub-chat 6).
 // -----------------------------------------------------------------------------
 
-describe('Level 2 silent fallback (PINNED suspect behavior)', () => {
-  // PINNED — TODO clean up in follow-up (contract §1.2 medium-confidence:
-  // generateLevel2Problem wraps its body in try/catch and falls back to
-  // generateMultiplicationProblem on any thrown error, with only a
-  // console.error survivor. We can't reliably force the catch branch from
-  // outside, but we pin two surface invariants:
-  //   1. Level 2 always returns a well-formed Problem.
-  //   2. When a `console.error` IS emitted (catch branch hit), the returned
-  //      problem is a Multiplication Estimation problem — i.e. the fallback.
+describe('Level 2 catch policy (soft fallback + telemetry)', () => {
+  // generateLevel2Problem wraps its body in try/catch and on error falls
+  // back to generateMultiplicationProblem (a valid Level-2 problem type,
+  // so the student does not see a blank screen). The catch logs a
+  // structured `{ error, difficulty }` context object via console.error
+  // so production debug has signal. The catch branch is not reliably
+  // forceable from outside (the body is defensive — no operation in the
+  // try-block has a known throw path today), so the two externally
+  // observable invariants we can pin are:
+  //   1. Level 2 always returns a well-formed Problem for every difficulty.
+  //   2. The happy path with Math.random=0.42 does NOT trip the catch
+  //      (surfaces if a future change unexpectedly throws in the body).
 
   let randomSpy: ReturnType<typeof vi.spyOn>;
   let errorSpy: ReturnType<typeof vi.spyOn>;
