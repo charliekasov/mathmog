@@ -12,15 +12,23 @@ declare const perfectSquares: Record<number, number>;
 declare const perfectCubes: Record<number, number>;
 declare const perfectFourthPowers: Record<number, number>;
 declare const perfectFifthPowers: Record<number, number>;
-declare const generateProblem: (level: number, difficulty: Difficulty, history: string[], topic?: string) => Problem;
+declare const generateProblem: (level: number, difficulty: Difficulty, history: string[], topic?: string, scope?: string) => Problem;
 
 type DrillTopic = 'perfect_squares' | 'perfect_cubes' | 'fraction_conversions' | 'advanced_squares' | 'advanced_cubes' | 'higher_powers' | 'common_multiples' | 'multiplication_estimation' | 'root_estimation' | 'fraction_estimation' | 'percentage_calculations' | 'strategic_mul_div' | 'divisibility_3_6_9' | 'divisibility_4_8' | 'divisibility_7';
+interface ScopeDef {
+    id: string;
+    label: string;
+    description?: string;
+    widerThan?: string[];
+    narrowerThan?: string[];
+}
 interface DrillTopicInfo {
     id: DrillTopic;
     label: string;
     level: number;
     hasDifficulty: boolean;
     description: string;
+    scopes?: ScopeDef[];
 }
 declare const DRILL_TOPIC_REGISTRY: DrillTopicInfo[];
 declare function getTopicsForLevel(level: number): DrillTopicInfo[];
@@ -29,4 +37,4 @@ declare function topicHasDifficulty(topicId: string): boolean;
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, Problem, cn, commonFractionConversions, generateProblem, getTopicInfo, getTopicsForLevel, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, topicHasDifficulty };
+export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, Problem, type ScopeDef, cn, commonFractionConversions, generateProblem, getTopicInfo, getTopicsForLevel, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, topicHasDifficulty };

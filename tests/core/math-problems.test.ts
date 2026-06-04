@@ -677,3 +677,414 @@ describe('Rejection-loop iteration caps (regression)', () => {
     }
   }, 2000);
 });
+
+// -----------------------------------------------------------------------------
+// Phase 1 slice 1.1 — Scope infrastructure
+//
+// Adds an optional 5th positional `scope` arg to `generateProblem` and
+// scope-aware generation for three Memorize topics:
+//   - perfect_squares  (scopes: squares_full / squares_1_5 / squares_1_10 /
+//                       squares_11_15 / squares_11_20 / squares_16_20)
+//   - perfect_cubes    (scopes: cubes_full / cubes_1_3 / cubes_1_5 / cubes_6_10)
+//   - fraction_conversions (scopes: fractions_full / fractions_friendly /
+//                       fractions_halves_fourths / fractions_fifths /
+//                       fractions_eighths / fractions_thirds / fractions_sixths
+//                       / fractions_sevenths / fractions_ninths)
+//
+// The LOAD-BEARING invariant is byte-equivalence: `scope = undefined` (4-arg
+// call) AND `scope = '<topic>_full'` (5-arg call with the topic's "Full" scope)
+// must produce identical Problem output to today's generators for every seed.
+// Phase 1.1 must not silently shift the unscoped default — every existing
+// portal caller (only `src/react/contexts/problem.tsx:89` today) is a 4-arg
+// call.
+//
+// The byte-equivalence tests live BEFORE the registry/generator changes per the
+// test-protected refactor workflow (cartograph → pin → change → review).
+// -----------------------------------------------------------------------------
+
+describe('Scope: byte-equivalence baseline (no-scope path is unchanged)', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    randomSpy = vi.spyOn(Math, 'random');
+  });
+
+  afterEach(() => {
+    randomSpy.mockRestore();
+  });
+
+  // perfect_squares: today's generator does `Math.floor(Math.random() * 20) + 1`,
+  // then `answer = num * num`. Seed sweep pins specific (seed → num) pairs so
+  // the slice's source change cannot accidentally shift the unscoped default.
+  it.each([
+    [0.0, 1],
+    [0.05, 2],
+    [0.25, 6],
+    [0.5, 11],
+    [0.75, 16],
+    [0.95, 20],
+  ])('perfect_squares (no scope) at seed=%s yields %s²', (seed, expectedNum) => {
+    randomSpy.mockReturnValue(seed as number);
+    const p = generateProblem(1, 'Easy', [], 'perfect_squares');
+    expect(p.question).toBe(`${expectedNum}² = ?`);
+    expect(p.answer).toBe(expectedNum * expectedNum);
+    expect(p.type).toBe('Perfect Squares');
+  });
+
+  // perfect_cubes: today's generator does `Math.floor(Math.random() * 10) + 1`.
+  it.each([
+    [0.0, 1],
+    [0.05, 1],
+    [0.25, 3],
+    [0.5, 6],
+    [0.75, 8],
+    [0.95, 10],
+  ])('perfect_cubes (no scope) at seed=%s yields %s³', (seed, expectedNum) => {
+    randomSpy.mockReturnValue(seed as number);
+    const p = generateProblem(1, 'Easy', [], 'perfect_cubes');
+    expect(p.question).toBe(`${expectedNum}³ = ?`);
+    expect(p.answer).toBe(expectedNum * expectedNum * expectedNum);
+    expect(p.type).toBe('Perfect Cubes');
+  });
+
+  // fraction_conversions: today's generator picks a denominator from
+  // [3,4,5,6,7,8,9] then a numerator, then a conversion type. The exact output
+  // is seed-deterministic. We pin a sweep of seeds → (type, question pattern)
+  // to lock the unscoped distribution.
+  it('fraction_conversions (no scope) at seed=0.0 emits a fraction problem touching denominator 3', () => {
+    randomSpy.mockReturnValue(0.0);
+    const p = generateProblem(1, 'Easy', [], 'fraction_conversions');
+    // den index = floor(0 * 7) = 0 → den=3; numerator index = floor(0 * 2) = 0 → num=1
+    // conversion index varies but question must reference 1/3 or 0.<something for 1/3> or 33%-ish
+    expect(p.type).toMatch(/Fraction|Decimal|Percent/);
+    const q = String(p.question);
+    // either "1/3" reference, or "0.33" reference, or "33%" reference
+    expect(q).toMatch(/1\/3|0\.33|33\./);
+  });
+
+  it('fraction_conversions (no scope) at seed=0.5 emits a fraction problem touching denominator 6', () => {
+    randomSpy.mockReturnValue(0.5);
+    const p = generateProblem(1, 'Easy', [], 'fraction_conversions');
+    // den index = floor(0.5 * 7) = 3 → den=6
+    const q = String(p.question);
+    // Some seed paths reference simplified forms (e.g. 1/2 from 5/6 → percent → fraction).
+    // Pin the denominator-6 path by matching "/6" OR "5/6" OR a 0.83/0.16 decimal OR an 83.3%-ish percent.
+    expect(q).toMatch(/\/6\b|0\.16|0\.83|16\.6|83\.3/);
+  });
+
+  it('fraction_conversions (no scope) at seed=0.99 emits a fraction problem touching denominator 9', () => {
+    randomSpy.mockReturnValue(0.99);
+    const p = generateProblem(1, 'Easy', [], 'fraction_conversions');
+    // den index = floor(0.99 * 7) = 6 → den=9
+    const q = String(p.question);
+    expect(q).toMatch(/\/9\b|0\.[0-9]{2,}|[0-9]+\.[0-9]+%/);
+  });
+
+  // Belt-and-suspenders: every seed × every scoped topic produces a well-formed
+  // Problem on the no-scope (undefined) path. This is the catch-all that flags
+  // any source change that breaks unscoped behavior.
+  it('every (seed × scoped topic) on the no-scope path produces a well-formed Problem', () => {
+    const seeds = [0.0, 0.13, 0.27, 0.42, 0.5, 0.69, 0.83, 0.91, 0.99];
+    const topics = ['perfect_squares', 'perfect_cubes', 'fraction_conversions'];
+    for (const seed of seeds) {
+      randomSpy.mockReturnValue(seed);
+      for (const topic of topics) {
+        const p = generateProblem(1, 'Easy', [], topic);
+        expectProblemShape(p);
+      }
+    }
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Scope-aware output — pins the post-change scope-narrowing contract.
+//
+// Each scoped topic exposes a set of scope ids per curriculum DESIGN doc §3.3.
+// The generator interprets the id and narrows its number pool; scope=undefined
+// or scope=`<topic>_full` reproduces today's full-range behavior. An unknown
+// scope id silently falls back to Full (matching the existing topic-resilience
+// pattern: `getTopicInfo` returns undefined for unknown topics rather than
+// throwing).
+// -----------------------------------------------------------------------------
+
+describe('Scope: scope-aware output (perfect_squares)', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => { randomSpy = vi.spyOn(Math, 'random'); });
+  afterEach(() => { randomSpy.mockRestore(); });
+
+  // For every seed in a sweep, the picked base must lie inside the scope's
+  // declared range. This is a property test — we don't pin a single output,
+  // we pin the set of possible outputs.
+  const sweep = [0.0, 0.05, 0.15, 0.25, 0.4, 0.5, 0.6, 0.75, 0.85, 0.95];
+
+  const inRange = (q: unknown, lo: number, hi: number) => {
+    const m = String(q).match(/^(\d+)² = \?$/);
+    expect(m).not.toBeNull();
+    const x = Number(m![1]);
+    expect(x).toBeGreaterThanOrEqual(lo);
+    expect(x).toBeLessThanOrEqual(hi);
+  };
+
+  it('scope=squares_1_5 emits bases in 1..5', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_squares', 'squares_1_5');
+      inRange(p.question, 1, 5);
+    }
+  });
+
+  it('scope=squares_1_10 emits bases in 1..10', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_squares', 'squares_1_10');
+      inRange(p.question, 1, 10);
+    }
+  });
+
+  it('scope=squares_11_15 emits bases in 11..15', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_squares', 'squares_11_15');
+      inRange(p.question, 11, 15);
+    }
+  });
+
+  it('scope=squares_11_20 emits bases in 11..20', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_squares', 'squares_11_20');
+      inRange(p.question, 11, 20);
+    }
+  });
+
+  it('scope=squares_16_20 emits bases in 16..20', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_squares', 'squares_16_20');
+      inRange(p.question, 16, 20);
+    }
+  });
+
+  it('scope=squares_full is byte-equivalent to the no-scope path', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const noScope = generateProblem(1, 'Easy', [], 'perfect_squares');
+      randomSpy.mockReturnValue(s);
+      const withFull = generateProblem(1, 'Easy', [], 'perfect_squares', 'squares_full');
+      expect(withFull).toEqual(noScope);
+    }
+  });
+
+  it('unknown scope falls back to Full (silent, matches getTopicInfo resilience)', () => {
+    for (const s of [0.05, 0.5, 0.95]) {
+      randomSpy.mockReturnValue(s);
+      const noScope = generateProblem(1, 'Easy', [], 'perfect_squares');
+      randomSpy.mockReturnValue(s);
+      const withGarbage = generateProblem(1, 'Easy', [], 'perfect_squares', 'totally-not-a-scope');
+      expect(withGarbage).toEqual(noScope);
+    }
+  });
+});
+
+describe('Scope: scope-aware output (perfect_cubes)', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => { randomSpy = vi.spyOn(Math, 'random'); });
+  afterEach(() => { randomSpy.mockRestore(); });
+
+  const sweep = [0.0, 0.05, 0.15, 0.25, 0.4, 0.5, 0.6, 0.75, 0.85, 0.95];
+
+  const inRange = (q: unknown, lo: number, hi: number) => {
+    const m = String(q).match(/^(\d+)³ = \?$/);
+    expect(m).not.toBeNull();
+    const x = Number(m![1]);
+    expect(x).toBeGreaterThanOrEqual(lo);
+    expect(x).toBeLessThanOrEqual(hi);
+  };
+
+  it('scope=cubes_1_3 emits bases in 1..3', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_cubes', 'cubes_1_3');
+      inRange(p.question, 1, 3);
+    }
+  });
+
+  it('scope=cubes_1_5 emits bases in 1..5', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_cubes', 'cubes_1_5');
+      inRange(p.question, 1, 5);
+    }
+  });
+
+  it('scope=cubes_6_10 emits bases in 6..10', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'perfect_cubes', 'cubes_6_10');
+      inRange(p.question, 6, 10);
+    }
+  });
+
+  it('scope=cubes_full is byte-equivalent to the no-scope path', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const noScope = generateProblem(1, 'Easy', [], 'perfect_cubes');
+      randomSpy.mockReturnValue(s);
+      const withFull = generateProblem(1, 'Easy', [], 'perfect_cubes', 'cubes_full');
+      expect(withFull).toEqual(noScope);
+    }
+  });
+});
+
+describe('Scope: scope-aware output (fraction_conversions)', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => { randomSpy = vi.spyOn(Math, 'random'); });
+  afterEach(() => { randomSpy.mockRestore(); });
+
+  const sweep = [0.0, 0.13, 0.27, 0.42, 0.5, 0.69, 0.83, 0.91, 0.99];
+
+  // The question string for a fraction-conversion problem touches the
+  // denominator in one of several shapes:
+  //   - "Convert N/D to a decimal (P decimal places)"
+  //   - "Convert N/D to a percent (P decimal places)"
+  //   - "Convert 0.XYZ to a fraction"  (decToFrac — den hidden in answer)
+  //   - "Convert XYZ% to a fraction"   (percToFrac — den hidden in answer)
+  // For scope assertions we accept either: (a) the question references N/D
+  // where D is in the scope's denominator set, OR (b) the answer (a simplified
+  // fraction string "n/d" for the text-input types) has denominator dividing
+  // a denominator in the scope's set (because simplifyFraction may collapse
+  // e.g. 2/8 → 1/4, but the source fraction's denominator was still in scope).
+
+  const denomsInScope = (p: Problem, allowedDenoms: number[]) => {
+    const q = String(p.question);
+    // Question form 1+2: "Convert N/D ..." — match the displayed denominator
+    const qMatch = q.match(/Convert \d+\/(\d+)/);
+    if (qMatch) {
+      const d = Number(qMatch[1]);
+      expect(allowedDenoms).toContain(d);
+      return;
+    }
+    // Question form 3+4: "Convert 0.X to a fraction" or "Convert X% to a fraction"
+    // Answer is a "n/d" string. The simplified denom must divide one of the
+    // source denominators in scope (e.g., source 4 → answer could be 1/4 or
+    // 1/2 if numerator was 2; source 8 → 1/8, 3/8, 5/8, 7/8; source 5 → 1/5..4/5).
+    if (typeof p.answer === 'string' && /^\d+\/\d+$/.test(p.answer)) {
+      const ansDen = Number(p.answer.split('/')[1]);
+      // ansDen must divide some allowed denominator
+      const ok = allowedDenoms.some((d) => d % ansDen === 0);
+      expect(ok, `answer ${p.answer} not consistent with scope denominators ${allowedDenoms.join(',')}`).toBe(true);
+      return;
+    }
+    // Decimal-input form (decToFrac with non-simplifiable source) — sanity-only
+    // shape check; the seed paths we use don't typically land here.
+    expect(p.type).toMatch(/Fraction|Decimal|Percent/);
+  };
+
+  it('scope=fractions_friendly restricts to denominators {4, 5}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_friendly');
+      denomsInScope(p, [4, 5]);
+    }
+  });
+
+  it('scope=fractions_halves_fourths restricts to denominator {4}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_halves_fourths');
+      denomsInScope(p, [4]);
+    }
+  });
+
+  it('scope=fractions_fifths restricts to denominator {5}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_fifths');
+      denomsInScope(p, [5]);
+    }
+  });
+
+  it('scope=fractions_eighths restricts to denominator {8}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_eighths');
+      denomsInScope(p, [8]);
+    }
+  });
+
+  it('scope=fractions_thirds restricts to denominator {3}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_thirds');
+      denomsInScope(p, [3]);
+    }
+  });
+
+  it('scope=fractions_sixths restricts to denominator {6}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_sixths');
+      denomsInScope(p, [6]);
+    }
+  });
+
+  it('scope=fractions_sevenths restricts to denominator {7}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_sevenths');
+      denomsInScope(p, [7]);
+    }
+  });
+
+  it('scope=fractions_ninths restricts to denominator {9}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_ninths');
+      denomsInScope(p, [9]);
+    }
+  });
+
+  it('scope=fractions_full is byte-equivalent to the no-scope path', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const noScope = generateProblem(1, 'Easy', [], 'fraction_conversions');
+      randomSpy.mockReturnValue(s);
+      const withFull = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_full');
+      expect(withFull).toEqual(noScope);
+    }
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Scope on non-scoped topics: ignored (does not narrow, does not throw).
+// -----------------------------------------------------------------------------
+
+describe('Scope: topics without scopes ignore the scope arg', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => { randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.42); });
+  afterEach(() => { randomSpy.mockRestore(); });
+
+  // advanced_squares, advanced_cubes, higher_powers, common_multiples,
+  // and every Level-2 / Level-3 topic have no scope set in v1; passing a
+  // scope id must be a no-op (no throw, no change vs no-scope).
+  const unscopedTopics = [
+    'advanced_squares',
+    'advanced_cubes',
+    'higher_powers',
+    'common_multiples',
+    'multiplication_estimation',
+    'root_estimation',
+    'fraction_estimation',
+    'percentage_calculations',
+    'strategic_mul_div',
+    'divisibility_3_6_9',
+    'divisibility_4_8',
+    'divisibility_7',
+  ];
+
+  for (const topic of unscopedTopics) {
+    it(`topic=${topic} ignores a scope arg (no-op, no throw)`, () => {
+      expect(() => generateProblem(1, 'Easy', [], topic, 'arbitrary_scope_id')).not.toThrow();
+    });
+  }
+});

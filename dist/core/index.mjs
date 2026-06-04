@@ -889,20 +889,75 @@ var generateRootEstimationProblem = (difficulty) => {
   const explanation = `${symbol}${num} \u2248 ${actualRoot.toFixed(2)}. It's between ${base} (${base}${powerLabel}=${lowerBound}) and ${nextBase} (${nextBase}${powerLabel}=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
   return { question: questionTextParts, answer: answerText, type: "Root Estimation", explanation, inputType: "multi-text", placeholder: "a,b,c" };
 };
-var generatePerfectSquareProblem_targeted = () => {
-  const num = Math.floor(Math.random() * 20) + 1;
+var squaresRangeForScope = (scope) => {
+  switch (scope) {
+    case "squares_1_5":
+      return [1, 5];
+    case "squares_1_10":
+      return [1, 10];
+    case "squares_11_15":
+      return [11, 15];
+    case "squares_11_20":
+      return [11, 20];
+    case "squares_16_20":
+      return [16, 20];
+    case "squares_full":
+    default:
+      return [1, 20];
+  }
+};
+var cubesRangeForScope = (scope) => {
+  switch (scope) {
+    case "cubes_1_3":
+      return [1, 3];
+    case "cubes_1_5":
+      return [1, 5];
+    case "cubes_6_10":
+      return [6, 10];
+    case "cubes_full":
+    default:
+      return [1, 10];
+  }
+};
+var fractionDenominatorsForScope = (scope) => {
+  switch (scope) {
+    case "fractions_friendly":
+      return [4, 5];
+    case "fractions_halves_fourths":
+      return [4];
+    case "fractions_fifths":
+      return [5];
+    case "fractions_eighths":
+      return [8];
+    case "fractions_thirds":
+      return [3];
+    case "fractions_sixths":
+      return [6];
+    case "fractions_sevenths":
+      return [7];
+    case "fractions_ninths":
+      return [9];
+    case "fractions_full":
+    default:
+      return [3, 4, 5, 6, 7, 8, 9];
+  }
+};
+var generatePerfectSquareProblem_targeted = (scope) => {
+  const [lo, hi] = squaresRangeForScope(scope);
+  const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
   const answer = num * num;
   const explanation = `${num}\xB2 = ${num}\xD7${num} = ${answer}`;
   return { question: `${num}\xB2 = ?`, answer, type: "Perfect Squares", explanation, inputType: "number" };
 };
-var generatePerfectCubeProblem_targeted = () => {
-  const num = Math.floor(Math.random() * 10) + 1;
+var generatePerfectCubeProblem_targeted = (scope) => {
+  const [lo, hi] = cubesRangeForScope(scope);
+  const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
   const answer = num * num * num;
   const explanation = `${num}\xB3 = ${num}\xD7${num}\xD7${num} = ${answer}`;
   return { question: `${num}\xB3 = ?`, answer, type: "Perfect Cubes", explanation, inputType: "number" };
 };
-var generateFractionProblem_allDenominators = () => {
-  const allDenominators = [3, 4, 5, 6, 7, 8, 9];
+var generateFractionProblem_allDenominators = (scope) => {
+  const allDenominators = fractionDenominatorsForScope(scope);
   const den = allDenominators[Math.floor(Math.random() * allDenominators.length)];
   const availableNumerators = fractionBasesByDenominator[den].numerators;
   const num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
@@ -915,7 +970,7 @@ var generateFractionProblem_allDenominators = () => {
   const decimalValue = num / den;
   const percentValue = decimalValue * 100;
   if ((conversionType === "percToFrac" || conversionType === "decToFrac") && decimalValue % 1 === 0) {
-    return generateFractionProblem_allDenominators();
+    return generateFractionProblem_allDenominators(scope);
   }
   switch (conversionType) {
     case "fracToDec": {
@@ -944,7 +999,7 @@ var generateFractionProblem_allDenominators = () => {
       return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: "Percent to Fraction", explanation: `${questionPercent}% \u2248 ${questionPercent}/100 = ${simplified}`, inputType: "text" };
     }
     default:
-      return generateFractionProblem_allDenominators();
+      return generateFractionProblem_allDenominators(scope);
   }
 };
 var generateAdvancedSquareProblem_targeted = () => {
@@ -1040,15 +1095,15 @@ var generateDivisibilityProblem_grouped = (divisors, difficulty) => {
   const explanation = getDivisibilityExplanation(testNum, divisor, isDivisible);
   return { question: `Is ${testNum} divisible by ${divisor}?`, answer: isDivisible ? "yes" : "no", type: "Divisibility", explanation, inputType: "buttons", options: ["yes", "no"] };
 };
-var generateTopicProblem = (topic, difficulty) => {
+var generateTopicProblem = (topic, difficulty, scope) => {
   switch (topic) {
     // Level 1 topics (ignore difficulty)
     case "perfect_squares":
-      return generatePerfectSquareProblem_targeted();
+      return generatePerfectSquareProblem_targeted(scope);
     case "perfect_cubes":
-      return generatePerfectCubeProblem_targeted();
+      return generatePerfectCubeProblem_targeted(scope);
     case "fraction_conversions":
-      return generateFractionProblem_allDenominators();
+      return generateFractionProblem_allDenominators(scope);
     case "advanced_squares":
       return generateAdvancedSquareProblem_targeted();
     case "advanced_cubes":
@@ -1079,9 +1134,9 @@ var generateTopicProblem = (topic, difficulty) => {
       throw new Error(`Unknown drill topic: ${topic}`);
   }
 };
-var generateProblem = (level, difficulty, history, topic) => {
+var generateProblem = (level, difficulty, history, topic, scope) => {
   if (topic) {
-    const generator2 = () => generateTopicProblem(topic, difficulty);
+    const generator2 = () => generateTopicProblem(topic, difficulty, scope);
     return createUniqueProblem(generator2, history);
   }
   let generatorFunction;
@@ -1103,11 +1158,36 @@ var generateProblem = (level, difficulty, history, topic) => {
 };
 
 // src/core/drill-topics.ts
+var SCOPES_PERFECT_SQUARES = [
+  { id: "squares_full", label: "Full (1\xB2 through 20\xB2)", narrowerThan: ["squares_1_10"] },
+  { id: "squares_1_5", label: "1\xB2 through 5\xB2", widerThan: ["squares_1_10"] },
+  { id: "squares_1_10", label: "1\xB2 through 10\xB2", widerThan: ["squares_full"], narrowerThan: ["squares_1_5"] },
+  { id: "squares_11_15", label: "11\xB2 through 15\xB2", widerThan: ["squares_11_20"] },
+  { id: "squares_11_20", label: "11\xB2 through 20\xB2", widerThan: ["squares_full"], narrowerThan: ["squares_11_15"] },
+  { id: "squares_16_20", label: "16\xB2 through 20\xB2", widerThan: ["squares_11_20"] }
+];
+var SCOPES_PERFECT_CUBES = [
+  { id: "cubes_full", label: "Full (1\xB3 through 10\xB3)", narrowerThan: ["cubes_1_5"] },
+  { id: "cubes_1_3", label: "1\xB3 through 3\xB3", widerThan: ["cubes_1_5"] },
+  { id: "cubes_1_5", label: "1\xB3 through 5\xB3", widerThan: ["cubes_full"], narrowerThan: ["cubes_1_3"] },
+  { id: "cubes_6_10", label: "6\xB3 through 10\xB3", widerThan: ["cubes_full"] }
+];
+var SCOPES_FRACTION_CONVERSIONS = [
+  { id: "fractions_full", label: "Full (all denominators)", narrowerThan: ["fractions_friendly"] },
+  { id: "fractions_friendly", label: "The friendly ones (halves, fourths, fifths)", widerThan: ["fractions_full"], narrowerThan: ["fractions_halves_fourths"] },
+  { id: "fractions_halves_fourths", label: "Halves and fourths (1/2, 1/4, 3/4)", widerThan: ["fractions_friendly"] },
+  { id: "fractions_fifths", label: "Fifths (1/5, 2/5, 3/5, 4/5)", widerThan: ["fractions_friendly"] },
+  { id: "fractions_eighths", label: "Eighths (1/8, 3/8, 5/8, 7/8)", widerThan: ["fractions_full"] },
+  { id: "fractions_thirds", label: "Thirds (1/3, 2/3)", widerThan: ["fractions_full"] },
+  { id: "fractions_sixths", label: "Sixths (1/6, 5/6)", widerThan: ["fractions_full"] },
+  { id: "fractions_sevenths", label: "Sevenths (1/7 \u2026 6/7)", widerThan: ["fractions_full"] },
+  { id: "fractions_ninths", label: "Ninths (1/9 \u2026 8/9)", widerThan: ["fractions_full"] }
+];
 var DRILL_TOPIC_REGISTRY = [
   // Level 1: Memorize
-  { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20" },
-  { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10" },
-  { id: "fraction_conversions", label: "Fraction Conversions", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types" },
+  { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20", scopes: SCOPES_PERFECT_SQUARES },
+  { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10", scopes: SCOPES_PERFECT_CUBES },
+  { id: "fraction_conversions", label: "Fraction Conversions", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
   { id: "advanced_squares", label: "Advanced Squares", level: 1, hasDifficulty: false, description: "Squares of 10, 20, 30...100" },
   { id: "advanced_cubes", label: "Advanced Cubes", level: 1, hasDifficulty: false, description: "Cubes of 10, 20, 30...100" },
   { id: "higher_powers", label: "Higher Powers", level: 1, hasDifficulty: false, description: "2^4-2^9, 3^4-3^6, 4^4, 5^4, 6^4" },

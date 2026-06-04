@@ -928,23 +928,69 @@ const generateRootEstimationProblem = (difficulty: Difficulty): Problem => {
 };
 
 // --- Targeted generators for drill topics ---
+//
+// Phase 1.1 scope ranges. Per DESIGN-mathmog-curriculum.md §3.3, each scoped
+// topic narrows the generator's input space by id. `undefined`, the topic's
+// `<topic>_full` id, and any unrecognized id all return the full default range
+// — this is the byte-equivalence contract that lets every existing caller
+// (the React `ProblemProvider` is the only non-test caller today) keep
+// working without passing a scope.
 
-const generatePerfectSquareProblem_targeted = (): Problem => {
-    const num = Math.floor(Math.random() * 20) + 1;
+const squaresRangeForScope = (scope: string | undefined): [number, number] => {
+    switch (scope) {
+        case 'squares_1_5':   return [1, 5];
+        case 'squares_1_10':  return [1, 10];
+        case 'squares_11_15': return [11, 15];
+        case 'squares_11_20': return [11, 20];
+        case 'squares_16_20': return [16, 20];
+        case 'squares_full':
+        default:              return [1, 20];
+    }
+};
+
+const cubesRangeForScope = (scope: string | undefined): [number, number] => {
+    switch (scope) {
+        case 'cubes_1_3':  return [1, 3];
+        case 'cubes_1_5':  return [1, 5];
+        case 'cubes_6_10': return [6, 10];
+        case 'cubes_full':
+        default:           return [1, 10];
+    }
+};
+
+const fractionDenominatorsForScope = (scope: string | undefined): number[] => {
+    switch (scope) {
+        case 'fractions_friendly':       return [4, 5];
+        case 'fractions_halves_fourths': return [4];
+        case 'fractions_fifths':         return [5];
+        case 'fractions_eighths':        return [8];
+        case 'fractions_thirds':         return [3];
+        case 'fractions_sixths':         return [6];
+        case 'fractions_sevenths':       return [7];
+        case 'fractions_ninths':         return [9];
+        case 'fractions_full':
+        default:                         return [3, 4, 5, 6, 7, 8, 9];
+    }
+};
+
+const generatePerfectSquareProblem_targeted = (scope?: string): Problem => {
+    const [lo, hi] = squaresRangeForScope(scope);
+    const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
     const answer = num * num;
     const explanation = `${num}² = ${num}×${num} = ${answer}`;
     return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
 };
 
-const generatePerfectCubeProblem_targeted = (): Problem => {
-    const num = Math.floor(Math.random() * 10) + 1;
+const generatePerfectCubeProblem_targeted = (scope?: string): Problem => {
+    const [lo, hi] = cubesRangeForScope(scope);
+    const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
     const answer = num * num * num;
     const explanation = `${num}³ = ${num}×${num}×${num} = ${answer}`;
     return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
 };
 
-const generateFractionProblem_allDenominators = (): Problem => {
-    const allDenominators = [3, 4, 5, 6, 7, 8, 9];
+const generateFractionProblem_allDenominators = (scope?: string): Problem => {
+    const allDenominators = fractionDenominatorsForScope(scope);
     const den = allDenominators[Math.floor(Math.random() * allDenominators.length)];
     const availableNumerators = fractionBasesByDenominator[den].numerators;
     const num = availableNumerators[Math.floor(Math.random() * availableNumerators.length)];
@@ -961,7 +1007,7 @@ const generateFractionProblem_allDenominators = (): Problem => {
     const percentValue = decimalValue * 100;
 
     if ((conversionType === 'percToFrac' || conversionType === 'decToFrac') && decimalValue % 1 === 0) {
-        return generateFractionProblem_allDenominators();
+        return generateFractionProblem_allDenominators(scope);
     }
 
     switch (conversionType) {
@@ -995,7 +1041,7 @@ const generateFractionProblem_allDenominators = (): Problem => {
             return { question: `Convert ${questionPercent}% to a fraction`, answer: simplified, type: 'Percent to Fraction', explanation: `${questionPercent}% ≈ ${questionPercent}/100 = ${simplified}`, inputType: 'text' };
         }
         default:
-            return generateFractionProblem_allDenominators();
+            return generateFractionProblem_allDenominators(scope);
     }
 };
 
@@ -1095,12 +1141,18 @@ const generateDivisibilityProblem_grouped = (divisors: number[], difficulty: Dif
 
 // --- Topic routing ---
 
-const generateTopicProblem = (topic: string, difficulty: Difficulty): Problem => {
+// `scope` (Phase 1.1) is forwarded to the scoped Memorize generators
+// (perfect_squares, perfect_cubes, fraction_conversions). Topics without a
+// scope set in v1 ignore the arg — passing an arbitrary scope id to e.g.
+// `advanced_squares` is a no-op, NOT an error. This matches the existing
+// topic-resilience pattern (`getTopicInfo` returns undefined for unknown
+// topics rather than throwing).
+const generateTopicProblem = (topic: string, difficulty: Difficulty, scope?: string): Problem => {
     switch (topic) {
         // Level 1 topics (ignore difficulty)
-        case 'perfect_squares': return generatePerfectSquareProblem_targeted();
-        case 'perfect_cubes': return generatePerfectCubeProblem_targeted();
-        case 'fraction_conversions': return generateFractionProblem_allDenominators();
+        case 'perfect_squares': return generatePerfectSquareProblem_targeted(scope);
+        case 'perfect_cubes': return generatePerfectCubeProblem_targeted(scope);
+        case 'fraction_conversions': return generateFractionProblem_allDenominators(scope);
         case 'advanced_squares': return generateAdvancedSquareProblem_targeted();
         case 'advanced_cubes': return generateAdvancedCubeProblem_targeted();
         case 'higher_powers': return generateHigherPowersProblem_all();
@@ -1123,9 +1175,15 @@ const generateTopicProblem = (topic: string, difficulty: Difficulty): Problem =>
     }
 };
 
-export const generateProblem = (level: number, difficulty: Difficulty, history: string[], topic?: string): Problem => {
+// `scope` (Phase 1.1) is an optional narrowing of the per-topic generation
+// space. Default behavior with `scope = undefined` is byte-equivalent to
+// pre-1.1: every existing caller (only `src/react/contexts/problem.tsx:89` in
+// the package today) continues to receive the same Problem distribution.
+// See DESIGN-mathmog-curriculum.md §3.1-§3.3 for the scope model; see
+// `drill-topics.ts` for the registry and `ScopeDef` shape.
+export const generateProblem = (level: number, difficulty: Difficulty, history: string[], topic?: string, scope?: string): Problem => {
     if (topic) {
-        const generator = () => generateTopicProblem(topic, difficulty);
+        const generator = () => generateTopicProblem(topic, difficulty, scope);
         return createUniqueProblem(generator, history);
     }
 

@@ -26,6 +26,7 @@ export {
 export type {
   DrillTopic,
   DrillTopicInfo,
+  ScopeDef,
 } from './drill-topics';
 
 export {

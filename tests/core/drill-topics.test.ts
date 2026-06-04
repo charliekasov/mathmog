@@ -30,6 +30,7 @@ import {
   topicHasDifficulty,
   type DrillTopic,
   type DrillTopicInfo,
+  type ScopeDef,
 } from '../../src/core/drill-topics';
 
 // ---------------------------------------------------------------------------
@@ -51,6 +52,15 @@ describe('DRILL_TOPIC_REGISTRY', () => {
       expect(typeof entry.level).toBe('number');
       expect(typeof entry.hasDifficulty).toBe('boolean');
       expect(typeof entry.description).toBe('string');
+      // `scopes` is optional. When present, it is a non-empty ScopeDef[].
+      if (entry.scopes !== undefined) {
+        expect(Array.isArray(entry.scopes)).toBe(true);
+        expect(entry.scopes.length).toBeGreaterThan(0);
+        for (const s of entry.scopes) {
+          expect(typeof s.id).toBe('string');
+          expect(typeof s.label).toBe('string');
+        }
+      }
     }
   });
 
@@ -77,9 +87,15 @@ describe('DRILL_TOPIC_REGISTRY', () => {
     ]);
   });
 
-  it('contains all 15 expected entries with exact copy and gating flags', () => {
-    // Source of truth pinned per contract §1.3 table.
-    const expected: DrillTopicInfo[] = [
+  it('contains all 15 expected entries with exact copy and gating flags (scopes pinned separately)', () => {
+    // Source of truth pinned per contract §1.3 table. The non-scope fields are
+    // pinned exactly here; the `scopes` field on the three scoped Memorize
+    // topics (perfect_squares, perfect_cubes, fraction_conversions) is pinned
+    // by id-list assertions further below in this file. Splitting the two
+    // keeps this test stable when scope sets evolve (e.g. slice 1.2's Times
+    // Tables, future scope additions) without an unrelated copy change here.
+    const withoutScopes = DRILL_TOPIC_REGISTRY.map(({ scopes: _scopes, ...rest }) => rest);
+    const expected = [
       { id: 'perfect_squares', label: 'Perfect Squares (1-20)', level: 1, hasDifficulty: false, description: 'Squares of numbers 1 through 20' },
       { id: 'perfect_cubes', label: 'Perfect Cubes (1-10)', level: 1, hasDifficulty: false, description: 'Cubes of numbers 1 through 10' },
       { id: 'fraction_conversions', label: 'Fraction Conversions', level: 1, hasDifficulty: false, description: 'All denominators (3-9), all conversion types' },
@@ -96,7 +112,100 @@ describe('DRILL_TOPIC_REGISTRY', () => {
       { id: 'divisibility_4_8', label: 'Divisibility by 4, 8', level: 3, hasDifficulty: true, description: 'Last-digits and halving rules' },
       { id: 'divisibility_7', label: 'Advanced Divisibility (7, 11)', level: 3, hasDifficulty: true, description: 'Multiply-last-digit method (7); alternating digit sum (11)' },
     ];
-    expect(DRILL_TOPIC_REGISTRY).toEqual(expected);
+    expect(withoutScopes).toEqual(expected);
+  });
+
+  // -------------------------------------------------------------------------
+  // Phase 1.1 scope sets — pinned by id list per scoped topic
+  // -------------------------------------------------------------------------
+
+  it('perfect_squares has the 1.1 scope set (Full + five base ranges)', () => {
+    const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === 'perfect_squares')!;
+    expect(topic.scopes?.map((s) => s.id)).toEqual([
+      'squares_full',
+      'squares_1_5',
+      'squares_1_10',
+      'squares_11_15',
+      'squares_11_20',
+      'squares_16_20',
+    ]);
+  });
+
+  it('perfect_cubes has the 1.1 scope set (Full + three base ranges)', () => {
+    const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === 'perfect_cubes')!;
+    expect(topic.scopes?.map((s) => s.id)).toEqual([
+      'cubes_full',
+      'cubes_1_3',
+      'cubes_1_5',
+      'cubes_6_10',
+    ]);
+  });
+
+  it('fraction_conversions has the 1.1 scope set (Full + denominator families)', () => {
+    const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === 'fraction_conversions')!;
+    expect(topic.scopes?.map((s) => s.id)).toEqual([
+      'fractions_full',
+      'fractions_friendly',
+      'fractions_halves_fourths',
+      'fractions_fifths',
+      'fractions_eighths',
+      'fractions_thirds',
+      'fractions_sixths',
+      'fractions_sevenths',
+      'fractions_ninths',
+    ]);
+  });
+
+  it('every scoped topic includes a `<topic>_full` scope id (the byte-equivalent default)', () => {
+    const scopedTopics = DRILL_TOPIC_REGISTRY.filter((t) => t.scopes !== undefined);
+    expect(scopedTopics.length).toBeGreaterThan(0);
+    for (const topic of scopedTopics) {
+      const fullIds = topic.scopes!.filter((s) => s.id.endsWith('_full'));
+      expect(fullIds.length, `topic ${topic.id} must declare a "<prefix>_full" scope`).toBeGreaterThan(0);
+    }
+  });
+
+  it('topics without scopes in v1 leave `scopes` undefined', () => {
+    // Per DESIGN doc §3.4: Estimate / Get Crafty topics have Difficulty (no
+    // Scope in v1). Memorize topics that are too small to scope usefully
+    // (advanced_squares, advanced_cubes, higher_powers, common_multiples)
+    // also stay scope-less in v1.
+    const unscopedIds = [
+      'advanced_squares',
+      'advanced_cubes',
+      'higher_powers',
+      'common_multiples',
+      'multiplication_estimation',
+      'root_estimation',
+      'fraction_estimation',
+      'percentage_calculations',
+      'strategic_mul_div',
+      'divisibility_3_6_9',
+      'divisibility_4_8',
+      'divisibility_7',
+    ];
+    for (const id of unscopedIds) {
+      const t = DRILL_TOPIC_REGISTRY.find((x) => x.id === id)!;
+      expect(t.scopes, `topic ${id} should not declare scopes in v1`).toBeUndefined();
+    }
+  });
+
+  it('scope adjacency rails (widerThan / narrowerThan) reference only valid sibling scope ids', () => {
+    // Phase 3 will consume these as the rails for the progression loop.
+    // Validate that every adjacency entry points at a real scope id within
+    // the same topic — bad rail data would break Phase 3 silently.
+    const scopedTopics = DRILL_TOPIC_REGISTRY.filter((t) => t.scopes !== undefined);
+    for (const topic of scopedTopics) {
+      const ids = new Set(topic.scopes!.map((s) => s.id));
+      for (const s of topic.scopes!) {
+        for (const wid of s.widerThan ?? []) {
+          expect(ids.has(wid), `topic ${topic.id} scope ${s.id} widerThan refs unknown id ${wid}`).toBe(true);
+        }
+        for (const nid of s.narrowerThan ?? []) {
+          expect(ids.has(nid), `topic ${topic.id} scope ${s.id} narrowerThan refs unknown id ${nid}`).toBe(true);
+        }
+      }
+    }
   });
 
   it('has 7 Level-1 topics, 4 Level-2 topics, and 4 Level-3 topics', () => {
@@ -191,13 +300,17 @@ describe('getTopicsForLevel', () => {
 describe('getTopicInfo', () => {
   it('returns the matching entry for a valid DrillTopic id', () => {
     const info = getTopicInfo('perfect_squares');
-    expect(info).toEqual({
+    // Non-scope fields pinned exactly; the scope set is pinned by id-list in
+    // the DRILL_TOPIC_REGISTRY block above.
+    const { scopes: _scopes, ...withoutScopes } = info!;
+    expect(withoutScopes).toEqual({
       id: 'perfect_squares',
       label: 'Perfect Squares (1-20)',
       level: 1,
       hasDifficulty: false,
       description: 'Squares of numbers 1 through 20',
     });
+    expect(info!.scopes?.[0].id).toBe('squares_full');
   });
 
   it('returns the matching entry for a Level-2 topic (hasDifficulty=true)', () => {
