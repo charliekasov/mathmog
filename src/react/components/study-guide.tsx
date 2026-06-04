@@ -119,32 +119,102 @@ export const MemorizeContent = () => {
   const toSuperscript = (n: number | string) =>
     String(n).split('').map((char) => superscriptMap[char]).join('');
 
+  // Times Tables grid: factors 1-12 across both axes. Two-tone highlight:
+  // rows 6-9 carry a subtle tint (the curriculum's `tt_6_9` and `tt_just_N`
+  // scopes target these), and the 6-9 × 6-9 intersection block carries a
+  // stronger tint (the canonical "actually-hard" cluster Maya and Daniel
+  // both report stalling on per curriculum §1.1, §1.2). 1× is included for
+  // completeness with a quieter text color; Reference is the complete fact
+  // set, the generator decides what gets drilled.
+  const timesTablesFactors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const isHardRow = (n: number) => n >= 6 && n <= 9;
+  const isHardCell = (row: number, col: number) =>
+    isHardRow(row) && isHardRow(col);
+
   return (
     <div className="space-y-6">
       <StudySection title="Memorization Facts">
         <PrintableAccordion type="single" collapsible className="w-full">
-          <ui.AccordionItem value="item-1">
-            <ui.AccordionTrigger>Perfect Squares (1-20)</ui.AccordionTrigger>
+          <ui.AccordionItem value="times-tables">
+            <ui.AccordionTrigger>Times Tables (1× through 12×)</ui.AccordionTrigger>
             <ui.AccordionContent>
-              <ui.Table>
-                <ui.TableBody>
-                  {Object.entries(perfectSquares)
-                    .slice(0, 20)
-                    .reduce((acc, _, index, array) => {
-                      if (index % 4 === 0) {
-                        acc.push(array.slice(index, index + 4));
-                      }
-                      return acc;
-                    }, [] as [string, number][][])
-                    .map((row, rowIndex) => (
-                      <ui.TableRow key={rowIndex} className="font-mono text-sm even:bg-muted/50">
-                        {row.map(([base, square]) => (
-                          <ui.TableCell key={base}>
-                            <span className="font-semibold">{base}²</span> = {square}
+              <p className="text-sm text-muted-foreground mb-3">
+                Every single-digit multiplication fact in one grid. The shaded rows (6 through 9) are the ones students forget most often. If you can read a fact off the grid without thinking, that&apos;s one you&apos;ve got.
+              </p>
+              <div className="overflow-x-auto">
+                <ui.Table>
+                  <ui.TableBody>
+                    <ui.TableRow className="font-mono text-xs sm:text-sm">
+                      <ui.TableCell className="font-semibold text-muted-foreground px-2 py-1">×</ui.TableCell>
+                      {timesTablesFactors.map((col) => (
+                        <ui.TableCell
+                          key={col}
+                          className={`font-semibold px-2 py-1 text-center ${
+                            col === 1 ? 'text-muted-foreground/70' : 'text-muted-foreground'
+                          }`}
+                        >
+                          {col}
+                        </ui.TableCell>
+                      ))}
+                    </ui.TableRow>
+                    {timesTablesFactors.map((row) => (
+                      <ui.TableRow
+                        key={row}
+                        className={`font-mono text-xs sm:text-sm ${
+                          isHardRow(row) ? 'bg-amber-50 dark:bg-amber-900/20' : ''
+                        } ${row === 1 ? 'text-foreground/70' : ''}`}
+                      >
+                        <ui.TableCell className="font-semibold px-2 py-1">{row}</ui.TableCell>
+                        {timesTablesFactors.map((col) => (
+                          <ui.TableCell
+                            key={col}
+                            className={`px-2 py-1 text-center ${
+                              isHardCell(row, col)
+                                ? 'bg-amber-100 dark:bg-amber-900/40 font-semibold'
+                                : ''
+                            } ${col === 1 && row !== 1 ? 'text-foreground/70' : ''}`}
+                          >
+                            {row * col}
                           </ui.TableCell>
                         ))}
                       </ui.TableRow>
                     ))}
+                  </ui.TableBody>
+                </ui.Table>
+              </div>
+              <p className="text-sm text-muted-foreground mt-3">
+                <span className="font-semibold text-foreground">Often-mixed-up facts:</span>{' '}
+                7 × 8 = 56 (not 54). 6 × 9 = 54 (not 56). 8 × 8 = 64. 7 × 7 = 49.
+              </p>
+            </ui.AccordionContent>
+          </ui.AccordionItem>
+          <ui.AccordionItem value="item-1">
+            <ui.AccordionTrigger>Perfect Squares (1-20)</ui.AccordionTrigger>
+            <ui.AccordionContent>
+              <p className="text-sm text-muted-foreground mb-3">
+                The shaded row (16² through 20²) is where most students hesitate. The rest tend to come back fast once you&apos;ve seen them a few times.
+              </p>
+              <ui.Table>
+                <ui.TableBody>
+                  {[
+                    [1, 2, 3, 4, 5],
+                    [6, 7, 8, 9, 10],
+                    [11, 12, 13, 14, 15],
+                    [16, 17, 18, 19, 20],
+                  ].map((row, rowIndex) => (
+                    <ui.TableRow
+                      key={rowIndex}
+                      className={`font-mono text-sm ${
+                        rowIndex === 3 ? 'bg-amber-50 dark:bg-amber-900/20' : 'even:bg-muted/50'
+                      }`}
+                    >
+                      {row.map((base) => (
+                        <ui.TableCell key={base}>
+                          <span className="font-semibold">{base}²</span> = {perfectSquares[base]}
+                        </ui.TableCell>
+                      ))}
+                    </ui.TableRow>
+                  ))}
                 </ui.TableBody>
               </ui.Table>
             </ui.AccordionContent>
@@ -152,25 +222,28 @@ export const MemorizeContent = () => {
           <ui.AccordionItem value="item-2">
             <ui.AccordionTrigger>Perfect Cubes (1-10)</ui.AccordionTrigger>
             <ui.AccordionContent>
+              <p className="text-sm text-muted-foreground mb-3">
+                The shaded row (6³ through 10³) is the harder half. 6³ = 216 is where most students stall.
+              </p>
               <ui.Table>
                 <ui.TableBody>
-                  {Object.entries(perfectCubes)
-                    .slice(0, 10)
-                    .reduce((acc, _, index, array) => {
-                      if (index % 4 === 0) {
-                        acc.push(array.slice(index, index + 4));
-                      }
-                      return acc;
-                    }, [] as [string, number][][])
-                    .map((row, rowIndex) => (
-                      <ui.TableRow key={rowIndex} className="font-mono text-sm even:bg-muted/50">
-                        {row.map(([base, cube]) => (
-                          <ui.TableCell key={base}>
-                            <span className="font-semibold">{base}³</span> = {cube}
-                          </ui.TableCell>
-                        ))}
-                      </ui.TableRow>
-                    ))}
+                  {[
+                    [1, 2, 3, 4, 5],
+                    [6, 7, 8, 9, 10],
+                  ].map((row, rowIndex) => (
+                    <ui.TableRow
+                      key={rowIndex}
+                      className={`font-mono text-sm ${
+                        rowIndex === 1 ? 'bg-amber-50 dark:bg-amber-900/20' : ''
+                      }`}
+                    >
+                      {row.map((base) => (
+                        <ui.TableCell key={base}>
+                          <span className="font-semibold">{base}³</span> = {perfectCubes[base]}
+                        </ui.TableCell>
+                      ))}
+                    </ui.TableRow>
+                  ))}
                 </ui.TableBody>
               </ui.Table>
             </ui.AccordionContent>

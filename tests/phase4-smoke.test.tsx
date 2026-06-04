@@ -165,6 +165,11 @@ describe('Phase 4 component smoke', () => {
     expect(() => render(withProviders(<DifficultyScalingContent />))).not.toThrow();
   });
 
+  it('MemorizeContent surfaces Times Tables (Phase 1.2b content)', () => {
+    const { container } = render(withProviders(<MemorizeContent />));
+    expect(container.textContent).toMatch(/Times Tables/);
+  });
+
   it('PrintableStudyGuideProvider wraps MemorizeContent without throwing', () => {
     expect(() =>
       render(

@@ -2667,38 +2667,101 @@ var MemorizeContent = () => {
     "9": "\u2079"
   };
   const toSuperscript2 = (n) => String(n).split("").map((char) => superscriptMap2[char]).join("");
+  const timesTablesFactors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const isHardRow = (n) => n >= 6 && n <= 9;
+  const isHardCell = (row, col) => isHardRow(row) && isHardRow(col);
   return /* @__PURE__ */ jsxRuntime.jsx("div", { className: "space-y-6", children: /* @__PURE__ */ jsxRuntime.jsx(StudySection, { title: "Memorization Facts", children: /* @__PURE__ */ jsxRuntime.jsxs(PrintableAccordion, { type: "single", collapsible: true, className: "w-full", children: [
+    /* @__PURE__ */ jsxRuntime.jsxs(ui.AccordionItem, { value: "times-tables", children: [
+      /* @__PURE__ */ jsxRuntime.jsx(ui.AccordionTrigger, { children: "Times Tables (1\xD7 through 12\xD7)" }),
+      /* @__PURE__ */ jsxRuntime.jsxs(ui.AccordionContent, { children: [
+        /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground mb-3", children: "Every single-digit multiplication fact in one grid. The shaded rows (6 through 9) are the ones students forget most often. If you can read a fact off the grid without thinking, that's one you've got." }),
+        /* @__PURE__ */ jsxRuntime.jsx("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxRuntime.jsx(ui.Table, { children: /* @__PURE__ */ jsxRuntime.jsxs(ui.TableBody, { children: [
+          /* @__PURE__ */ jsxRuntime.jsxs(ui.TableRow, { className: "font-mono text-xs sm:text-sm", children: [
+            /* @__PURE__ */ jsxRuntime.jsx(ui.TableCell, { className: "font-semibold text-muted-foreground px-2 py-1", children: "\xD7" }),
+            timesTablesFactors.map((col) => /* @__PURE__ */ jsxRuntime.jsx(
+              ui.TableCell,
+              {
+                className: `font-semibold px-2 py-1 text-center ${col === 1 ? "text-muted-foreground/70" : "text-muted-foreground"}`,
+                children: col
+              },
+              col
+            ))
+          ] }),
+          timesTablesFactors.map((row) => /* @__PURE__ */ jsxRuntime.jsxs(
+            ui.TableRow,
+            {
+              className: `font-mono text-xs sm:text-sm ${isHardRow(row) ? "bg-amber-50 dark:bg-amber-900/20" : ""} ${row === 1 ? "text-foreground/70" : ""}`,
+              children: [
+                /* @__PURE__ */ jsxRuntime.jsx(ui.TableCell, { className: "font-semibold px-2 py-1", children: row }),
+                timesTablesFactors.map((col) => /* @__PURE__ */ jsxRuntime.jsx(
+                  ui.TableCell,
+                  {
+                    className: `px-2 py-1 text-center ${isHardCell(row, col) ? "bg-amber-100 dark:bg-amber-900/40 font-semibold" : ""} ${col === 1 && row !== 1 ? "text-foreground/70" : ""}`,
+                    children: row * col
+                  },
+                  col
+                ))
+              ]
+            },
+            row
+          ))
+        ] }) }) }),
+        /* @__PURE__ */ jsxRuntime.jsxs("p", { className: "text-sm text-muted-foreground mt-3", children: [
+          /* @__PURE__ */ jsxRuntime.jsx("span", { className: "font-semibold text-foreground", children: "Often-mixed-up facts:" }),
+          " ",
+          "7 \xD7 8 = 56 (not 54). 6 \xD7 9 = 54 (not 56). 8 \xD7 8 = 64. 7 \xD7 7 = 49."
+        ] })
+      ] })
+    ] }),
     /* @__PURE__ */ jsxRuntime.jsxs(ui.AccordionItem, { value: "item-1", children: [
       /* @__PURE__ */ jsxRuntime.jsx(ui.AccordionTrigger, { children: "Perfect Squares (1-20)" }),
-      /* @__PURE__ */ jsxRuntime.jsx(ui.AccordionContent, { children: /* @__PURE__ */ jsxRuntime.jsx(ui.Table, { children: /* @__PURE__ */ jsxRuntime.jsx(ui.TableBody, { children: Object.entries(perfectSquares).slice(0, 20).reduce((acc, _, index, array) => {
-        if (index % 4 === 0) {
-          acc.push(array.slice(index, index + 4));
-        }
-        return acc;
-      }, []).map((row, rowIndex) => /* @__PURE__ */ jsxRuntime.jsx(ui.TableRow, { className: "font-mono text-sm even:bg-muted/50", children: row.map(([base, square]) => /* @__PURE__ */ jsxRuntime.jsxs(ui.TableCell, { children: [
-        /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "font-semibold", children: [
-          base,
-          "\xB2"
-        ] }),
-        " = ",
-        square
-      ] }, base)) }, rowIndex)) }) }) })
+      /* @__PURE__ */ jsxRuntime.jsxs(ui.AccordionContent, { children: [
+        /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground mb-3", children: "The shaded row (16\xB2 through 20\xB2) is where most students hesitate. The rest tend to come back fast once you've seen them a few times." }),
+        /* @__PURE__ */ jsxRuntime.jsx(ui.Table, { children: /* @__PURE__ */ jsxRuntime.jsx(ui.TableBody, { children: [
+          [1, 2, 3, 4, 5],
+          [6, 7, 8, 9, 10],
+          [11, 12, 13, 14, 15],
+          [16, 17, 18, 19, 20]
+        ].map((row, rowIndex) => /* @__PURE__ */ jsxRuntime.jsx(
+          ui.TableRow,
+          {
+            className: `font-mono text-sm ${rowIndex === 3 ? "bg-amber-50 dark:bg-amber-900/20" : "even:bg-muted/50"}`,
+            children: row.map((base) => /* @__PURE__ */ jsxRuntime.jsxs(ui.TableCell, { children: [
+              /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "font-semibold", children: [
+                base,
+                "\xB2"
+              ] }),
+              " = ",
+              perfectSquares[base]
+            ] }, base))
+          },
+          rowIndex
+        )) }) })
+      ] })
     ] }),
     /* @__PURE__ */ jsxRuntime.jsxs(ui.AccordionItem, { value: "item-2", children: [
       /* @__PURE__ */ jsxRuntime.jsx(ui.AccordionTrigger, { children: "Perfect Cubes (1-10)" }),
-      /* @__PURE__ */ jsxRuntime.jsx(ui.AccordionContent, { children: /* @__PURE__ */ jsxRuntime.jsx(ui.Table, { children: /* @__PURE__ */ jsxRuntime.jsx(ui.TableBody, { children: Object.entries(perfectCubes).slice(0, 10).reduce((acc, _, index, array) => {
-        if (index % 4 === 0) {
-          acc.push(array.slice(index, index + 4));
-        }
-        return acc;
-      }, []).map((row, rowIndex) => /* @__PURE__ */ jsxRuntime.jsx(ui.TableRow, { className: "font-mono text-sm even:bg-muted/50", children: row.map(([base, cube]) => /* @__PURE__ */ jsxRuntime.jsxs(ui.TableCell, { children: [
-        /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "font-semibold", children: [
-          base,
-          "\xB3"
-        ] }),
-        " = ",
-        cube
-      ] }, base)) }, rowIndex)) }) }) })
+      /* @__PURE__ */ jsxRuntime.jsxs(ui.AccordionContent, { children: [
+        /* @__PURE__ */ jsxRuntime.jsx("p", { className: "text-sm text-muted-foreground mb-3", children: "The shaded row (6\xB3 through 10\xB3) is the harder half. 6\xB3 = 216 is where most students stall." }),
+        /* @__PURE__ */ jsxRuntime.jsx(ui.Table, { children: /* @__PURE__ */ jsxRuntime.jsx(ui.TableBody, { children: [
+          [1, 2, 3, 4, 5],
+          [6, 7, 8, 9, 10]
+        ].map((row, rowIndex) => /* @__PURE__ */ jsxRuntime.jsx(
+          ui.TableRow,
+          {
+            className: `font-mono text-sm ${rowIndex === 1 ? "bg-amber-50 dark:bg-amber-900/20" : ""}`,
+            children: row.map((base) => /* @__PURE__ */ jsxRuntime.jsxs(ui.TableCell, { children: [
+              /* @__PURE__ */ jsxRuntime.jsxs("span", { className: "font-semibold", children: [
+                base,
+                "\xB3"
+              ] }),
+              " = ",
+              perfectCubes[base]
+            ] }, base))
+          },
+          rowIndex
+        )) }) })
+      ] })
     ] }),
     /* @__PURE__ */ jsxRuntime.jsxs(ui.AccordionItem, { value: "item-3", children: [
       /* @__PURE__ */ jsxRuntime.jsx(ui.AccordionTrigger, { children: "Common Fraction Conversions" }),
