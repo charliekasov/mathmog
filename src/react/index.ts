@@ -44,7 +44,7 @@ export { MathmogTrainerProviders } from './contexts/trainer-providers';
 export { ScoreDisplay } from './components/score-display';
 export { ElapsedTimer } from './components/elapsed-timer';
 export { SpeedChallengeControls } from './components/speed-challenge-controls';
-export { DifficultySelector } from './components/difficulty-selector';
+export { TrainerConfigSelector } from './components/trainer-config-selector';
 export { SpeedChallengeReadyScreen } from './components/speed-challenge-ready-screen';
 export { MissesReviewScreen } from './components/misses-review-screen';
 export { LevelUpDialog } from './components/level-up-dialog';

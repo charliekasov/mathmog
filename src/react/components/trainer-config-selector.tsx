@@ -16,7 +16,7 @@ const levels = [
 
 const difficulties: Difficulty[] = ['Easy', 'Medium', 'Hard'];
 
-export function DifficultySelector() {
+export function TrainerConfigSelector() {
   const ui = useMathmogUI();
   const { currentLevel, currentDifficulty, currentTopic, handleLevelDifficultyChange } = useProblem();
   const { speedChallenge } = useSpeedChallenge();

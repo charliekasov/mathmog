@@ -6,7 +6,7 @@ import type { Difficulty } from '../../core/types';
 import { useProblem } from '../contexts/problem';
 import { useSpeedChallenge } from '../contexts/speed-challenge';
 import { useMathmogUI } from '../ui/provider';
-import { DifficultySelector } from './difficulty-selector';
+import { TrainerConfigSelector } from './trainer-config-selector';
 
 const LEVEL_NAMES: Record<number, string> = {
   1: 'Memorize',
@@ -82,7 +82,7 @@ export function SpeedChallengeReadyScreen({
             </div>
           ) : (
             <>
-              <DifficultySelector />
+              <TrainerConfigSelector />
 
               <div>
                 <ui.Label className="mb-3 block text-center font-medium">Select Duration</ui.Label>

@@ -11,7 +11,7 @@ import {
   ScoreDisplay,
   ElapsedTimer,
   SpeedChallengeControls,
-  DifficultySelector,
+  TrainerConfigSelector,
   SpeedChallengeReadyScreen,
   MissesReviewScreen,
   LevelUpDialog,
@@ -85,8 +85,8 @@ describe('Phase 4 component smoke', () => {
     expect(container.querySelector('[data-tour="mathmog-speed-toggle"]')).toBeNull();
   });
 
-  it('DifficultySelector mounts with three tour anchors', () => {
-    const { container } = render(withProviders(<DifficultySelector />));
+  it('TrainerConfigSelector mounts with three tour anchors', () => {
+    const { container } = render(withProviders(<TrainerConfigSelector />));
     expect(container.querySelector('[data-tour="mathmog-mode-select"]')).not.toBeNull();
     expect(container.querySelector('[data-tour="mathmog-topic-select"]')).not.toBeNull();
     expect(container.querySelector('[data-tour="mathmog-difficulty-select"]')).not.toBeNull();

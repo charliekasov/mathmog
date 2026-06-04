@@ -1236,7 +1236,7 @@ var DRILL_TOPIC_REGISTRY = [
   { id: "times_tables", label: "Times Tables", level: 1, hasDifficulty: false, description: "Single-digit multiplication facts (2\xD7 through 12\xD7)", scopes: SCOPES_TIMES_TABLES },
   { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20", scopes: SCOPES_PERFECT_SQUARES },
   { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10", scopes: SCOPES_PERFECT_CUBES },
-  { id: "fraction_conversions", label: "Fraction Conversions", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
+  { id: "fraction_conversions", label: "Fractions \u2194 Decimals \u2194 Percents", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
   { id: "advanced_squares", label: "Advanced Squares", level: 1, hasDifficulty: false, description: "Squares of 10, 20, 30...100" },
   { id: "advanced_cubes", label: "Advanced Cubes", level: 1, hasDifficulty: false, description: "Cubes of 10, 20, 30...100" },
   { id: "higher_powers", label: "Higher Powers", level: 1, hasDifficulty: false, description: "2^4-2^9, 3^4-3^6, 4^4, 5^4, 6^4" },
@@ -1245,7 +1245,7 @@ var DRILL_TOPIC_REGISTRY = [
   { id: "multiplication_estimation", label: "Multiplication Estimation", level: 2, hasDifficulty: true, description: "Estimate products of multi-digit numbers" },
   { id: "root_estimation", label: "Root Estimation", level: 2, hasDifficulty: true, description: "Square roots, cube roots, and higher roots at Hard" },
   { id: "fraction_estimation", label: "Fraction Estimation", level: 2, hasDifficulty: true, description: "Estimate fraction values with 2-digit or 3-digit denominators" },
-  { id: "percentage_calculations", label: "Percentage Calculations", level: 2, hasDifficulty: true, description: "Round, complex, or arbitrary number percentages" },
+  { id: "percentage_calculations", label: "Percentage Estimation", level: 2, hasDifficulty: true, description: "Quick percentage estimates: tips, taxes, percent change" },
   // Level 3: Get Crafty
   { id: "strategic_mul_div", label: "Strategic Mult & Division", level: 3, hasDifficulty: true, description: "Multiply/divide by 4, 5, 8, 9, 11, 12, 15, 25, 19, 99; squaring X5; complementary" },
   { id: "divisibility_3_6_9", label: "Divisibility by 3, 6, 9", level: 3, hasDifficulty: true, description: "Digit-sum divisibility rules" },

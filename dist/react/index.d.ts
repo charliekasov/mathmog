@@ -337,7 +337,7 @@ declare function SpeedChallengeControls({ isHomeworkMode, }: {
     isHomeworkMode?: boolean;
 }): react_jsx_runtime.JSX.Element | null;
 
-declare function DifficultySelector(): react_jsx_runtime.JSX.Element;
+declare function TrainerConfigSelector(): react_jsx_runtime.JSX.Element;
 
 interface Props {
     isHomeworkMode?: boolean;
@@ -419,4 +419,4 @@ declare function StudyGuide({ onOpen }?: {
     onOpen?: () => void;
 }): react_jsx_runtime.JSX.Element;
 
-export { CraftyContent, DifficultyScalingContent, DifficultySelector, ElapsedTimer, EstimateContent, type EstimationTier, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, type OnSaveSession, PrintableStudyGuideProvider, type ProblemContextValue, ProblemDisplay, ProblemProvider, type SavePracticeSessionPayload, ScoreDisplay, type SpeedChallengeContextValue, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, type TrainerMode, type TrainerModeContextValue, TrainerModeProvider, type TrainerStateContextValue, TrainerStateProvider, type UIPrimitiveBag, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
+export { CraftyContent, DifficultyScalingContent, ElapsedTimer, EstimateContent, type EstimationTier, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, type OnSaveSession, PrintableStudyGuideProvider, type ProblemContextValue, ProblemDisplay, ProblemProvider, type SavePracticeSessionPayload, ScoreDisplay, type SpeedChallengeContextValue, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, TrainerConfigSelector, type TrainerMode, type TrainerModeContextValue, TrainerModeProvider, type TrainerStateContextValue, TrainerStateProvider, type UIPrimitiveBag, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
