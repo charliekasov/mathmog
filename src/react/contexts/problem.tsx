@@ -205,7 +205,18 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       // For number inputs, compare numerically to handle cases like ".2" vs "0.2"
       const userNum = parseFloat(userAnswerTrimmed);
       if (!isNaN(userNum)) {
-        // Handle array of acceptable answers (for repeating decimals like 1/3, 1/6)
+        // Handle array of acceptable answers (for repeating decimals like 1/3, 1/6).
+        // CONTRACT (Phase 0.6 sub-chat 7, A.3 #2): the validator does NOT truncate
+        // the user's longer input to compare against a shorter author-supplied form.
+        // Authors of repeating-decimal problems must enumerate the decimal-length
+        // variants they want to accept; registry coverage is enforced by
+        // `tests/core/math-problems.test.ts` "Repeating-denominator registry coverage".
+        // Conservative on purpose — a precision-aware validator can't separate
+        // precision-error from conceptual-correctness without seeing the underlying
+        // fraction (e.g. 0.1668 shares 3 decimals with 1/6's 0.166 form but is wrong
+        // at the 4th place). See HANDOFF-mathmog-redesign-phase-0-6-g.md for the
+        // weighed alternative ("any-length truncation acceptance") and why it was
+        // ruled out.
         if (Array.isArray(currentProblem.answer)) {
           isCorrect = currentProblem.answer.some(acceptableAnswer => {
             const correctNum = typeof acceptableAnswer === 'number'

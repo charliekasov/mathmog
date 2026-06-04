@@ -33,9 +33,20 @@
  *     the catch. `currentProblem` and `problemHistory` are intentionally
  *     left untouched so the previously-rendered problem stays on screen
  *     while the next-problem attempt resets the per-problem UI state.
- *   - STILL PINNED: Repeating decimals. The validator does not "truncate";
- *     the number branch only matches within 0.0001 of an array entry, and
- *     the multi-text branch only matches an exact lowercased string entry.
+ *   - WIRED: Repeating-decimal validation follows an "enumerate variants"
+ *     contract (Phase 0.6 sub-chat 7, A.3 #2). Authors of repeating-decimal
+ *     problems must list every decimal-length variant they want to accept in
+ *     `specificAnswers` (e.g. `1/3 → [0.3, 0.33, 0.333]`); the number branch
+ *     matches within 0.0001 of any array entry and does NOT mathematically
+ *     truncate the user's longer input. Registry coverage of the contract is
+ *     enforced by `tests/core/math-problems.test.ts` "Repeating-denominator
+ *     registry coverage" (sub-chat 3, A.1 #7). The multi-text branch is the
+ *     same shape: exact lowercased string compare against any array entry.
+ *     Rationale recorded in `.claude/HANDOFF-mathmog-redesign-phase-0-6-g.md`
+ *     — TL;DR: a precision-aware validator can't separate precision-error
+ *     from conceptual-correctness without knowing the underlying fraction
+ *     (e.g. `0.1668` is a longer-precision form by the first 3 decimals but
+ *     wrong at the 4th — only the registry distinguishes valid forms).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -621,13 +632,17 @@ describe('handleCheckAnswer — six-branch cascade (first match wins)', () => {
     expect(result.current.feedback).toBe('correct');
   });
 
-  it('branch 5 (number) — repeating-decimal handling (PINNED suspect): no truncation; only matches within 0.0001 of an array entry', () => {
-    // PINNED — TODO clean up in follow-up (see contract §2.1 + locked decisions §0).
-    // The validator does NOT "truncate" the user's decimal to compare
-    // against a shorter author-supplied answer. With answer [0.333], the
-    // user typing 0.3333 is OUTSIDE 0.0001 of 0.333 and scores incorrect.
-    // Authors that want broader acceptance must include more entries in
-    // the answer array (e.g. [0.333, 0.3333, 0.33333]).
+  it('branch 5 (number) — repeating-decimal "enumerate variants" contract: no validator truncation; only matches within 0.0001 of an array entry', () => {
+    // Contract (Phase 0.6 sub-chat 7, A.3 #2 — see HANDOFF-mathmog-redesign-phase-0-6-g.md):
+    // The validator does NOT truncate the user's decimal to compare against
+    // a shorter author-supplied answer. With answer [0.333], a user typing
+    // 0.3333 is OUTSIDE 0.0001 of 0.333 and scores incorrect. Authors of
+    // repeating-decimal problems must enumerate the decimal-length variants
+    // they want to accept (e.g. [0.333, 0.3333, 0.33333]) — registry coverage
+    // is enforced by `tests/core/math-problems.test.ts` "Repeating-denominator
+    // registry coverage" (sub-chat 3, A.1 #7). The conservative locked policy
+    // protects against mathematically-wrong inputs that happen to share the
+    // first N decimals of a valid form (e.g. 0.1668 against [0.166]).
     queueProblems([numberProblem({ answer: [0.333] })]);
     const { result } = renderHook(() => useProblem(), { wrapper });
     act(() => result.current.handleNewProblem());
