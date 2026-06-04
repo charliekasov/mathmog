@@ -930,6 +930,30 @@ var generateRootEstimationProblem = (difficulty) => {
   const explanation = `${symbol}${num} \u2248 ${actualRoot.toFixed(2)}. It's between ${base} (${base}${powerLabel}=${lowerBound}) and ${nextBase} (${nextBase}${powerLabel}=${upperBound}). The midpoint is ${midPoint.toFixed(1)}, and ${num} is closer to ${closerInt}.`;
   return { question: questionTextParts, answer: answerText, type: "Root Estimation", explanation, inputType: "multi-text", placeholder: "a,b,c" };
 };
+var TIMES_TABLES_ALL_FACTORS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+var timesTablesPoolForScope = (scope) => {
+  switch (scope) {
+    case "tt_easy":
+      return { aPool: [2, 5, 10], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+    case "tt_2_5":
+      return { aPool: [2, 3, 4, 5], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+    case "tt_6_9":
+      return { aPool: [6, 7, 8, 9], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+    case "tt_10_12":
+      return { aPool: [10, 11, 12], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+    case "tt_just_6":
+      return { aPool: [6], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+    case "tt_just_7":
+      return { aPool: [7], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+    case "tt_just_8":
+      return { aPool: [8], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+    case "tt_just_9":
+      return { aPool: [9], bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+    case "tt_full":
+    default:
+      return { aPool: TIMES_TABLES_ALL_FACTORS, bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+  }
+};
 var squaresRangeForScope = (scope) => {
   switch (scope) {
     case "squares_1_5":
@@ -982,6 +1006,17 @@ var fractionDenominatorsForScope = (scope) => {
     default:
       return [3, 4, 5, 6, 7, 8, 9];
   }
+};
+var generateTimesTablesProblem_targeted = (scope) => {
+  const { aPool, bPool, preserveOrder } = timesTablesPoolForScope(scope);
+  let a = aPool[Math.floor(Math.random() * aPool.length)];
+  let b = bPool[Math.floor(Math.random() * bPool.length)];
+  if (!preserveOrder && a < b) {
+    [a, b] = [b, a];
+  }
+  const answer = a * b;
+  const explanation = `${a} \xD7 ${b} = ${answer}.`;
+  return { question: `${a} \xD7 ${b} = ?`, answer, type: "Times Tables", explanation, inputType: "number" };
 };
 var generatePerfectSquareProblem_targeted = (scope) => {
   const [lo, hi] = squaresRangeForScope(scope);
@@ -1139,6 +1174,8 @@ var generateDivisibilityProblem_grouped = (divisors, difficulty) => {
 var generateTopicProblem = (topic, difficulty, scope) => {
   switch (topic) {
     // Level 1 topics (ignore difficulty)
+    case "times_tables":
+      return generateTimesTablesProblem_targeted(scope);
     case "perfect_squares":
       return generatePerfectSquareProblem_targeted(scope);
     case "perfect_cubes":
@@ -1674,6 +1711,17 @@ function cn(...inputs) {
 }
 
 // src/core/drill-topics.ts
+var SCOPES_TIMES_TABLES = [
+  { id: "tt_full", label: "Full (2\xD7 through 12\xD7)", narrowerThan: ["tt_6_9"] },
+  { id: "tt_easy", label: "The easy ones (2\xD7, 5\xD7, 10\xD7)", widerThan: ["tt_2_5"] },
+  { id: "tt_2_5", label: "2\xD7 through 5\xD7", widerThan: ["tt_full"], narrowerThan: ["tt_easy"] },
+  { id: "tt_6_9", label: "6\xD7 through 9\xD7", widerThan: ["tt_full"], narrowerThan: ["tt_just_7"] },
+  { id: "tt_10_12", label: "10\xD7 through 12\xD7", widerThan: ["tt_full"] },
+  { id: "tt_just_6", label: "Just the 6\xD7 table", widerThan: ["tt_6_9"] },
+  { id: "tt_just_7", label: "Just the 7\xD7 table", widerThan: ["tt_6_9"] },
+  { id: "tt_just_8", label: "Just the 8\xD7 table", widerThan: ["tt_6_9"] },
+  { id: "tt_just_9", label: "Just the 9\xD7 table", widerThan: ["tt_6_9"] }
+];
 var SCOPES_PERFECT_SQUARES = [
   { id: "squares_full", label: "Full (1\xB2 through 20\xB2)", narrowerThan: ["squares_1_10"] },
   { id: "squares_1_5", label: "1\xB2 through 5\xB2", widerThan: ["squares_1_10"] },
@@ -1701,6 +1749,7 @@ var SCOPES_FRACTION_CONVERSIONS = [
 ];
 var DRILL_TOPIC_REGISTRY = [
   // Level 1: Memorize
+  { id: "times_tables", label: "Times Tables", level: 1, hasDifficulty: false, description: "Single-digit multiplication facts (2\xD7 through 12\xD7)", scopes: SCOPES_TIMES_TABLES },
   { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20", scopes: SCOPES_PERFECT_SQUARES },
   { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10", scopes: SCOPES_PERFECT_CUBES },
   { id: "fraction_conversions", label: "Fraction Conversions", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },

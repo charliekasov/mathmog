@@ -936,6 +936,38 @@ const generateRootEstimationProblem = (difficulty: Difficulty): Problem => {
 // (the React `ProblemProvider` is the only non-test caller today) keep
 // working without passing a scope.
 
+// Phase 1.2 — Times Tables (curriculum §3.3). Multi-row scopes draw factors
+// from two pools and canonicalize larger-first (matching the precedent in
+// `generateMemorizedMultiplicationProblem` and `generateCommonMultiplesProblem_all`).
+// Singleton-row scopes (tt_just_N) draw the row factor from {N} and the column
+// factor from {2..12}, and DO NOT swap — the question always reads "N × b" so
+// the student picking "Just the 7× table" sees the 7× row consistently.
+//
+// `undefined`, `tt_full`, and any unrecognized id all return the full default
+// pool — the byte-equivalence contract from slice 1.1.
+interface TimesTablesPool {
+    aPool: number[];
+    bPool: number[];
+    preserveOrder: boolean;
+}
+
+const TIMES_TABLES_ALL_FACTORS: number[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+const timesTablesPoolForScope = (scope: string | undefined): TimesTablesPool => {
+    switch (scope) {
+        case 'tt_easy':   return { aPool: [2, 5, 10],       bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+        case 'tt_2_5':    return { aPool: [2, 3, 4, 5],     bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+        case 'tt_6_9':    return { aPool: [6, 7, 8, 9],     bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+        case 'tt_10_12':  return { aPool: [10, 11, 12],     bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+        case 'tt_just_6': return { aPool: [6],              bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+        case 'tt_just_7': return { aPool: [7],              bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+        case 'tt_just_8': return { aPool: [8],              bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+        case 'tt_just_9': return { aPool: [9],              bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: true };
+        case 'tt_full':
+        default:          return { aPool: TIMES_TABLES_ALL_FACTORS, bPool: TIMES_TABLES_ALL_FACTORS, preserveOrder: false };
+    }
+};
+
 const squaresRangeForScope = (scope: string | undefined): [number, number] => {
     switch (scope) {
         case 'squares_1_5':   return [1, 5];
@@ -971,6 +1003,18 @@ const fractionDenominatorsForScope = (scope: string | undefined): number[] => {
         case 'fractions_full':
         default:                         return [3, 4, 5, 6, 7, 8, 9];
     }
+};
+
+const generateTimesTablesProblem_targeted = (scope?: string): Problem => {
+    const { aPool, bPool, preserveOrder } = timesTablesPoolForScope(scope);
+    let a = aPool[Math.floor(Math.random() * aPool.length)];
+    let b = bPool[Math.floor(Math.random() * bPool.length)];
+    if (!preserveOrder && a < b) {
+        [a, b] = [b, a];
+    }
+    const answer = a * b;
+    const explanation = `${a} × ${b} = ${answer}.`;
+    return { question: `${a} × ${b} = ?`, answer, type: 'Times Tables', explanation, inputType: 'number' };
 };
 
 const generatePerfectSquareProblem_targeted = (scope?: string): Problem => {
@@ -1150,6 +1194,7 @@ const generateDivisibilityProblem_grouped = (divisors: number[], difficulty: Dif
 const generateTopicProblem = (topic: string, difficulty: Difficulty, scope?: string): Problem => {
     switch (topic) {
         // Level 1 topics (ignore difficulty)
+        case 'times_tables': return generateTimesTablesProblem_targeted(scope);
         case 'perfect_squares': return generatePerfectSquareProblem_targeted(scope);
         case 'perfect_cubes': return generatePerfectCubeProblem_targeted(scope);
         case 'fraction_conversions': return generateFractionProblem_allDenominators(scope);

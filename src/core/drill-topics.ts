@@ -1,4 +1,5 @@
 export type DrillTopic =
+  | 'times_tables'
   | 'perfect_squares'
   | 'perfect_cubes'
   | 'fraction_conversions'
@@ -47,13 +48,31 @@ export interface DrillTopicInfo {
   scopes?: ScopeDef[];
 }
 
-// Scope sets for the three v1 scoped Memorize topics. Per DESIGN doc §3.3
+// Scope sets for the four v1 scoped Memorize topics. Per DESIGN doc §3.3
 // (curriculum) — denominator-family split for fractions, base-range split for
-// squares / cubes. Phase 1.2 (Times Tables) adds a fourth scoped topic.
+// squares / cubes, row-based split for times tables.
 //
 // Naming: `<topic-prefix>_<scope-suffix>` (snake_case) — matches the existing
 // topic-id convention. The id is the wire format that URLs and assign-homework
 // will carry; the label is the user-facing string.
+
+// Phase 1.2 — Times Tables (curriculum §2.1, §3.3). Tiered ranges plus a
+// per-row singleton for each "actually-hard" row (6× through 9×). The
+// singleton scopes are pedagogically distinct from the multi-row scopes: their
+// generator preserves "N × b" presentation order so the student picking
+// "Just the 7× table" sees the 7× row consistently. See math-problems.ts
+// `generateTimesTablesProblem_targeted` for the implementation.
+const SCOPES_TIMES_TABLES: ScopeDef[] = [
+  { id: 'tt_full', label: 'Full (2× through 12×)', narrowerThan: ['tt_6_9'] },
+  { id: 'tt_easy', label: 'The easy ones (2×, 5×, 10×)', widerThan: ['tt_2_5'] },
+  { id: 'tt_2_5', label: '2× through 5×', widerThan: ['tt_full'], narrowerThan: ['tt_easy'] },
+  { id: 'tt_6_9', label: '6× through 9×', widerThan: ['tt_full'], narrowerThan: ['tt_just_7'] },
+  { id: 'tt_10_12', label: '10× through 12×', widerThan: ['tt_full'] },
+  { id: 'tt_just_6', label: 'Just the 6× table', widerThan: ['tt_6_9'] },
+  { id: 'tt_just_7', label: 'Just the 7× table', widerThan: ['tt_6_9'] },
+  { id: 'tt_just_8', label: 'Just the 8× table', widerThan: ['tt_6_9'] },
+  { id: 'tt_just_9', label: 'Just the 9× table', widerThan: ['tt_6_9'] },
+];
 
 const SCOPES_PERFECT_SQUARES: ScopeDef[] = [
   { id: 'squares_full', label: 'Full (1² through 20²)', narrowerThan: ['squares_1_10'] },
@@ -85,6 +104,7 @@ const SCOPES_FRACTION_CONVERSIONS: ScopeDef[] = [
 
 export const DRILL_TOPIC_REGISTRY: DrillTopicInfo[] = [
   // Level 1: Memorize
+  { id: 'times_tables', label: 'Times Tables', level: 1, hasDifficulty: false, description: 'Single-digit multiplication facts (2× through 12×)', scopes: SCOPES_TIMES_TABLES },
   { id: 'perfect_squares', label: 'Perfect Squares (1-20)', level: 1, hasDifficulty: false, description: 'Squares of numbers 1 through 20', scopes: SCOPES_PERFECT_SQUARES },
   { id: 'perfect_cubes', label: 'Perfect Cubes (1-10)', level: 1, hasDifficulty: false, description: 'Cubes of numbers 1 through 10', scopes: SCOPES_PERFECT_CUBES },
   { id: 'fraction_conversions', label: 'Fraction Conversions', level: 1, hasDifficulty: false, description: 'All denominators (3-9), all conversion types', scopes: SCOPES_FRACTION_CONVERSIONS },

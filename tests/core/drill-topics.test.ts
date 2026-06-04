@@ -38,11 +38,10 @@ import {
 // ---------------------------------------------------------------------------
 
 describe('DRILL_TOPIC_REGISTRY', () => {
-  it('has exactly 15 entries', () => {
-    // Pinned per Phase 5 minimum coverage spec. (The pre-lift
-    // `mathmog-core/CLAUDE.md` "16 topics" doc drift was resolved when that
-    // file was deleted during the lift.)
-    expect(DRILL_TOPIC_REGISTRY).toHaveLength(15);
+  it('has exactly 16 entries (15 pre-1.2 + Times Tables)', () => {
+    // Phase 1.2 inserts Times Tables as the new Memorize floor (curriculum
+    // §2.1). Length grew from 15 (slice 1.1 baseline) to 16.
+    expect(DRILL_TOPIC_REGISTRY).toHaveLength(16);
   });
 
   it('every entry has the DrillTopicInfo shape', () => {
@@ -69,6 +68,9 @@ describe('DRILL_TOPIC_REGISTRY', () => {
     // the registry render in this order. Pinning the full ordered list.
     const ids = DRILL_TOPIC_REGISTRY.map((t) => t.id);
     expect(ids).toEqual([
+      // Phase 1.2: Times Tables inserts as the FIRST Memorize entry per
+      // curriculum §2.1 ("the missing floor, highest priority").
+      'times_tables',
       'perfect_squares',
       'perfect_cubes',
       'fraction_conversions',
@@ -87,15 +89,15 @@ describe('DRILL_TOPIC_REGISTRY', () => {
     ]);
   });
 
-  it('contains all 15 expected entries with exact copy and gating flags (scopes pinned separately)', () => {
-    // Source of truth pinned per contract §1.3 table. The non-scope fields are
-    // pinned exactly here; the `scopes` field on the three scoped Memorize
-    // topics (perfect_squares, perfect_cubes, fraction_conversions) is pinned
-    // by id-list assertions further below in this file. Splitting the two
-    // keeps this test stable when scope sets evolve (e.g. slice 1.2's Times
-    // Tables, future scope additions) without an unrelated copy change here.
+  it('contains all 16 expected entries with exact copy and gating flags (scopes pinned separately)', () => {
+    // Source of truth pinned per contract §1.3 table + Phase 1.2 Times Tables
+    // addition. The non-scope fields are pinned exactly here; the `scopes`
+    // field on the four scoped Memorize topics (times_tables, perfect_squares,
+    // perfect_cubes, fraction_conversions) is pinned by id-list assertions
+    // further below in this file.
     const withoutScopes = DRILL_TOPIC_REGISTRY.map(({ scopes: _scopes, ...rest }) => rest);
     const expected = [
+      { id: 'times_tables', label: 'Times Tables', level: 1, hasDifficulty: false, description: 'Single-digit multiplication facts (2× through 12×)' },
       { id: 'perfect_squares', label: 'Perfect Squares (1-20)', level: 1, hasDifficulty: false, description: 'Squares of numbers 1 through 20' },
       { id: 'perfect_cubes', label: 'Perfect Cubes (1-10)', level: 1, hasDifficulty: false, description: 'Cubes of numbers 1 through 10' },
       { id: 'fraction_conversions', label: 'Fraction Conversions', level: 1, hasDifficulty: false, description: 'All denominators (3-9), all conversion types' },
@@ -116,8 +118,23 @@ describe('DRILL_TOPIC_REGISTRY', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Phase 1.1 scope sets — pinned by id list per scoped topic
+  // Phase 1.1 + 1.2 scope sets — pinned by id list per scoped topic
   // -------------------------------------------------------------------------
+
+  it('times_tables has the 1.2 scope set (Full + tiered ranges + per-row singletons)', () => {
+    const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === 'times_tables')!;
+    expect(topic.scopes?.map((s) => s.id)).toEqual([
+      'tt_full',
+      'tt_easy',
+      'tt_2_5',
+      'tt_6_9',
+      'tt_10_12',
+      'tt_just_6',
+      'tt_just_7',
+      'tt_just_8',
+      'tt_just_9',
+    ]);
+  });
 
   it('perfect_squares has the 1.1 scope set (Full + five base ranges)', () => {
     const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === 'perfect_squares')!;
@@ -208,14 +225,14 @@ describe('DRILL_TOPIC_REGISTRY', () => {
     }
   });
 
-  it('has 7 Level-1 topics, 4 Level-2 topics, and 4 Level-3 topics', () => {
-    // Pinned distribution from contract §1.3; if a topic is added/moved this
-    // catches it independently of the order assertion above.
+  it('has 8 Level-1 topics, 4 Level-2 topics, and 4 Level-3 topics', () => {
+    // Phase 1.2 inserts Times Tables as a Level-1 topic; distribution shifts
+    // from 7+4+4 (slice 1.1 baseline) to 8+4+4.
     const byLevel = DRILL_TOPIC_REGISTRY.reduce<Record<number, number>>((acc, t) => {
       acc[t.level] = (acc[t.level] ?? 0) + 1;
       return acc;
     }, {});
-    expect(byLevel).toEqual({ 1: 7, 2: 4, 3: 4 });
+    expect(byLevel).toEqual({ 1: 8, 2: 4, 3: 4 });
   });
 
   it('every Level-1 topic has hasDifficulty=false', () => {
@@ -239,9 +256,10 @@ describe('DRILL_TOPIC_REGISTRY', () => {
 // ---------------------------------------------------------------------------
 
 describe('getTopicsForLevel', () => {
-  it('returns the 7 Level-1 topics in registry order', () => {
+  it('returns the 8 Level-1 topics in registry order', () => {
     const result = getTopicsForLevel(1);
     expect(result.map((t) => t.id)).toEqual([
+      'times_tables',
       'perfect_squares',
       'perfect_cubes',
       'fraction_conversions',
@@ -327,10 +345,11 @@ describe('getTopicInfo', () => {
 
   it('returns a defensive copy of the matching entry (mutations do not corrupt the registry)', () => {
     const info = getTopicInfo('perfect_squares');
-    expect(info).not.toBe(DRILL_TOPIC_REGISTRY[0]);
-    expect(info).toEqual(DRILL_TOPIC_REGISTRY[0]);
+    const registryEntry = DRILL_TOPIC_REGISTRY.find((t) => t.id === 'perfect_squares')!;
+    expect(info).not.toBe(registryEntry);
+    expect(info).toEqual(registryEntry);
     info!.label = 'mutated';
-    expect(DRILL_TOPIC_REGISTRY[0].label).not.toBe('mutated');
+    expect(registryEntry.label).not.toBe('mutated');
   });
 
   it('returns undefined for an unknown topic id', () => {
@@ -355,6 +374,7 @@ describe('getTopicInfo', () => {
 
   it('resolves every DrillTopic union member', () => {
     const allIds: DrillTopic[] = [
+      'times_tables',
       'perfect_squares',
       'perfect_cubes',
       'fraction_conversions',
@@ -417,6 +437,10 @@ describe('topicHasDifficulty', () => {
   });
 
   // --- valid topics that do NOT have a difficulty toggle (all Level 1) ---
+
+  it('returns false for times_tables (Level 1, Phase 1.2)', () => {
+    expect(topicHasDifficulty('times_tables')).toBe(false);
+  });
 
   it('returns false for perfect_squares (Level 1)', () => {
     expect(topicHasDifficulty('perfect_squares')).toBe(false);

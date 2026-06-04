@@ -780,12 +780,31 @@ describe('Scope: byte-equivalence baseline (no-scope path is unchanged)', () => 
     expect(q).toMatch(/\/9\b|0\.[0-9]{2,}|[0-9]+\.[0-9]+%/);
   });
 
+  // times_tables (Phase 1.2): the no-scope generator picks a, b ∈ {2..12} with
+  // canonical larger-first ordering. With seed-mocked Math.random returning a
+  // constant s, both picks are a = b = aPool[floor(s*11)]; canonicalization is
+  // a no-op (a == b). Sweep pins the (s → factor) map.
+  it.each([
+    [0.0, 2],
+    [0.05, 2],
+    [0.25, 4],
+    [0.5, 7],
+    [0.75, 10],
+    [0.95, 12],
+  ])('times_tables (no scope) at seed=%s yields %s × %s', (seed, expectedFactor) => {
+    randomSpy.mockReturnValue(seed as number);
+    const p = generateProblem(1, 'Easy', [], 'times_tables');
+    expect(p.question).toBe(`${expectedFactor} × ${expectedFactor} = ?`);
+    expect(p.answer).toBe((expectedFactor as number) * (expectedFactor as number));
+    expect(p.type).toBe('Times Tables');
+  });
+
   // Belt-and-suspenders: every seed × every scoped topic produces a well-formed
   // Problem on the no-scope (undefined) path. This is the catch-all that flags
   // any source change that breaks unscoped behavior.
   it('every (seed × scoped topic) on the no-scope path produces a well-formed Problem', () => {
     const seeds = [0.0, 0.13, 0.27, 0.42, 0.5, 0.69, 0.83, 0.91, 0.99];
-    const topics = ['perfect_squares', 'perfect_cubes', 'fraction_conversions'];
+    const topics = ['times_tables', 'perfect_squares', 'perfect_cubes', 'fraction_conversions'];
     for (const seed of seeds) {
       randomSpy.mockReturnValue(seed);
       for (const topic of topics) {
@@ -1051,6 +1070,160 @@ describe('Scope: scope-aware output (fraction_conversions)', () => {
       randomSpy.mockReturnValue(s);
       const withFull = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_full');
       expect(withFull).toEqual(noScope);
+    }
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Scope-aware output (times_tables) — Phase 1.2.
+//
+// Multi-row scopes (tt_easy, tt_2_5, tt_6_9, tt_10_12, tt_full) draw a, b from
+// scope-narrowed pools and canonicalize larger-first per the existing
+// memorized-multiplication / common-multiples precedent.
+//
+// Singleton-row scopes (tt_just_6, tt_just_7, tt_just_8, tt_just_9) draw a
+// from a single-element pool {N} and b from {2..12}, and DO NOT swap. The
+// question always reads "N × b" so a student picking "Just the 7× table" sees
+// the 7× row frame consistently.
+// -----------------------------------------------------------------------------
+
+describe('Scope: scope-aware output (times_tables)', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => { randomSpy = vi.spyOn(Math, 'random'); });
+  afterEach(() => { randomSpy.mockRestore(); });
+
+  const sweep = [0.0, 0.05, 0.15, 0.25, 0.4, 0.5, 0.6, 0.75, 0.85, 0.95];
+
+  const parseFactors = (q: unknown): [number, number] => {
+    const m = String(q).match(/^(\d+) × (\d+) = \?$/);
+    expect(m).not.toBeNull();
+    return [Number(m![1]), Number(m![2])];
+  };
+
+  const factorsInPools = (q: unknown, aPool: number[], bPool: number[]) => {
+    const [a, b] = parseFactors(q);
+    // Multi-row scopes canonicalize larger-first. Either ordering must satisfy
+    // (a ∈ aPool ∧ b ∈ bPool) or (a ∈ bPool ∧ b ∈ aPool) after the swap.
+    const direct = aPool.includes(a) && bPool.includes(b);
+    const swapped = aPool.includes(b) && bPool.includes(a);
+    expect(direct || swapped).toBe(true);
+  };
+
+  const allFactors = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+  // ---- multi-row scopes -----------------------------------------------------
+
+  it('scope=tt_easy draws first factor from {2, 5, 10}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_easy');
+      factorsInPools(p.question, [2, 5, 10], allFactors);
+    }
+  });
+
+  it('scope=tt_2_5 draws first factor from {2, 3, 4, 5}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_2_5');
+      factorsInPools(p.question, [2, 3, 4, 5], allFactors);
+    }
+  });
+
+  it('scope=tt_6_9 draws first factor from {6, 7, 8, 9}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_6_9');
+      factorsInPools(p.question, [6, 7, 8, 9], allFactors);
+    }
+  });
+
+  it('scope=tt_10_12 draws first factor from {10, 11, 12}', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_10_12');
+      factorsInPools(p.question, [10, 11, 12], allFactors);
+    }
+  });
+
+  // ---- singleton scopes (preserve row × column ordering) --------------------
+
+  it('scope=tt_just_6 always presents 6 as the row factor (left side)', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_just_6');
+      const [a, b] = parseFactors(p.question);
+      expect(a).toBe(6);
+      expect(allFactors).toContain(b);
+    }
+  });
+
+  it('scope=tt_just_7 always presents 7 as the row factor (left side)', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_just_7');
+      const [a, b] = parseFactors(p.question);
+      expect(a).toBe(7);
+      expect(allFactors).toContain(b);
+    }
+  });
+
+  it('scope=tt_just_8 always presents 8 as the row factor (left side)', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_just_8');
+      const [a, b] = parseFactors(p.question);
+      expect(a).toBe(8);
+      expect(allFactors).toContain(b);
+    }
+  });
+
+  it('scope=tt_just_9 always presents 9 as the row factor (left side)', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const p = generateProblem(1, 'Easy', [], 'times_tables', 'tt_just_9');
+      const [a, b] = parseFactors(p.question);
+      expect(a).toBe(9);
+      expect(allFactors).toContain(b);
+    }
+  });
+
+  // ---- byte-equivalence vs no-scope path ------------------------------------
+
+  it('scope=tt_full is byte-equivalent to the no-scope path', () => {
+    for (const s of sweep) {
+      randomSpy.mockReturnValue(s);
+      const noScope = generateProblem(1, 'Easy', [], 'times_tables');
+      randomSpy.mockReturnValue(s);
+      const withFull = generateProblem(1, 'Easy', [], 'times_tables', 'tt_full');
+      expect(withFull).toEqual(noScope);
+    }
+  });
+
+  it('unknown scope falls back to Full (silent, matches the slice-1.1 pattern)', () => {
+    for (const s of [0.05, 0.5, 0.95]) {
+      randomSpy.mockReturnValue(s);
+      const noScope = generateProblem(1, 'Easy', [], 'times_tables');
+      randomSpy.mockReturnValue(s);
+      const withGarbage = generateProblem(1, 'Easy', [], 'times_tables', 'tt_made_up_scope');
+      expect(withGarbage).toEqual(noScope);
+    }
+  });
+
+  // ---- multi-row canonicalization sanity check ------------------------------
+
+  it('multi-row scopes produce canonical ordering (left factor >= right factor)', () => {
+    // The swap only fires when a < b. For multi-row scopes the test verifies
+    // the swap actually canonicalizes: the question's left factor must be the
+    // larger of the two (or equal). Note: this is a property test sampling
+    // many seeds, not a single-output pin.
+    const multiRowScopes = ['tt_easy', 'tt_2_5', 'tt_6_9', 'tt_10_12', 'tt_full'];
+    for (const scope of multiRowScopes) {
+      for (const s of sweep) {
+        randomSpy.mockReturnValue(s);
+        const p = generateProblem(1, 'Easy', [], 'times_tables', scope);
+        const [a, b] = parseFactors(p.question);
+        expect(a).toBeGreaterThanOrEqual(b);
+      }
     }
   });
 });
