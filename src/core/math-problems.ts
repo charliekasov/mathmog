@@ -401,6 +401,17 @@ const createUniqueProblem = (generator: () => Problem, history: string[]): Probl
         problem = generator();
         attempt++;
     } while (history.includes(problem.question.toString()) && attempt < 50); // Failsafe to prevent infinite loops
+    if (attempt >= 50 && history.includes(problem.question.toString())) {
+        // The 50-attempt cap was reached and the returned problem is still a
+        // collision. Surface a console.warn so the orchestrator / debugger has
+        // a signal that the generator's variety is degraded for this seed.
+        // The trainer still receives the colliding problem so it can render
+        // something rather than throw mid-session.
+        console.warn(
+            "createUniqueProblem: returning a colliding problem after exhausting 50 retry attempts",
+            { question: problem.question.toString(), historySize: history.length },
+        );
+    }
     return problem;
 }
 

@@ -234,13 +234,16 @@ describe('generateProblem — topic routing', () => {
 
 describe('createUniqueProblem retry cap (via generateProblem)', () => {
   let randomSpy: ReturnType<typeof vi.spyOn>;
+  let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.42);
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     randomSpy.mockRestore();
+    warnSpy.mockRestore();
   });
 
   it('returns a problem (does not hang) when history contains every generatable question', () => {
@@ -263,17 +266,31 @@ describe('createUniqueProblem retry cap (via generateProblem)', () => {
     expect(elapsed).toBeLessThan(2000);
   });
 
-  it('returns the colliding (non-unique) problem after exhausting retries', () => {
-    // PINNED — TODO clean up in follow-up (contract §1.2: after 50 collisions
-    // `createUniqueProblem` returns the last generated problem WITHOUT raising
-    // or logging, even though it's a duplicate).
+  it('returns the colliding problem after exhausting retries, with a console.warn signal', () => {
+    // Contract (post-A.1#6, v0.5.14): when the 50-attempt cap is reached
+    // `createUniqueProblem` STILL returns the colliding problem (no throw —
+    // the trainer needs a problem to render), but it emits exactly one
+    // `console.warn` so the orchestrator / debugger has a signal that the
+    // generator's variety has degraded. The return-shape invariant
+    // (collision-as-fallback) is intentional; the warn is the new addition.
     const first = generateProblem(1, 'Easy', []);
     const firstKey = first.question.toString();
 
+    // Sanity: priming the warn spy should be clean — the first call shouldn't
+    // have warned (history empty, first attempt succeeded).
+    expect(warnSpy).not.toHaveBeenCalled();
+
     const second = generateProblem(1, 'Easy', [firstKey]);
-    // The second problem's question matches the first (collision happened, and
-    // it was returned anyway).
+
+    // Collision return preserved.
     expect(second.question.toString()).toBe(firstKey);
+
+    // Exactly one warn fired, message identifies the source.
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('createUniqueProblem'),
+      expect.anything(),
+    );
   });
 });
 

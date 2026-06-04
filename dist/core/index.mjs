@@ -429,6 +429,12 @@ var createUniqueProblem = (generator, history) => {
     problem = generator();
     attempt++;
   } while (history.includes(problem.question.toString()) && attempt < 50);
+  if (attempt >= 50 && history.includes(problem.question.toString())) {
+    console.warn(
+      "createUniqueProblem: returning a colliding problem after exhausting 50 retry attempts",
+      { question: problem.question.toString(), historySize: history.length }
+    );
+  }
   return problem;
 };
 var generateMultiplicationProblem = (difficulty) => {
