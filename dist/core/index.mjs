@@ -1620,15 +1620,58 @@ var PERFECT_SQUARES_LEARN_MODULES = [
   squaresModule("squares_16_20", 16, 20)
 ];
 
+// src/core/learn/modules/perfect-cubes.ts
+var CUBE_DISTRACTORS = {
+  1: [3, 13, 8, 27],
+  2: [4, 6, 27, 16],
+  3: [9, 64, 81, 18],
+  4: [16, 27, 125, 32],
+  5: [25, 75, 64, 625],
+  6: [36, 125, 343, 126],
+  7: [49, 216, 512, 147],
+  8: [64, 343, 729, 256],
+  9: [81, 512, 1e3, 243],
+  10: [100, 1e4, 729, 300]
+};
+var cubeItem = (n) => ({
+  id: `${n}^3`,
+  prompt: `${n}\xB3`,
+  answer: n * n * n
+});
+var rangeItems2 = (lo, hi) => {
+  const items = [];
+  for (let n = lo; n <= hi; n++) items.push(cubeItem(n));
+  return items;
+};
+var cubesModule = (scopeId, lo, hi) => {
+  const items = rangeItems2(lo, hi);
+  return {
+    id: mathmogLearnModuleId("perfect_cubes", scopeId),
+    label: registryScopeLabel("perfect_cubes", scopeId),
+    items,
+    distractorSets: items.map((item) => ({
+      itemId: item.id,
+      distractors: CUBE_DISTRACTORS[Number(item.id.split("^")[0])]
+    }))
+  };
+};
+var PERFECT_CUBES_LEARN_MODULES = [
+  cubesModule("cubes_full", 1, 10),
+  cubesModule("cubes_1_3", 1, 3),
+  cubesModule("cubes_1_5", 1, 5),
+  cubesModule("cubes_6_10", 6, 10)
+];
+
 // src/core/learn/modules/index.ts
 var MATHMOG_LEARN_MODULES = [
   ...TIMES_TABLES_LEARN_MODULES,
-  ...PERFECT_SQUARES_LEARN_MODULES
+  ...PERFECT_SQUARES_LEARN_MODULES,
+  ...PERFECT_CUBES_LEARN_MODULES
 ];
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export { DRILL_TOPIC_REGISTRY, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

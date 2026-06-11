@@ -256,6 +256,9 @@ declare const TIMES_TABLES_LEARN_MODULES: LearnModuleDef<string, number>[];
 /** One module per registry scope; ranges match `squaresRangeForScope`. */
 declare const PERFECT_SQUARES_LEARN_MODULES: LearnModuleDef<string, number>[];
 
+/** One module per registry scope; ranges match `cubesRangeForScope`. */
+declare const PERFECT_CUBES_LEARN_MODULES: LearnModuleDef<string, number>[];
+
 /** Every curated Math Mog Learn module across all topics shipped so far. */
 declare const MATHMOG_LEARN_MODULES: LearnModuleDef<string, number>[];
 
@@ -292,4 +295,4 @@ declare function parseMathmogLearnModuleId(moduleId: string): {
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnTier, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, PERFECT_SQUARES_LEARN_MODULES, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, type ScopeDef, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnTier, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, type ScopeDef, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
