@@ -1226,6 +1226,468 @@ var generateProblem = (level, difficulty, history, topic, scope) => {
   return createUniqueProblem(generator, history);
 };
 
+// src/core/diagnosis/fraction-identities.ts
+var FRACTION_DISTRACTOR_IDENTITIES = {
+  "1/2": [
+    { value: 0.12, identity: { kind: "digits" } },
+    { value: 0.2, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } }
+  ],
+  "1/3": [
+    { value: 0.67, identity: { kind: "complement", fraction: "2/3" } },
+    { value: 0.66, identity: { kind: "complement", fraction: "2/3" } },
+    { value: 0.13, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.44, identity: { kind: "other-fact", fraction: "4/9" } }
+  ],
+  "2/3": [
+    { value: 0.33, identity: { kind: "complement", fraction: "1/3" } },
+    { value: 0.23, identity: { kind: "digits" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } },
+    { value: 0.56, identity: { kind: "other-fact", fraction: "5/9" } }
+  ],
+  "1/4": [
+    { value: 0.4, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.14, identity: { kind: "digits" } },
+    { value: 0.75, identity: { kind: "complement", fraction: "3/4" } },
+    { value: 0.2, identity: { kind: "other-fact", fraction: "1/5" } }
+  ],
+  "3/4": [
+    { value: 0.25, identity: { kind: "complement", fraction: "1/4" } },
+    { value: 0.34, identity: { kind: "digits" } },
+    { value: 0.8, identity: { kind: "other-fact", fraction: "4/5" } },
+    { value: 0.67, identity: { kind: "other-fact", fraction: "2/3" } }
+  ],
+  "1/5": [
+    { value: 0.5, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.15, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.05, identity: { kind: "percent-slip" } }
+  ],
+  "2/5": [
+    { value: 0.25, identity: { kind: "digits" } },
+    { value: 0.5, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.2, identity: { kind: "part-as-decimal", part: "numerator" } },
+    { value: 0.6, identity: { kind: "complement", fraction: "3/5" } }
+  ],
+  "3/5": [
+    { value: 0.35, identity: { kind: "digits" } },
+    { value: 0.4, identity: { kind: "complement", fraction: "2/5" } },
+    { value: 0.3, identity: { kind: "part-as-decimal", part: "numerator" } },
+    { value: 0.57, identity: { kind: "other-fact", fraction: "4/7" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } }
+  ],
+  "4/5": [
+    { value: 0.45, identity: { kind: "digits" } },
+    { value: 0.4, identity: { kind: "part-as-decimal", part: "numerator" } },
+    { value: 0.2, identity: { kind: "complement", fraction: "1/5" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } }
+  ],
+  "1/6": [
+    { value: 0.6, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.125, identity: { kind: "other-fact", fraction: "1/8" } },
+    // shadowed by under-precision (0.2 = 1/6 rounded at one place)
+    { value: 0.2, identity: { kind: "other-fact", fraction: "1/5" } },
+    { value: 0.667, identity: { kind: "other-fact", fraction: "2/3" } }
+  ],
+  "5/6": [
+    { value: 0.56, identity: { kind: "digits" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.6, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.857, identity: { kind: "other-fact", fraction: "6/7" } }
+  ],
+  "1/7": [
+    { value: 0.17, identity: { kind: "digits" } },
+    { value: 0.125, identity: { kind: "other-fact", fraction: "1/8" } },
+    { value: 0.134, identity: { kind: "digit-swap", of: 0.143 } },
+    { value: 0.286, identity: { kind: "rotation", fraction: "2/7" } }
+  ],
+  "2/7": [
+    { value: 0.27, identity: { kind: "digits" } },
+    { value: 0.143, identity: { kind: "rotation", fraction: "1/7" } },
+    { value: 0.268, identity: { kind: "digit-swap", of: 0.286 } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.429, identity: { kind: "rotation", fraction: "3/7" } }
+  ],
+  "3/7": [
+    { value: 0.37, identity: { kind: "digits" } },
+    { value: 0.492, identity: { kind: "digit-swap", of: 0.429 } },
+    { value: 0.571, identity: { kind: "rotation", fraction: "4/7" } },
+    // shadowed by under-precision (0.4 = 3/7 truncated at one place)
+    { value: 0.4, identity: { kind: "other-fact", fraction: "2/5" } }
+  ],
+  "4/7": [
+    { value: 0.47, identity: { kind: "digits" } },
+    { value: 0.517, identity: { kind: "digit-swap", of: 0.571 } },
+    { value: 0.429, identity: { kind: "rotation", fraction: "3/7" } },
+    // shadowed by under-precision (0.6 = 4/7 rounded at one place)
+    { value: 0.6, identity: { kind: "other-fact", fraction: "3/5" } }
+  ],
+  "5/7": [
+    { value: 0.57, identity: { kind: "digits" } },
+    { value: 0.741, identity: { kind: "digit-swap", of: 0.714 } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } },
+    { value: 0.286, identity: { kind: "rotation", fraction: "2/7" } }
+  ],
+  "6/7": [
+    { value: 0.67, identity: { kind: "digits" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.833, identity: { kind: "other-fact", fraction: "5/6" } },
+    { value: 0.143, identity: { kind: "rotation", fraction: "1/7" } }
+  ],
+  "1/8": [
+    { value: 0.8, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.18, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.375, identity: { kind: "other-fact", fraction: "3/8" } },
+    { value: 0.111, identity: { kind: "other-fact", fraction: "1/9" } }
+  ],
+  "3/8": [
+    { value: 0.38, identity: { kind: "digits" } },
+    { value: 0.625, identity: { kind: "complement", fraction: "5/8" } },
+    { value: 0.357, identity: { kind: "digit-swap", of: 0.375 } }
+    // 0.35: deliberately unannotated
+  ],
+  "5/8": [
+    { value: 0.58, identity: { kind: "digits" } },
+    { value: 0.375, identity: { kind: "complement", fraction: "3/8" } },
+    { value: 0.652, identity: { kind: "digit-swap", of: 0.625 } },
+    { value: 0.6, identity: { kind: "other-fact", fraction: "3/5" } }
+  ],
+  "7/8": [
+    { value: 0.78, identity: { kind: "digits" } },
+    { value: 0.857, identity: { kind: "other-fact", fraction: "6/7" } },
+    { value: 0.125, identity: { kind: "complement", fraction: "1/8" } },
+    { value: 0.8, identity: { kind: "other-fact", fraction: "4/5" } },
+    { value: 0.89, identity: { kind: "other-fact", fraction: "8/9" } }
+  ],
+  "1/9": [
+    { value: 0.19, identity: { kind: "digits" } },
+    { value: 0.9, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.125, identity: { kind: "other-fact", fraction: "1/8" } },
+    { value: 0.22, identity: { kind: "other-fact", fraction: "2/9" } },
+    { value: 0.09, identity: { kind: "percent-slip" } }
+  ],
+  "2/9": [
+    { value: 0.29, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.11, identity: { kind: "other-fact", fraction: "1/9" } },
+    { value: 0.286, identity: { kind: "other-fact", fraction: "2/7" } }
+  ],
+  "4/9": [
+    { value: 0.49, identity: { kind: "digits" } },
+    { value: 0.33, identity: { kind: "other-fact", fraction: "1/3" } },
+    { value: 0.429, identity: { kind: "other-fact", fraction: "3/7" } }
+    // 0.45: deliberately unannotated (last-digit detector covers it)
+  ],
+  "5/9": [
+    { value: 0.59, identity: { kind: "digits" } },
+    { value: 0.44, identity: { kind: "other-fact", fraction: "4/9" } },
+    { value: 0.571, identity: { kind: "other-fact", fraction: "4/7" } },
+    { value: 0.65, identity: { kind: "digit-swap", of: 0.56 } }
+  ],
+  "7/9": [
+    { value: 0.79, identity: { kind: "digits" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.22, identity: { kind: "complement", fraction: "2/9" } },
+    { value: 0.87, identity: { kind: "other-fact", fraction: "7/8" } }
+  ],
+  "8/9": [
+    { value: 0.98, identity: { kind: "digit-swap", of: 0.89 } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.11, identity: { kind: "complement", fraction: "1/9" } },
+    { value: 0.83, identity: { kind: "other-fact", fraction: "5/6" } }
+  ]
+};
+
+// src/core/diagnosis/diagnose.ts
+var decimalPlaces = (v) => (String(v).split(".")[1] ?? "").length;
+var sortedDigits = (v) => String(v).replace(".", "").split("").sort().join("");
+var isDigitSwap = (wrong, target) => wrong !== target && String(target).replace(".", "").length > 1 && sortedDigits(wrong) === sortedDigits(target);
+var endSentence = (text) => text.endsWith("\u2026") ? text : `${text}.`;
+var TT_OFFSETS = [
+  { da: 0, db: -1, code: "tt-adjacent-product" },
+  { da: 0, db: 1, code: "tt-adjacent-product" },
+  { da: -1, db: 0, code: "tt-adjacent-product" },
+  { da: 1, db: 0, code: "tt-adjacent-product" },
+  { da: -1, db: 1, code: "tt-neighbor-fact" },
+  { da: 1, db: -1, code: "tt-neighbor-fact" },
+  { da: -1, db: -1, code: "tt-near-product" },
+  { da: 1, db: 1, code: "tt-near-product" },
+  { da: 0, db: -2, code: "tt-near-product" },
+  { da: 0, db: 2, code: "tt-near-product" },
+  { da: -2, db: 0, code: "tt-near-product" },
+  { da: 2, db: 0, code: "tt-near-product" }
+];
+var diagnoseTimesTablesMiss = (a, b, wrong) => {
+  const answer = a * b;
+  for (const { da, db, code } of TT_OFFSETS) {
+    const f1 = a + da;
+    const f2 = b + db;
+    if (f1 < 1 || f2 < 1 || f1 * f2 !== wrong) continue;
+    if (code === "tt-adjacent-product") {
+      const step = da === 0 ? a : b;
+      const direction = wrong > answer ? "less" : "more";
+      return {
+        code,
+        message: `${wrong} is ${f1} \xD7 ${f2}. ${a} \xD7 ${b} is one ${step} ${direction}: ${answer}.`
+      };
+    }
+    if (code === "tt-neighbor-fact") {
+      return {
+        code,
+        message: `${wrong} is ${f1} \xD7 ${f2} \u2014 a neighbor fact. ${a} \xD7 ${b} = ${answer}.`
+      };
+    }
+    return {
+      code,
+      message: `${wrong} is ${f1} \xD7 ${f2}. ${a} \xD7 ${b} = ${answer}.`
+    };
+  }
+  if (wrong === a + b) {
+    return {
+      code: "tt-added-instead",
+      message: `${wrong} is ${a} + ${b}. Multiplying: ${a} \xD7 ${b} = ${answer}.`
+    };
+  }
+  if (isDigitSwap(wrong, answer)) {
+    return {
+      code: "tt-digit-swap",
+      message: `${wrong} is ${answer} with the digits swapped. ${a} \xD7 ${b} = ${answer}.`
+    };
+  }
+  return null;
+};
+var diagnoseSquareMiss = (n, wrong) => {
+  const answer = n * n;
+  for (const m of [n - 1, n + 1]) {
+    if (m >= 1 && m * m === wrong) {
+      return { code: "sq-adjacent-square", message: `${wrong} is ${m}\xB2. ${n}\xB2 = ${answer}.` };
+    }
+  }
+  for (const m of [n - 1, n + 1]) {
+    if (m >= 1 && n * m === wrong) {
+      const relation = m < n ? "short of" : "past";
+      return {
+        code: "sq-row-product",
+        message: `${wrong} is ${n} \xD7 ${m} \u2014 one ${n} ${relation} ${n} \xD7 ${n}. ${n}\xB2 = ${answer}.`
+      };
+    }
+  }
+  if (n >= 2 && wrong === n * n * n) {
+    return {
+      code: "sq-cube-slip",
+      message: `${wrong} is ${n}\xB3 \u2014 three ${n}s multiplied. Squaring uses two: ${n} \xD7 ${n} = ${answer}.`
+    };
+  }
+  for (const m of [n - 2, n + 2]) {
+    if (m >= 1 && m * m === wrong) {
+      return { code: "sq-near-square", message: `${wrong} is ${m}\xB2. ${n}\xB2 = ${answer}.` };
+    }
+  }
+  for (const m of [n - 2, n + 2]) {
+    if (m >= 1 && n * m === wrong) {
+      return {
+        code: "sq-near-product",
+        message: `${wrong} is ${n} \xD7 ${m}. ${n}\xB2 is ${n} \xD7 ${n}: ${answer}.`
+      };
+    }
+  }
+  if (isDigitSwap(wrong, answer)) {
+    return {
+      code: "sq-digit-swap",
+      message: `${wrong} is ${answer} with its digits rearranged. ${n}\xB2 = ${answer}.`
+    };
+  }
+  return null;
+};
+var diagnoseCubeMiss = (n, wrong) => {
+  const answer = n * n * n;
+  if (n >= 2 && wrong === n * n) {
+    return {
+      code: "cb-square-slip",
+      message: `${wrong} is ${n}\xB2 \u2014 two ${n}s. A cube multiplies three: ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
+    };
+  }
+  for (const m of [n - 1, n + 1]) {
+    if (m >= 1 && m * m * m === wrong) {
+      return { code: "cb-adjacent-cube", message: `${wrong} is ${m}\xB3. ${n}\xB3 = ${answer}.` };
+    }
+  }
+  if (wrong === 3 * n && wrong !== answer) {
+    return {
+      code: "cb-times-three",
+      message: `${wrong} is ${n} \xD7 3. ${n}\xB3 means ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
+    };
+  }
+  for (const k of [2, 3]) {
+    if (n >= 2 && wrong === n * n * k) {
+      return {
+        code: "cb-square-multiple",
+        message: `${wrong} is ${n}\xB2 \xD7 ${k}. Cubing multiplies by ${n} again: ${n}\xB2 \xD7 ${n} = ${answer}.`
+      };
+    }
+  }
+  for (const [power, label] of [[4, "\u2074 \u2014 four"], [5, "\u2075 \u2014 five"]]) {
+    if (n >= 2 && wrong === n ** power) {
+      return {
+        code: "cb-power-slip",
+        message: `${wrong} is ${n}${label} ${n}s. A cube is three: ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
+      };
+    }
+  }
+  for (const m of [n - 2, n + 2]) {
+    if (m >= 1 && m * m * m === wrong) {
+      return { code: "cb-near-cube", message: `${wrong} is ${m}\xB3. ${n}\xB3 = ${answer}.` };
+    }
+  }
+  if (isDigitSwap(wrong, answer)) {
+    return {
+      code: "cb-digit-swap",
+      message: `${wrong} is ${answer} with its digits rearranged. ${n}\xB3 = ${answer}.`
+    };
+  }
+  return null;
+};
+var fractionValueDisplay = (num, den) => {
+  const { repeating, precision } = fractionBasesByDenominator[den];
+  return repeating ? repeatingDecimalDisplay(num, den) : String(truncateFraction(num, den, precision));
+};
+var acceptedFormsAt = (num, den, places) => {
+  const truncated = truncateFraction(num, den, places);
+  const rounded = roundFraction(num, den, places);
+  return truncated === rounded ? `${truncated}` : `${truncated} or ${rounded}`;
+};
+var parseFractionId = (itemId) => {
+  const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(itemId);
+  if (!match) return null;
+  const num = Number(match[1]);
+  const den = Number(match[2]);
+  if (!fractionBasesByDenominator[den]?.numerators.includes(num)) return null;
+  return { num, den };
+};
+var detectUnderPrecision = (num, den, wrong) => {
+  const { repeating } = fractionBasesByDenominator[den];
+  const { floorPlaces, canonicalPlaces } = fractionPrecisionPolicy(den);
+  const places = decimalPlaces(wrong);
+  if (wrong <= 0 || wrong >= 1 || places < 1 || places >= floorPlaces) return null;
+  const itemId = `${num}/${den}`;
+  const display = fractionValueDisplay(num, den);
+  if (wrong === truncateFraction(num, den, places)) {
+    return {
+      code: "frac-under-precision",
+      message: repeating ? `Right idea \u2014 ${itemId} starts with ${wrong}, but the digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right start \u2014 ${itemId} does begin with ${wrong}. The full value is ${display}.`
+    };
+  }
+  if (wrong === roundFraction(num, den, places)) {
+    const placeWord = places === 1 ? "decimal" : "decimals";
+    return {
+      code: "frac-under-precision",
+      message: repeating ? `Right idea \u2014 ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right idea \u2014 ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The full value is ${display}.`
+    };
+  }
+  return null;
+};
+var detectLastDigitSlip = (num, den, wrong) => {
+  const { floorPlaces, ceilingPlaces } = fractionPrecisionPolicy(den);
+  const places = decimalPlaces(wrong);
+  if (wrong <= 0 || wrong >= 1 || places < floorPlaces || places > ceilingPlaces) return null;
+  const scale = 10 ** places;
+  const wrongScaled = Math.round(wrong * scale);
+  const truncScaled = Math.round(truncateFraction(num, den, places) * scale);
+  const roundScaled = Math.round(roundFraction(num, den, places) * scale);
+  if (Math.abs(wrongScaled - truncScaled) !== 1 && Math.abs(wrongScaled - roundScaled) !== 1) {
+    return null;
+  }
+  const placeWord = places === 1 ? "decimal" : "decimals";
+  return {
+    code: "frac-last-digit",
+    message: `So close \u2014 ${wrong} is one digit off in the last place. ${num}/${den} = ${endSentence(fractionValueDisplay(num, den))} At ${places} ${placeWord}, that's ${acceptedFormsAt(num, den, places)}.`
+  };
+};
+var fractionIdentityMessage = (num, den, wrong, identity) => {
+  const itemId = `${num}/${den}`;
+  const display = endSentence(fractionValueDisplay(num, den));
+  switch (identity.kind) {
+    case "other-fact": {
+      const [refNum, refDen] = identity.fraction.split("/").map(Number);
+      const inFamily = acceptedDecimalFamily(refNum, refDen).includes(wrong);
+      const comparison = num / den > wrong ? "more" : "less";
+      const closeness = Math.abs(num / den - wrong) < 0.1 ? "a bit " : "";
+      if (inFamily) {
+        return `${wrong} is what ${identity.fraction} comes to. ${itemId} is ${closeness}${comparison}: ${display}`;
+      }
+      return `${wrong} is ${identity.fraction} cut short \u2014 ${identity.fraction} = ${endSentence(fractionValueDisplay(refNum, refDen))} ${itemId} is ${closeness}${comparison}: ${display}`;
+    }
+    case "complement":
+      return `${wrong} is what ${identity.fraction} comes to \u2014 that's the rest of the whole after ${itemId}. ${itemId} itself is ${display}`;
+    case "rotation":
+      return `${wrong} is what ${identity.fraction} comes to \u2014 sevenths all run the same 142857 loop, just starting at different digits. ${itemId} is ${display}`;
+    case "digits":
+      return `${wrong} reads the ${num} and ${den} straight across. ${itemId} means ${num} \xF7 ${den}: ${display}`;
+    case "digit-swap":
+      return `${wrong} is ${identity.of} with two digits swapped. ${itemId} is ${display}`;
+    case "percent-slip": {
+      const wrongPercent = Math.round(wrong * 100);
+      const percentDisplay = fractionBasesByDenominator[den].repeating ? repeatingDecimalDisplay(num * 100, den) : String(truncateFraction(num * 100, den, 1));
+      return `${wrong} means ${wrongPercent}%. ${itemId} is ${percentDisplay}% \u2014 as a decimal, ${display}`;
+    }
+    case "part-as-decimal": {
+      const digit = identity.part === "numerator" ? num : den;
+      const position = identity.part === "numerator" ? "top" : "bottom";
+      return `${wrong} grabs the ${digit} from the ${position} of ${itemId}. ${itemId} means ${num} \xF7 ${den}: ${display}`;
+    }
+  }
+};
+var diagnoseFractionMiss = (num, den, wrong) => {
+  if (acceptedDecimalFamily(num, den).includes(wrong)) return null;
+  const poolEntry = FRACTION_DISTRACTOR_IDENTITIES[`${num}/${den}`]?.find((e) => e.value === wrong);
+  const poolDiagnosis = poolEntry ? {
+    code: `frac-${poolEntry.identity.kind}`,
+    message: fractionIdentityMessage(num, den, wrong, poolEntry.identity)
+  } : null;
+  if (fractionBasesByDenominator[den].repeating) {
+    return detectUnderPrecision(num, den, wrong) ?? poolDiagnosis ?? detectLastDigitSlip(num, den, wrong);
+  }
+  return poolDiagnosis ?? detectUnderPrecision(num, den, wrong) ?? detectLastDigitSlip(num, den, wrong);
+};
+var parseBase = (itemId, exponent) => {
+  const match = new RegExp(`^([1-9]\\d*)\\^${exponent}$`).exec(itemId);
+  return match ? Number(match[1]) : null;
+};
+var diagnoseMiss = (topic, itemId, wrongAnswer) => {
+  if (!Number.isFinite(wrongAnswer)) return null;
+  switch (topic) {
+    case "times_tables": {
+      const match = /^([1-9]\d*)x([1-9]\d*)$/.exec(itemId);
+      if (!match) return null;
+      const a = Number(match[1]);
+      const b = Number(match[2]);
+      if (wrongAnswer === a * b) return null;
+      return diagnoseTimesTablesMiss(a, b, wrongAnswer);
+    }
+    case "perfect_squares": {
+      const n = parseBase(itemId, 2);
+      if (n === null || wrongAnswer === n * n) return null;
+      return diagnoseSquareMiss(n, wrongAnswer);
+    }
+    case "perfect_cubes": {
+      const n = parseBase(itemId, 3);
+      if (n === null || wrongAnswer === n * n * n) return null;
+      return diagnoseCubeMiss(n, wrongAnswer);
+    }
+    case "fraction_conversions": {
+      const parsed = parseFractionId(itemId);
+      if (!parsed) return null;
+      return diagnoseFractionMiss(parsed.num, parsed.den, wrongAnswer);
+    }
+    default:
+      return null;
+  }
+};
+
 // src/core/drill-topics.ts
 var SCOPES_TIMES_TABLES = [
   { id: "tt_full", label: "Full (2\xD7 through 12\xD7)", narrowerThan: ["tt_6_9"] },
@@ -1968,6 +2430,7 @@ function cn(...inputs) {
 exports.DRILL_TOPIC_REGISTRY = DRILL_TOPIC_REGISTRY;
 exports.FRACTION_ACCEPTED_DECIMALS = FRACTION_ACCEPTED_DECIMALS;
 exports.FRACTION_CONVERSIONS_LEARN_MODULES = FRACTION_CONVERSIONS_LEARN_MODULES;
+exports.FRACTION_DISTRACTOR_IDENTITIES = FRACTION_DISTRACTOR_IDENTITIES;
 exports.INITIAL_LEARN_TIER = INITIAL_LEARN_TIER;
 exports.LEARN_TIER_LADDER = LEARN_TIER_LADDER;
 exports.MATHMOG_LEARN_CONFIG = MATHMOG_LEARN_CONFIG;
@@ -1992,6 +2455,7 @@ exports.createInitialItemStates = createInitialItemStates;
 exports.createLearnSession = createLearnSession;
 exports.currentLearnItemId = currentLearnItemId;
 exports.deriveItemStatus = deriveItemStatus;
+exports.diagnoseMiss = diagnoseMiss;
 exports.dropTier = dropTier;
 exports.escalateTier = escalateTier;
 exports.fractionPrecisionPolicy = fractionPrecisionPolicy;

@@ -34,6 +34,17 @@ export {
 } from './math-problems';
 
 export type {
+  MissDiagnosis,
+  FractionDistractorIdentity,
+  FractionDistractorIdentityEntry,
+} from './diagnosis';
+
+export {
+  diagnoseMiss,
+  FRACTION_DISTRACTOR_IDENTITIES,
+} from './diagnosis';
+
+export type {
   DrillTopic,
   DrillTopicInfo,
   ScopeDef,
