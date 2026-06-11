@@ -16,6 +16,7 @@ var simplifyFraction = (num, den) => {
   return `${reducedNum === 0 ? 0 : sign * reducedNum}/${reducedDen}`;
 };
 var fractionBasesByDenominator = {
+  2: { numerators: [1], precision: 1, repeating: false },
   3: {
     numerators: [1, 2],
     precision: 2,
@@ -65,6 +66,7 @@ var fractionBasesByDenominator = {
   }
 };
 var commonFractionConversions = [
+  { frac: "1/2", decimal: "0.5", percent: "50%" },
   { frac: "1/3", decimal: "0.33", percent: "33.3%" },
   { frac: "2/3", decimal: "0.66 or 0.67", percent: "66.6% or 66.7%" },
   { frac: "1/4", decimal: "0.25", percent: "25%" },
@@ -948,9 +950,9 @@ var cubesRangeForScope = (scope) => {
 var fractionDenominatorsForScope = (scope) => {
   switch (scope) {
     case "fractions_friendly":
-      return [4, 5];
+      return [2, 4, 5];
     case "fractions_halves_fourths":
-      return [4];
+      return [2, 4];
     case "fractions_fifths":
       return [5];
     case "fractions_eighths":
@@ -965,7 +967,7 @@ var fractionDenominatorsForScope = (scope) => {
       return [9];
     case "fractions_full":
     default:
-      return [3, 4, 5, 6, 7, 8, 9];
+      return [2, 3, 4, 5, 6, 7, 8, 9];
   }
 };
 var generateTimesTablesProblem_targeted = (scope) => {
@@ -1238,7 +1240,7 @@ var DRILL_TOPIC_REGISTRY = [
   { id: "times_tables", label: "Times Tables", level: 1, hasDifficulty: false, description: "Single-digit multiplication facts (2\xD7 through 12\xD7)", scopes: SCOPES_TIMES_TABLES },
   { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20", scopes: SCOPES_PERFECT_SQUARES },
   { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10", scopes: SCOPES_PERFECT_CUBES },
-  { id: "fraction_conversions", label: "Fractions \u2194 Decimals \u2194 Percents", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
+  { id: "fraction_conversions", label: "Fractions \u2194 Decimals \u2194 Percents", level: 1, hasDifficulty: false, description: "All denominators (2-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
   { id: "advanced_squares", label: "Advanced Squares", level: 1, hasDifficulty: false, description: "Squares of 10, 20, 30...100" },
   { id: "advanced_cubes", label: "Advanced Cubes", level: 1, hasDifficulty: false, description: "Cubes of 10, 20, 30...100" },
   { id: "higher_powers", label: "Higher Powers", level: 1, hasDifficulty: false, description: "2^4-2^9, 3^4-3^6, 4^4, 5^4, 6^4" },
@@ -1664,17 +1666,106 @@ var PERFECT_CUBES_LEARN_MODULES = [
   cubesModule("cubes_6_10", 6, 10)
 ];
 
+// src/core/learn/modules/fractions.ts
+var ALL_DENOMINATORS = [2, 3, 4, 5, 6, 7, 8, 9];
+var FRACTION_DISTRACTORS = {
+  // halves — 0.5
+  "1/2": [0.12, 0.2, 0.25, 0.75],
+  // thirds — 0.33 / 0.66
+  "1/3": [0.67, 0.66, 0.13, 0.25, 0.44],
+  "2/3": [0.33, 0.23, 0.75, 0.56],
+  // fourths — 0.25 / 0.75
+  "1/4": [0.4, 0.14, 0.75, 0.2],
+  "3/4": [0.25, 0.34, 0.8, 0.67],
+  // fifths — 0.2 / 0.4 / 0.6 / 0.8
+  "1/5": [0.5, 0.15, 0.25, 0.05],
+  "2/5": [0.25, 0.5, 0.2, 0.6],
+  "3/5": [0.35, 0.4, 0.3, 0.57, 0.75],
+  "4/5": [0.45, 0.4, 0.2, 0.75, 0.875],
+  // sixths — 0.166 / 0.833
+  "1/6": [0.6, 0.125, 0.2, 0.667],
+  "5/6": [0.56, 0.875, 0.6, 0.857],
+  // sevenths — the 142857 rotations; complements are the rotation slips
+  "1/7": [0.17, 0.125, 0.134, 0.286],
+  "2/7": [0.27, 0.143, 0.268, 0.25, 0.429],
+  "3/7": [0.37, 0.492, 0.571, 0.4],
+  "4/7": [0.47, 0.517, 0.429, 0.6],
+  "5/7": [0.57, 0.741, 0.75, 0.286],
+  "6/7": [0.67, 0.875, 0.833, 0.143],
+  // eighths — 0.125 / 0.375 / 0.625 / 0.875
+  "1/8": [0.8, 0.18, 0.25, 0.375, 0.111],
+  "3/8": [0.38, 0.625, 0.35, 0.357],
+  "5/8": [0.58, 0.375, 0.652, 0.6],
+  "7/8": [0.78, 0.857, 0.125, 0.8, 0.89],
+  // ninths — the 0.nn repeaters
+  "1/9": [0.19, 0.9, 0.125, 0.22, 0.09],
+  "2/9": [0.29, 0.25, 0.11, 0.286],
+  "4/9": [0.49, 0.45, 0.33, 0.429],
+  "5/9": [0.59, 0.44, 0.571, 0.65],
+  "7/9": [0.79, 0.875, 0.22, 0.87],
+  "8/9": [0.98, 0.875, 0.11, 0.83]
+};
+var canonicalDecimal = (num, den) => {
+  const places = den === 7 ? 3 : fractionBasesByDenominator[den].precision;
+  return parseFloat((num / den).toFixed(places + 1).slice(0, -1));
+};
+var FRACTION_ACCEPTED_DECIMALS = Object.fromEntries(
+  ALL_DENOMINATORS.flatMap((den) => {
+    const { numerators, answers } = fractionBasesByDenominator[den];
+    return numerators.map((num) => [
+      `${num}/${den}`,
+      answers?.[num] ?? [canonicalDecimal(num, den)]
+    ]);
+  })
+);
+var fractionItem = (num, den) => ({
+  id: `${num}/${den}`,
+  prompt: `${num}/${den} as a decimal`,
+  answer: canonicalDecimal(num, den)
+});
+var itemsForDenominators = (dens) => dens.flatMap(
+  (den) => fractionBasesByDenominator[den].numerators.map((num) => fractionItem(num, den))
+);
+var fractionsModule = (scopeId, dens) => {
+  const items = itemsForDenominators(dens);
+  return {
+    id: mathmogLearnModuleId("fraction_conversions", scopeId),
+    label: registryScopeLabel("fraction_conversions", scopeId),
+    items,
+    distractorSets: items.map(
+      (item) => ({
+        itemId: item.id,
+        distractors: FRACTION_DISTRACTORS[item.id]
+      })
+    )
+  };
+};
+var FRACTION_CONVERSIONS_LEARN_MODULES = [
+  fractionsModule("fractions_full", ALL_DENOMINATORS),
+  fractionsModule("fractions_friendly", [2, 4, 5]),
+  fractionsModule("fractions_halves_fourths", [2, 4]),
+  fractionsModule("fractions_fifths", [5]),
+  fractionsModule("fractions_eighths", [8]),
+  fractionsModule("fractions_thirds", [3]),
+  fractionsModule("fractions_sixths", [6]),
+  fractionsModule("fractions_sevenths", [7]),
+  fractionsModule("fractions_ninths", [9])
+];
+
 // src/core/learn/modules/index.ts
 var MATHMOG_LEARN_MODULES = [
   ...TIMES_TABLES_LEARN_MODULES,
   ...PERFECT_SQUARES_LEARN_MODULES,
-  ...PERFECT_CUBES_LEARN_MODULES
+  ...PERFECT_CUBES_LEARN_MODULES,
+  ...FRACTION_CONVERSIONS_LEARN_MODULES
 ];
 function cn(...inputs) {
   return tailwindMerge.twMerge(clsx.clsx(inputs));
 }
 
 exports.DRILL_TOPIC_REGISTRY = DRILL_TOPIC_REGISTRY;
+exports.FRACTION_ACCEPTED_DECIMALS = FRACTION_ACCEPTED_DECIMALS;
+exports.FRACTION_CONVERSIONS_LEARN_MODULES = FRACTION_CONVERSIONS_LEARN_MODULES;
 exports.INITIAL_LEARN_TIER = INITIAL_LEARN_TIER;
 exports.LEARN_TIER_LADDER = LEARN_TIER_LADDER;
 exports.MATHMOG_LEARN_CONFIG = MATHMOG_LEARN_CONFIG;

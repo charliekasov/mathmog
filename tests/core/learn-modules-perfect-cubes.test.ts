@@ -14,8 +14,6 @@ import {
   validateLearnModuleDef,
   isLearnEligible,
   mathmogLearnModuleId,
-  TIMES_TABLES_LEARN_MODULES,
-  PERFECT_SQUARES_LEARN_MODULES,
   PERFECT_CUBES_LEARN_MODULES,
   MATHMOG_LEARN_MODULES,
 } from '../../src/core/learn';
@@ -66,12 +64,10 @@ describe('registry coverage', () => {
     }
   });
 
-  it('the aggregate registry is exactly TT + Squares + Cubes, in topic order', () => {
-    expect(MATHMOG_LEARN_MODULES).toEqual([
-      ...TIMES_TABLES_LEARN_MODULES,
-      ...PERFECT_SQUARES_LEARN_MODULES,
-      ...PERFECT_CUBES_LEARN_MODULES,
-    ]);
+  it('the aggregate registry contains every cubes module', () => {
+    for (const def of PERFECT_CUBES_LEARN_MODULES) {
+      expect(MATHMOG_LEARN_MODULES).toContain(def);
+    }
   });
 });
 

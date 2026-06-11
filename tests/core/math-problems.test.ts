@@ -443,15 +443,15 @@ describe('Repeating-decimal answer encoding', () => {
 // -----------------------------------------------------------------------------
 
 describe('Reference data tables', () => {
-  it('commonFractionConversions has 26 entries', () => {
-    expect(commonFractionConversions).toHaveLength(26);
+  it('commonFractionConversions has 27 entries', () => {
+    expect(commonFractionConversions).toHaveLength(27);
   });
 
-  it('commonFractionConversions first entry is 1/3 → 0.33 / 33.3%', () => {
+  it('commonFractionConversions first entry is 1/2 → 0.5 / 50%', () => {
     expect(commonFractionConversions[0]).toEqual({
-      frac: '1/3',
-      decimal: '0.33',
-      percent: '33.3%',
+      frac: '1/2',
+      decimal: '0.5',
+      percent: '50%',
     });
   });
 
@@ -748,24 +748,23 @@ describe('Scope: byte-equivalence baseline (no-scope path is unchanged)', () => 
   });
 
   // fraction_conversions: today's generator picks a denominator from
-  // [3,4,5,6,7,8,9] then a numerator, then a conversion type. The exact output
-  // is seed-deterministic. We pin a sweep of seeds → (type, question pattern)
-  // to lock the unscoped distribution.
-  it('fraction_conversions (no scope) at seed=0.0 emits a fraction problem touching denominator 3', () => {
+  // [2,3,4,5,6,7,8,9] then a numerator, then a conversion type. The exact
+  // output is seed-deterministic. We pin a sweep of seeds → (type, question
+  // pattern) to lock the unscoped distribution.
+  it('fraction_conversions (no scope) at seed=0.0 emits a fraction problem touching denominator 2', () => {
     randomSpy.mockReturnValue(0.0);
     const p = generateProblem(1, 'Easy', [], 'fraction_conversions');
-    // den index = floor(0 * 7) = 0 → den=3; numerator index = floor(0 * 2) = 0 → num=1
-    // conversion index varies but question must reference 1/3 or 0.<something for 1/3> or 33%-ish
+    // den index = floor(0 * 8) = 0 → den=2; numerator index = floor(0 * 1) = 0 → num=1
+    // conversion index varies but question must reference 1/2 or 0.5 or 50%
     expect(p.type).toMatch(/Fraction|Decimal|Percent/);
     const q = String(p.question);
-    // either "1/3" reference, or "0.33" reference, or "33%" reference
-    expect(q).toMatch(/1\/3|0\.33|33\./);
+    expect(q).toMatch(/1\/2|0\.5|50/);
   });
 
   it('fraction_conversions (no scope) at seed=0.5 emits a fraction problem touching denominator 6', () => {
     randomSpy.mockReturnValue(0.5);
     const p = generateProblem(1, 'Easy', [], 'fraction_conversions');
-    // den index = floor(0.5 * 7) = 3 → den=6
+    // den index = floor(0.5 * 8) = 4 → den=6
     const q = String(p.question);
     // Some seed paths reference simplified forms (e.g. 1/2 from 5/6 → percent → fraction).
     // Pin the denominator-6 path by matching "/6" OR "5/6" OR a 0.83/0.16 decimal OR an 83.3%-ish percent.
@@ -775,7 +774,7 @@ describe('Scope: byte-equivalence baseline (no-scope path is unchanged)', () => 
   it('fraction_conversions (no scope) at seed=0.99 emits a fraction problem touching denominator 9', () => {
     randomSpy.mockReturnValue(0.99);
     const p = generateProblem(1, 'Easy', [], 'fraction_conversions');
-    // den index = floor(0.99 * 7) = 6 → den=9
+    // den index = floor(0.99 * 8) = 7 → den=9
     const q = String(p.question);
     expect(q).toMatch(/\/9\b|0\.[0-9]{2,}|[0-9]+\.[0-9]+%/);
   });
@@ -999,19 +998,19 @@ describe('Scope: scope-aware output (fraction_conversions)', () => {
     expect(p.type).toMatch(/Fraction|Decimal|Percent/);
   };
 
-  it('scope=fractions_friendly restricts to denominators {4, 5}', () => {
+  it('scope=fractions_friendly restricts to denominators {2, 4, 5}', () => {
     for (const s of sweep) {
       randomSpy.mockReturnValue(s);
       const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_friendly');
-      denomsInScope(p, [4, 5]);
+      denomsInScope(p, [2, 4, 5]);
     }
   });
 
-  it('scope=fractions_halves_fourths restricts to denominator {4}', () => {
+  it('scope=fractions_halves_fourths restricts to denominators {2, 4}', () => {
     for (const s of sweep) {
       randomSpy.mockReturnValue(s);
       const p = generateProblem(1, 'Easy', [], 'fraction_conversions', 'fractions_halves_fourths');
-      denomsInScope(p, [4]);
+      denomsInScope(p, [2, 4]);
     }
   });
 

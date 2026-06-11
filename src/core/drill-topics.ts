@@ -107,7 +107,7 @@ export const DRILL_TOPIC_REGISTRY: DrillTopicInfo[] = [
   { id: 'times_tables', label: 'Times Tables', level: 1, hasDifficulty: false, description: 'Single-digit multiplication facts (2× through 12×)', scopes: SCOPES_TIMES_TABLES },
   { id: 'perfect_squares', label: 'Perfect Squares (1-20)', level: 1, hasDifficulty: false, description: 'Squares of numbers 1 through 20', scopes: SCOPES_PERFECT_SQUARES },
   { id: 'perfect_cubes', label: 'Perfect Cubes (1-10)', level: 1, hasDifficulty: false, description: 'Cubes of numbers 1 through 10', scopes: SCOPES_PERFECT_CUBES },
-  { id: 'fraction_conversions', label: 'Fractions ↔ Decimals ↔ Percents', level: 1, hasDifficulty: false, description: 'All denominators (3-9), all conversion types', scopes: SCOPES_FRACTION_CONVERSIONS },
+  { id: 'fraction_conversions', label: 'Fractions ↔ Decimals ↔ Percents', level: 1, hasDifficulty: false, description: 'All denominators (2-9), all conversion types', scopes: SCOPES_FRACTION_CONVERSIONS },
   { id: 'advanced_squares', label: 'Advanced Squares', level: 1, hasDifficulty: false, description: 'Squares of 10, 20, 30...100' },
   { id: 'advanced_cubes', label: 'Advanced Cubes', level: 1, hasDifficulty: false, description: 'Cubes of 10, 20, 30...100' },
   { id: 'higher_powers', label: 'Higher Powers', level: 1, hasDifficulty: false, description: '2^4-2^9, 3^4-3^6, 4^4, 5^4, 6^4' },

@@ -55,6 +55,7 @@ var simplifyFraction = (num, den) => {
   return `${reducedNum === 0 ? 0 : sign * reducedNum}/${reducedDen}`;
 };
 var fractionBasesByDenominator = {
+  2: { numerators: [1], precision: 1, repeating: false },
   3: {
     numerators: [1, 2],
     precision: 2,
@@ -104,6 +105,7 @@ var fractionBasesByDenominator = {
   }
 };
 var commonFractionConversions = [
+  { frac: "1/2", decimal: "0.5", percent: "50%" },
   { frac: "1/3", decimal: "0.33", percent: "33.3%" },
   { frac: "2/3", decimal: "0.66 or 0.67", percent: "66.6% or 66.7%" },
   { frac: "1/4", decimal: "0.25", percent: "25%" },
@@ -987,9 +989,9 @@ var cubesRangeForScope = (scope) => {
 var fractionDenominatorsForScope = (scope) => {
   switch (scope) {
     case "fractions_friendly":
-      return [4, 5];
+      return [2, 4, 5];
     case "fractions_halves_fourths":
-      return [4];
+      return [2, 4];
     case "fractions_fifths":
       return [5];
     case "fractions_eighths":
@@ -1004,7 +1006,7 @@ var fractionDenominatorsForScope = (scope) => {
       return [9];
     case "fractions_full":
     default:
-      return [3, 4, 5, 6, 7, 8, 9];
+      return [2, 3, 4, 5, 6, 7, 8, 9];
   }
 };
 var generateTimesTablesProblem_targeted = (scope) => {
@@ -1277,7 +1279,7 @@ var DRILL_TOPIC_REGISTRY = [
   { id: "times_tables", label: "Times Tables", level: 1, hasDifficulty: false, description: "Single-digit multiplication facts (2\xD7 through 12\xD7)", scopes: SCOPES_TIMES_TABLES },
   { id: "perfect_squares", label: "Perfect Squares (1-20)", level: 1, hasDifficulty: false, description: "Squares of numbers 1 through 20", scopes: SCOPES_PERFECT_SQUARES },
   { id: "perfect_cubes", label: "Perfect Cubes (1-10)", level: 1, hasDifficulty: false, description: "Cubes of numbers 1 through 10", scopes: SCOPES_PERFECT_CUBES },
-  { id: "fraction_conversions", label: "Fractions \u2194 Decimals \u2194 Percents", level: 1, hasDifficulty: false, description: "All denominators (3-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
+  { id: "fraction_conversions", label: "Fractions \u2194 Decimals \u2194 Percents", level: 1, hasDifficulty: false, description: "All denominators (2-9), all conversion types", scopes: SCOPES_FRACTION_CONVERSIONS },
   { id: "advanced_squares", label: "Advanced Squares", level: 1, hasDifficulty: false, description: "Squares of 10, 20, 30...100" },
   { id: "advanced_cubes", label: "Advanced Cubes", level: 1, hasDifficulty: false, description: "Cubes of 10, 20, 30...100" },
   { id: "higher_powers", label: "Higher Powers", level: 1, hasDifficulty: false, description: "2^4-2^9, 3^4-3^6, 4^4, 5^4, 6^4" },

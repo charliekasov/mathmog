@@ -20,6 +20,7 @@ export const simplifyFraction = (num: number, den: number) => {
 // re-exported from `src/core/index.ts` so it is not part of the package's
 // public surface.
 export const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean, answers?: Record<number, number[]> }> = {
+    2: { numerators: [1], precision: 1, repeating: false },
     3: {
         numerators: [1, 2],
         precision: 2,
@@ -68,6 +69,7 @@ export const fractionBasesByDenominator: Record<number, { numerators: number[], 
 
 // Reference data
 export const commonFractionConversions = [
+    { frac: '1/2', decimal: '0.5', percent: '50%' },
     { frac: '1/3', decimal: '0.33', percent: '33.3%' },
     { frac: '2/3', decimal: '0.66 or 0.67', percent: '66.6% or 66.7%' },
     { frac: '1/4', decimal: '0.25', percent: '25%' },
@@ -992,8 +994,8 @@ const cubesRangeForScope = (scope: string | undefined): [number, number] => {
 
 const fractionDenominatorsForScope = (scope: string | undefined): number[] => {
     switch (scope) {
-        case 'fractions_friendly':       return [4, 5];
-        case 'fractions_halves_fourths': return [4];
+        case 'fractions_friendly':       return [2, 4, 5];
+        case 'fractions_halves_fourths': return [2, 4];
         case 'fractions_fifths':         return [5];
         case 'fractions_eighths':        return [8];
         case 'fractions_thirds':         return [3];
@@ -1001,7 +1003,7 @@ const fractionDenominatorsForScope = (scope: string | undefined): number[] => {
         case 'fractions_sevenths':       return [7];
         case 'fractions_ninths':         return [9];
         case 'fractions_full':
-        default:                         return [3, 4, 5, 6, 7, 8, 9];
+        default:                         return [2, 3, 4, 5, 6, 7, 8, 9];
     }
 };
 
