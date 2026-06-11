@@ -246,6 +246,133 @@ declare function isLearnEligibleModule<TPrompt, TAnswer>(def: LearnModuleDef<TPr
 declare function isLearnEligible(modules: LearnModuleDef<unknown, unknown>[], moduleId: string): boolean;
 
 /**
+ * The machine's tuning: the 2A.1 completion knob plus this slice's two
+ * policy knobs. Per-product values live in the product binding
+ * (`MATHMOG_LEARN_CONFIG`), never inline at call sites.
+ */
+interface LearnSessionConfig extends LearnConfig {
+    /**
+     * Upper bound on items per round. Rounds are balanced: the not-yet-solid
+     * remainder is divided into as few rounds as the bound allows, sized as
+     * evenly as possible (13 remaining at a bound of 12 → 7 + 6, not 12 + 1).
+     */
+    maxRoundSize: number;
+    /**
+     * Presentations before a re-queued item (missed, or tapped through a See
+     * card) comes back in the same round. Clamped to the queue's end.
+     */
+    requeueGap: number;
+}
+/**
+ * Trace of the in-progress round; becomes the `LearnRoundSummary` when the
+ * round's queue empties. Ids are unique and in first-occurrence order.
+ */
+interface LearnRoundTrace {
+    presentedItemIds: string[];
+    missedItemIds: string[];
+    newlySolidItemIds: string[];
+}
+/**
+ * The session aggregate — everything Learn needs to run, resume, and report
+ * one module pass. This exact shape is the 2B.1 Firestore wire format;
+ * see the serializability contract in the file header. `itemStates` is in
+ * `LearnModuleDef.items` order (creation order, never re-sorted).
+ */
+interface LearnSessionState {
+    moduleId: string;
+    itemStates: LearnItemState[];
+    round: LearnRoundState;
+    roundTrace: LearnRoundTrace;
+    roundSummaries: LearnRoundSummary[];
+}
+/**
+ * Derived, never stored (same rail as `LearnItemStatus`):
+ * - `in-round`: the queue has a current item to present.
+ * - `round-complete`: the queue emptied and the module isn't done — the
+ *   between-rounds summary screen; `startNextLearnRound` advances.
+ * - `module-complete`: every item is solid. Terminal.
+ */
+type LearnSessionPhase = 'in-round' | 'round-complete' | 'module-complete';
+/**
+ * What an action did, for the 2B.6 telemetry layer and the 2A.4 UI.
+ * `tier-changed` fires on every rung move with its cause; note a correct
+ * answer at `recall` moves no rung (the ladder clamps), so the solid path
+ * is observed via `item-solid`, which fires exactly once per item — on the
+ * recall-tier correct that crosses `recallsToSolid`.
+ */
+type LearnSessionEvent = {
+    type: 'tier-changed';
+    itemId: string;
+    from: LearnTier;
+    to: LearnTier;
+    cause: 'correct' | 'miss' | 'seen';
+} | {
+    type: 'item-solid';
+    itemId: string;
+} | {
+    type: 'round-complete';
+    summary: LearnRoundSummary;
+} | {
+    type: 'module-complete';
+};
+interface LearnActionResult {
+    session: LearnSessionState;
+    events: LearnSessionEvent[];
+}
+/**
+ * Starts a session on a validated module. Validation runs ONCE here (a
+ * malformed module throws loudly at the door — the portal's `isLearnEligible`
+ * gate should make this unreachable); transitions assume it and never
+ * re-validate. Round 1 is assembled immediately: the first balanced chunk of
+ * `def.items` in order, every item at `INITIAL_LEARN_TIER`.
+ */
+declare function createLearnSession(def: LearnModuleDef<unknown, unknown>, config: LearnSessionConfig): LearnSessionState;
+/** The item to present now: the queue's head, or null between/after rounds. */
+declare function currentLearnItemId(session: LearnSessionState): string | null;
+declare function getLearnItemState(session: LearnSessionState, itemId: string): LearnItemState | undefined;
+/** See `LearnSessionPhase`. Derived from the aggregate, never stored. */
+declare function learnSessionPhase(session: LearnSessionState, config: LearnSessionConfig): LearnSessionPhase;
+/**
+ * Grades the current item at its quizzed tier. `correct` is the caller's
+ * verdict (the machine never sees the student's answer); "Don't know?" is
+ * `correct: false` by the 2A.1 rail. A correct answer escalates and retires
+ * the item for the round; a miss drops a tier and re-queues it
+ * `requeueGap` presentations later (the immediate answer reveal on a miss is
+ * 2A.4's presentation beat — at recognize the dropped item additionally
+ * resurfaces as a See card when its re-queue comes up). When the answer
+ * empties the queue the round is finalized: its summary is appended (and
+ * emitted), and module completion is detected.
+ *
+ * No-op (same session reference) when there is no current item or the
+ * current item sits at `see` — See cards are tap-through (`applyLearnSeen`),
+ * never graded.
+ */
+declare function applyLearnAnswer(session: LearnSessionState, config: LearnSessionConfig, correct: boolean): LearnActionResult;
+/**
+ * The student tapped through the current item's See card (the post-miss
+ * re-teach beat — in v1 `see` is reachable only by a recognize-miss).
+ * Exposure isn't retrieval: no attempt is counted (2A.1 `applySeen`). The
+ * item escalates back to `recognize` and re-queues `requeueGap`
+ * presentations later for the check, so a See tap can never end a round.
+ *
+ * No-op (same session reference) when there is no current item or the
+ * current item isn't at `see`.
+ */
+declare function applyLearnSeen(session: LearnSessionState, config: LearnSessionConfig): LearnActionResult;
+/**
+ * Advances past the between-rounds summary: assembles the next balanced
+ * chunk of not-yet-solid items under a new round number — canonical order
+ * if the chunk is all first-contact items, shuffled otherwise (see the
+ * file header). `rng` is injectable for deterministic tests, matching
+ * `assembleRecognizeOptions`. Emits no events — the round-complete event
+ * fired when the queue emptied; if the portal wants a round-started emit it
+ * owns that call site.
+ *
+ * No-op (same session reference) unless the phase is `round-complete`.
+ */
+declare function startNextLearnRound(session: LearnSessionState, config: LearnSessionConfig, rng?: () => number): LearnActionResult;
+
+/**
  * One Learn module per registry scope (design doc §6.5: every finite
  * Memorize fact set; the scope and the module are the same content unit
  * viewed two ways). A test pins this list against the registry so a new
@@ -287,11 +414,20 @@ declare const MATHMOG_LEARN_MODULES: LearnModuleDef<string, number>[];
 declare const MEMORIZE_LEARN_TOPICS: readonly ["times_tables", "perfect_squares", "perfect_cubes", "fraction_conversions", "advanced_squares", "advanced_cubes", "higher_powers", "common_multiples"];
 type MemorizeLearnTopic = (typeof MEMORIZE_LEARN_TOPICS)[number];
 /**
- * Math Mog completion tuning: recalled-correctly-twice (Learn doc Q5
- * resolution — Quizlet's Write standard as the default, held in a per-product
- * constant rather than a literal).
+ * Math Mog tuning: recalled-correctly-twice (Learn doc Q5 resolution —
+ * Quizlet's Write standard as the default), plus the 2A.3 session-policy
+ * knobs, all held in a per-product constant rather than literals.
+ * - `maxRoundSize: 12` keeps every singleton-row and small-range scope whole
+ *   as a single round (singleton times-table rows are 11 items; most
+ *   squares/cubes/fractions scopes are ≤10) and balance-chunks every
+ *   combined scope into rounds of 9–11 (tt_full 66 → 6×11, tt_2_5/tt_6_9
+ *   38 → 4×10, fractions full 27 → 3×9, squares full 20 → 2×10) — inside
+ *   the 8–12 right-sized-drill band.
+ * - `requeueGap: 3` brings a missed or just-seen item back after three other
+ *   presentations — soon enough to close the loop in the same round, spaced
+ *   enough that the retrieval isn't an echo of the answer reveal.
  */
-declare const MATHMOG_LEARN_CONFIG: LearnConfig;
+declare const MATHMOG_LEARN_CONFIG: LearnSessionConfig;
 /**
  * Module-id wire format: `<topic>/<scopeId>`, e.g.
  * `times_tables/tt_just_7`. The explicit topic segment keeps ids
@@ -308,4 +444,4 @@ declare function parseMathmogLearnModuleId(moduleId: string): {
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnTier, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, type ScopeDef, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnActionResult, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnRoundTrace, type LearnSessionConfig, type LearnSessionEvent, type LearnSessionPhase, type LearnSessionState, type LearnTier, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, type ScopeDef, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, dropTier, escalateTier, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, validateLearnModuleDef };

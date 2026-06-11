@@ -38,6 +38,25 @@ export {
   isLearnEligible,
 } from './helpers';
 
+export type {
+  LearnSessionConfig,
+  LearnRoundTrace,
+  LearnSessionState,
+  LearnSessionPhase,
+  LearnSessionEvent,
+  LearnActionResult,
+} from './machine';
+
+export {
+  createLearnSession,
+  currentLearnItemId,
+  getLearnItemState,
+  learnSessionPhase,
+  applyLearnAnswer,
+  applyLearnSeen,
+  startNextLearnRound,
+} from './machine';
+
 export {
   TIMES_TABLES_LEARN_MODULES,
   PERFECT_SQUARES_LEARN_MODULES,

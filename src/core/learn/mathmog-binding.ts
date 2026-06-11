@@ -7,7 +7,7 @@
 // generated and infinite, so no module id ever exists for them.
 
 import type { DrillTopic } from '../drill-topics';
-import type { LearnConfig } from './types';
+import type { LearnSessionConfig } from './machine';
 
 /**
  * The Memorize (level 1) topics — the only ones whose content is a finite
@@ -32,12 +32,23 @@ export const MEMORIZE_LEARN_TOPICS = [
 export type MemorizeLearnTopic = (typeof MEMORIZE_LEARN_TOPICS)[number];
 
 /**
- * Math Mog completion tuning: recalled-correctly-twice (Learn doc Q5
- * resolution — Quizlet's Write standard as the default, held in a per-product
- * constant rather than a literal).
+ * Math Mog tuning: recalled-correctly-twice (Learn doc Q5 resolution —
+ * Quizlet's Write standard as the default), plus the 2A.3 session-policy
+ * knobs, all held in a per-product constant rather than literals.
+ * - `maxRoundSize: 12` keeps every singleton-row and small-range scope whole
+ *   as a single round (singleton times-table rows are 11 items; most
+ *   squares/cubes/fractions scopes are ≤10) and balance-chunks every
+ *   combined scope into rounds of 9–11 (tt_full 66 → 6×11, tt_2_5/tt_6_9
+ *   38 → 4×10, fractions full 27 → 3×9, squares full 20 → 2×10) — inside
+ *   the 8–12 right-sized-drill band.
+ * - `requeueGap: 3` brings a missed or just-seen item back after three other
+ *   presentations — soon enough to close the loop in the same round, spaced
+ *   enough that the retrieval isn't an echo of the answer reveal.
  */
-export const MATHMOG_LEARN_CONFIG: LearnConfig = {
+export const MATHMOG_LEARN_CONFIG: LearnSessionConfig = {
   recallsToSolid: 2,
+  maxRoundSize: 12,
+  requeueGap: 3,
 };
 
 /**

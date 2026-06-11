@@ -1408,6 +1408,182 @@ function isLearnEligible(modules, moduleId) {
   return def !== void 0 && isLearnEligibleModule(def);
 }
 
+// src/core/learn/machine.ts
+function emptyTrace() {
+  return {
+    presentedItemIds: [],
+    missedItemIds: [],
+    newlySolidItemIds: []
+  };
+}
+function appendUnique(ids, id) {
+  return ids.includes(id) ? ids : [...ids, id];
+}
+function assembleRoundQueue(itemStates, config, rng) {
+  const remaining = itemStates.filter((s) => !isItemSolid(s, config));
+  if (remaining.length === 0) return [];
+  const rounds = Math.ceil(remaining.length / config.maxRoundSize);
+  const chunk = remaining.slice(0, Math.ceil(remaining.length / rounds));
+  const ids = chunk.map((s) => s.itemId);
+  if (chunk.every((s) => s.attempts === 0)) return ids;
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+  return ids;
+}
+function createLearnSession(def, config) {
+  const problems = validateLearnModuleDef(def);
+  if (problems.length > 0) {
+    throw new Error(
+      `createLearnSession: module "${def.id}" is not Learn-eligible: ${problems.join("; ")}`
+    );
+  }
+  const itemStates = createInitialItemStates(def);
+  return {
+    moduleId: def.id,
+    itemStates,
+    // Round 1 is all first-contact items, so assembly is deterministic
+    // (canonical order) — no rng seam needed here.
+    round: {
+      roundNumber: 1,
+      queue: assembleRoundQueue(itemStates, config, Math.random)
+    },
+    roundTrace: emptyTrace(),
+    roundSummaries: []
+  };
+}
+function currentLearnItemId(session) {
+  return session.round.queue.length > 0 ? session.round.queue[0] : null;
+}
+function getLearnItemState(session, itemId) {
+  return session.itemStates.find((s) => s.itemId === itemId);
+}
+function learnSessionPhase(session, config) {
+  if (session.round.queue.length > 0) return "in-round";
+  return isModuleComplete(session.itemStates, config) ? "module-complete" : "round-complete";
+}
+function requeue(rest, itemId, config) {
+  const at = Math.min(config.requeueGap, rest.length);
+  return [...rest.slice(0, at), itemId, ...rest.slice(at)];
+}
+function replaceItemState(itemStates, next) {
+  return itemStates.map((s) => s.itemId === next.itemId ? next : s);
+}
+function applyLearnAnswer(session, config, correct) {
+  const itemId = currentLearnItemId(session);
+  if (itemId === null) return { session, events: [] };
+  const state = getLearnItemState(session, itemId);
+  if (state === void 0 || state.tier === "see") {
+    return { session, events: [] };
+  }
+  const next = correct ? applyCorrectAnswer(state) : applyMiss(state);
+  const becameSolid = !isItemSolid(state, config) && isItemSolid(next, config);
+  const events = [];
+  if (next.tier !== state.tier) {
+    events.push({
+      type: "tier-changed",
+      itemId,
+      from: state.tier,
+      to: next.tier,
+      cause: correct ? "correct" : "miss"
+    });
+  }
+  if (becameSolid) {
+    events.push({ type: "item-solid", itemId });
+  }
+  const itemStates = replaceItemState(session.itemStates, next);
+  const rest = session.round.queue.slice(1);
+  const queue = correct ? rest : requeue(rest, itemId, config);
+  const trace = {
+    presentedItemIds: appendUnique(session.roundTrace.presentedItemIds, itemId),
+    missedItemIds: correct ? session.roundTrace.missedItemIds : appendUnique(session.roundTrace.missedItemIds, itemId),
+    newlySolidItemIds: becameSolid ? appendUnique(session.roundTrace.newlySolidItemIds, itemId) : session.roundTrace.newlySolidItemIds
+  };
+  if (queue.length > 0) {
+    return {
+      session: {
+        ...session,
+        itemStates,
+        round: { ...session.round, queue },
+        roundTrace: trace
+      },
+      events
+    };
+  }
+  const summary = {
+    roundNumber: session.round.roundNumber,
+    presentedItemIds: trace.presentedItemIds,
+    missedItemIds: trace.missedItemIds,
+    newlySolidItemIds: trace.newlySolidItemIds
+  };
+  events.push({ type: "round-complete", summary });
+  if (isModuleComplete(itemStates, config)) {
+    events.push({ type: "module-complete" });
+  }
+  return {
+    session: {
+      ...session,
+      itemStates,
+      round: { ...session.round, queue },
+      roundTrace: emptyTrace(),
+      roundSummaries: [...session.roundSummaries, summary]
+    },
+    events
+  };
+}
+function applyLearnSeen(session, config) {
+  const itemId = currentLearnItemId(session);
+  if (itemId === null) return { session, events: [] };
+  const state = getLearnItemState(session, itemId);
+  if (state === void 0 || state.tier !== "see") {
+    return { session, events: [] };
+  }
+  const next = applySeen(state);
+  return {
+    session: {
+      ...session,
+      itemStates: replaceItemState(session.itemStates, next),
+      round: {
+        ...session.round,
+        queue: requeue(session.round.queue.slice(1), itemId, config)
+      },
+      roundTrace: {
+        ...session.roundTrace,
+        presentedItemIds: appendUnique(
+          session.roundTrace.presentedItemIds,
+          itemId
+        )
+      }
+    },
+    events: [
+      {
+        type: "tier-changed",
+        itemId,
+        from: state.tier,
+        to: next.tier,
+        cause: "seen"
+      }
+    ]
+  };
+}
+function startNextLearnRound(session, config, rng = Math.random) {
+  if (learnSessionPhase(session, config) !== "round-complete") {
+    return { session, events: [] };
+  }
+  return {
+    session: {
+      ...session,
+      round: {
+        roundNumber: session.round.roundNumber + 1,
+        queue: assembleRoundQueue(session.itemStates, config, rng)
+      },
+      roundTrace: emptyTrace()
+    },
+    events: []
+  };
+}
+
 // src/core/learn/mathmog-binding.ts
 var MEMORIZE_LEARN_TOPICS = [
   "times_tables",
@@ -1420,7 +1596,9 @@ var MEMORIZE_LEARN_TOPICS = [
   "common_multiples"
 ];
 var MATHMOG_LEARN_CONFIG = {
-  recallsToSolid: 2
+  recallsToSolid: 2,
+  maxRoundSize: 12,
+  requeueGap: 3
 };
 function mathmogLearnModuleId(topic, scopeId) {
   return `${topic}/${scopeId}`;
@@ -1761,6 +1939,6 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, dropTier, escalateTier, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, validateLearnModuleDef };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map
