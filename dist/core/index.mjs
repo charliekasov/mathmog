@@ -1558,14 +1558,77 @@ var TIMES_TABLES_LEARN_MODULES = [
   ttModule("tt_just_9", rowItems(9))
 ];
 
+// src/core/learn/modules/scope-label.ts
+var registryScopeLabel = (topicId, scopeId) => {
+  const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
+  const scope = topic?.scopes?.find((s) => s.id === scopeId);
+  if (!scope) throw new Error(`Unknown ${topicId} scope: ${scopeId}`);
+  return scope.label;
+};
+
+// src/core/learn/modules/perfect-squares.ts
+var SQUARE_DISTRACTORS = {
+  1: [2, 4, 9, 11],
+  2: [6, 8, 9, 2],
+  3: [6, 12, 16, 27, 15],
+  4: [12, 20, 9, 25],
+  5: [20, 30, 16, 35, 15],
+  6: [30, 42, 25, 49],
+  7: [36, 64, 42, 63, 35],
+  8: [56, 72, 49, 81],
+  9: [72, 90, 64, 63, 99],
+  10: [90, 110, 81, 121],
+  11: [110, 132, 144, 111, 99],
+  12: [132, 121, 156, 169],
+  13: [156, 196, 144, 121, 225],
+  14: [182, 210, 169, 225],
+  15: [210, 240, 196, 125, 289],
+  16: [240, 272, 225, 289, 265],
+  17: [272, 324, 256, 225, 361],
+  18: [306, 342, 289, 361],
+  19: [342, 380, 324, 289, 441],
+  20: [380, 420, 361, 441]
+};
+var squareItem = (n) => ({
+  id: `${n}^2`,
+  prompt: `${n}\xB2`,
+  answer: n * n
+});
+var rangeItems = (lo, hi) => {
+  const items = [];
+  for (let n = lo; n <= hi; n++) items.push(squareItem(n));
+  return items;
+};
+var squaresModule = (scopeId, lo, hi) => {
+  const items = rangeItems(lo, hi);
+  return {
+    id: mathmogLearnModuleId("perfect_squares", scopeId),
+    label: registryScopeLabel("perfect_squares", scopeId),
+    items,
+    distractorSets: items.map((item) => ({
+      itemId: item.id,
+      distractors: SQUARE_DISTRACTORS[Number(item.id.split("^")[0])]
+    }))
+  };
+};
+var PERFECT_SQUARES_LEARN_MODULES = [
+  squaresModule("squares_full", 1, 20),
+  squaresModule("squares_1_5", 1, 5),
+  squaresModule("squares_1_10", 1, 10),
+  squaresModule("squares_11_15", 11, 15),
+  squaresModule("squares_11_20", 11, 20),
+  squaresModule("squares_16_20", 16, 20)
+];
+
 // src/core/learn/modules/index.ts
 var MATHMOG_LEARN_MODULES = [
-  ...TIMES_TABLES_LEARN_MODULES
+  ...TIMES_TABLES_LEARN_MODULES,
+  ...PERFECT_SQUARES_LEARN_MODULES
 ];
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export { DRILL_TOPIC_REGISTRY, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, RECOGNIZE_OPTION_COUNT, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

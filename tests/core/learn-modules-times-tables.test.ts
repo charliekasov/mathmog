@@ -70,8 +70,10 @@ describe('registry coverage', () => {
     }
   });
 
-  it('the aggregate registry currently contains exactly the Times Tables modules', () => {
-    expect(MATHMOG_LEARN_MODULES).toEqual(TIMES_TABLES_LEARN_MODULES);
+  it('the aggregate registry contains every Times Tables module', () => {
+    for (const def of TIMES_TABLES_LEARN_MODULES) {
+      expect(MATHMOG_LEARN_MODULES).toContain(def);
+    }
   });
 });
 

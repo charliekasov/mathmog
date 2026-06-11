@@ -8,10 +8,12 @@
 
 import type { LearnModuleDef } from '../types';
 import { TIMES_TABLES_LEARN_MODULES } from './times-tables';
+import { PERFECT_SQUARES_LEARN_MODULES } from './perfect-squares';
 
-export { TIMES_TABLES_LEARN_MODULES };
+export { TIMES_TABLES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES };
 
 /** Every curated Math Mog Learn module across all topics shipped so far. */
 export const MATHMOG_LEARN_MODULES: LearnModuleDef<string, number>[] = [
   ...TIMES_TABLES_LEARN_MODULES,
+  ...PERFECT_SQUARES_LEARN_MODULES,
 ];
