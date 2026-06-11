@@ -15,57 +15,166 @@ export const simplifyFraction = (num: number, den: number) => {
     return `${reducedNum === 0 ? 0 : sign * reducedNum}/${reducedDen}`;
 };
 
-// Helper data for the fraction generator. Exported for internal test use
+// ---------------------------------------------------------------------------
+// Fraction precision policy (Phase 2D.1).
+//
+// Accepted-answer families for repeating denominators are DERIVED, never
+// hand-typed: for each precision from the floor up to one place past the
+// prompt precision, both the truncation and the rounding of the true value
+// are accepted. The hand-typed tables this replaces live on as test
+// fixtures (tests/core/fraction-families.test.ts), which also pin the
+// deltas — the values the generator deliberately stops accepting.
+//
+// - FLOOR (2 places for repeating denominators; Charlie-ratified
+//   2026-06-11): one-place answers like 0.5 for 5/9 are no longer accepted.
+//   Several were other facts' exact values (0.5 = 1/2, 0.8 = 4/5) — false
+//   positives that silently endorsed the premier confusion the Learn
+//   curation exists to catch. The 2D.2 under-precision detector diagnoses
+//   them instead, so the tightening never lands as a bare "wrong".
+// - CEILING (prompt precision + 1): a student who types one extra correct
+//   digit is never punished. Matches every historic hand table.
+// - Terminating denominators accept exactly the exact value (unchanged).
+//
+// Deriving truncation AND rounding at every covered precision kills the
+// rounding-asymmetry bug class (0.8-accepted-but-not-0.9 for 8/9) and the
+// sixths/ninths floor asymmetry — the two grading defects logged in
+// HANDOFF-mathmog-redesign-phase-2a-2-fractions.md §"Drill-side follow-ups".
+// ---------------------------------------------------------------------------
+
+/** Lowest accepted precision for repeating denominators (Charlie-ratified). */
+export const REPEATING_PRECISION_FLOOR = 2;
+
+const FRACTION_BASES: Record<number, { numerators: number[], precision: number, repeating: boolean }> = {
+    2: { numerators: [1], precision: 1, repeating: false },
+    3: { numerators: [1, 2], precision: 2, repeating: true },
+    4: { numerators: [1, 3], precision: 2, repeating: false },
+    5: { numerators: [1, 2, 3, 4], precision: 1, repeating: false },
+    6: { numerators: [1, 5], precision: 3, repeating: true },
+    7: { numerators: [1, 2, 3, 4, 5, 6], precision: 3, repeating: true },
+    8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
+    9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true },
+};
+
+/** num/den truncated at `places` — exact (integer arithmetic, no float drift). */
+export const truncateFraction = (num: number, den: number, places: number): number =>
+    Math.floor((num * 10 ** places) / den) / 10 ** places;
+
+/** num/den rounded at `places` (round half up — the schoolroom convention). */
+export const roundFraction = (num: number, den: number, places: number): number =>
+    Math.round((num * 10 ** places) / den) / 10 ** places;
+
+/**
+ * The per-denominator precision policy. This is the tuning surface for the
+ * family generator: adjust floors/ceilings here, never per-fact values.
+ */
+export const fractionPrecisionPolicy = (
+    den: number
+): { floorPlaces: number, canonicalPlaces: number, ceilingPlaces: number } => {
+    const { precision, repeating } = FRACTION_BASES[den];
+    return repeating
+        ? { floorPlaces: REPEATING_PRECISION_FLOOR, canonicalPlaces: precision, ceilingPlaces: precision + 1 }
+        : { floorPlaces: precision, canonicalPlaces: precision, ceilingPlaces: precision };
+};
+
+/**
+ * Every decimal the Drill grades correct for num/den, derived from the
+ * policy. Order is precision-major, truncation before rounding — also the
+ * render order when the family is displayed ("0.66 or 0.67 or 0.666 or
+ * 0.667"). The 2A.4 Recall grader and the Drill share this list, so Learn
+ * and Drill cannot disagree about a family (review finding #3).
+ */
+export const acceptedDecimalFamily = (num: number, den: number): number[] => {
+    const { repeating } = FRACTION_BASES[den];
+    const { floorPlaces, ceilingPlaces } = fractionPrecisionPolicy(den);
+    if (!repeating) return [truncateFraction(num, den, ceilingPlaces)];
+    const family: number[] = [];
+    for (let places = floorPlaces; places <= ceilingPlaces; places++) {
+        for (const v of [truncateFraction(num, den, places), roundFraction(num, den, places)]) {
+            if (!family.includes(v)) family.push(v);
+        }
+    }
+    return family;
+};
+
+/**
+ * The repeating expansion for display: enough digits to show the repetend
+ * (at least four for short cycles), then an ellipsis — "0.6666…",
+ * "0.1666…", "0.142857…". Also handles shifted values for percent display
+ * (200/3 → "66.6666…"). Throws on terminating fractions.
+ */
+export const repeatingDecimalDisplay = (num: number, den: number): string => {
+    const whole = Math.floor(num / den);
+    const seen = new Map<number, number>();
+    let remainder = num % den;
+    let digits = '';
+    while (remainder !== 0 && !seen.has(remainder)) {
+        seen.set(remainder, digits.length);
+        remainder = remainder * 10;
+        digits += Math.floor(remainder / den);
+        remainder = remainder % den;
+    }
+    if (remainder === 0) throw new RangeError(`repeatingDecimalDisplay: ${num}/${den} terminates`);
+    const cycle = digits.slice(seen.get(remainder)!);
+    while (digits.length < 4) digits += cycle;
+    return `${whole}.${digits}…`;
+};
+
+/** "0.66 or 0.67" — both canonical-precision forms, truncation first. */
+const canonicalFractionForms = (num: number, den: number): string => {
+    const { canonicalPlaces } = fractionPrecisionPolicy(den);
+    const truncated = truncateFraction(num, den, canonicalPlaces);
+    const rounded = roundFraction(num, den, canonicalPlaces);
+    return truncated === rounded ? `${truncated}` : `${truncated} or ${rounded}`;
+};
+
+/**
+ * fracToDec explanation. Repeating fractions show the repeating form and
+ * lead with the truncated canonical — the same number Learn teaches and the
+ * reference card lists first (2A.2 truncated-canonical ruling); the rounded
+ * form rides along as the schoolroom alternative. Replaces the old
+ * `toFixed` string, which ROUNDED ("0.67") while Learn taught the truncated
+ * canonical (0.66) — same student, two different "the answers".
+ */
+export const fractionToDecimalExplanation = (num: number, den: number): string => {
+    const { repeating, precision } = FRACTION_BASES[den];
+    if (!repeating) return `${num}/${den} = ${num} ÷ ${den} = ${truncateFraction(num, den, precision)}`;
+    return `${num}/${den} = ${num} ÷ ${den} = ${repeatingDecimalDisplay(num, den)} — to ${precision} decimal places, ${canonicalFractionForms(num, den)}`;
+};
+
+/** fracToPerc explanation, same truncated-canonical alignment as fracToDec. */
+export const fractionToPercentExplanation = (num: number, den: number, percentPlaces: number): string => {
+    const { repeating, precision } = FRACTION_BASES[den];
+    if (!repeating) {
+        return `${num}/${den} = ${truncateFraction(num, den, precision)} = ${truncateFraction(num * 100, den, percentPlaces)}%`;
+    }
+    const truncated = truncateFraction(num * 100, den, percentPlaces);
+    const rounded = roundFraction(num * 100, den, percentPlaces);
+    const forms = truncated === rounded ? `${truncated}%` : `${truncated}% or ${rounded}%`;
+    const atPrecision = percentPlaces === 0
+        ? `as a whole-number percent, ${forms}`
+        : `to ${percentPlaces} decimal place${percentPlaces === 1 ? '' : 's'}, ${forms}`;
+    return `${num}/${den} = ${repeatingDecimalDisplay(num, den)} = ${repeatingDecimalDisplay(num * 100, den)}% — ${atPrecision}`;
+};
+
+// Helper data for the fraction generator: the base registry above plus the
+// policy-derived accepted families. Exported for internal test use
 // (registry-coverage enumeration in tests/core/math-problems.test.ts); not
 // re-exported from `src/core/index.ts` so it is not part of the package's
 // public surface.
-export const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean, answers?: Record<number, number[]> }> = {
-    2: { numerators: [1], precision: 1, repeating: false },
-    3: {
-        numerators: [1, 2],
-        precision: 2,
-        repeating: true,
-        answers: {
-            1: [0.3, 0.33, 0.333],
-            2: [0.6, 0.66, 0.67, 0.666, 0.667]
-        }
-    },
-    4: { numerators: [1, 3], precision: 2, repeating: false },
-    5: { numerators: [1, 2, 3, 4], precision: 1, repeating: false },
-    6: {
-        numerators: [1, 5],
-        precision: 3,
-        repeating: true,
-        answers: {
-            1: [0.16, 0.17, 0.166, 0.167, 0.1666, 0.1667],
-            5: [0.83, 0.833, 0.8333]
-        }
-    },
-    7: {
-        numerators: [1, 2, 3, 4, 5, 6],
-        precision: 3,
-        repeating: true,
-        answers: {
-            1: [0.14, 0.142, 0.143, 0.1428, 0.1429],
-            2: [0.28, 0.29, 0.285, 0.286, 0.2857],
-            3: [0.42, 0.43, 0.428, 0.429, 0.4285, 0.4286],
-            4: [0.57, 0.571, 0.572, 0.5714],
-            5: [0.71, 0.714, 0.715, 0.7142, 0.7143],
-            6: [0.85, 0.86, 0.857, 0.858, 0.8571],
-        }
-    },
-    8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
-    9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true,
-        answers: {
-            1: [0.1, 0.11, 0.111],
-            2: [0.2, 0.22, 0.222],
-            4: [0.4, 0.44, 0.444],
-            5: [0.5, 0.55, 0.56, 0.555, 0.556],
-            7: [0.7, 0.77, 0.78, 0.777, 0.778],
-            8: [0.8, 0.88, 0.89, 0.888, 0.889],
-        }
-     },
-};
+export const fractionBasesByDenominator: Record<number, { numerators: number[], precision: number, repeating: boolean, answers?: Record<number, number[]> }> =
+    Object.fromEntries(
+        Object.entries(FRACTION_BASES).map(([den, base]) => [
+            den,
+            base.repeating
+                ? {
+                    ...base,
+                    answers: Object.fromEntries(
+                        base.numerators.map(num => [num, acceptedDecimalFamily(num, Number(den))])
+                    ),
+                }
+                : { ...base },
+        ])
+    );
 
 // Reference data
 export const commonFractionConversions = [
@@ -312,7 +421,7 @@ const generateLevel1Problem = (difficulty: Difficulty, history: string[]): Probl
             case 'fracToDec': {
                 const places = den === 7 ? 3 : precision;
                 const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
-                const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(places)}`;
+                const explanation = fractionToDecimalExplanation(num, den);
                 const answer: number | number[] = specificAnswers && specificAnswers[num]
                     ? specificAnswers[num]
                     : parseFloat(decimalValue.toFixed(precision));
@@ -331,7 +440,7 @@ const generateLevel1Problem = (difficulty: Difficulty, history: string[]): Probl
             case 'fracToPerc': {
                 const percentPrecision = den === 7 || den === 6 ? 1 : Math.max(0, precision - 2);
                 const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
-                const explanation = `${num}/${den} = ${decimalValue} ≈ ${(percentValue).toFixed(percentPrecision)}%`;
+                const explanation = fractionToPercentExplanation(num, den, percentPrecision);
                 const answer: number | number[] = specificAnswers && specificAnswers[num]
                     ? specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)))
                     : parseFloat(percentValue.toFixed(percentPrecision));
@@ -1060,7 +1169,7 @@ const generateFractionProblem_allDenominators = (scope?: string): Problem => {
         case 'fracToDec': {
             const places = den === 7 ? 3 : precision;
             const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
-            const explanation = `${num}/${den} = ${num} ÷ ${den} ≈ ${decimalValue.toFixed(places)}`;
+            const explanation = fractionToDecimalExplanation(num, den);
             const answer: number | number[] = specificAnswers && specificAnswers[num]
                 ? specificAnswers[num]
                 : parseFloat(decimalValue.toFixed(precision));
@@ -1074,7 +1183,7 @@ const generateFractionProblem_allDenominators = (scope?: string): Problem => {
         case 'fracToPerc': {
             const percentPrecision = den === 7 || den === 6 ? 1 : Math.max(0, precision - 2);
             const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
-            const explanation = `${num}/${den} = ${decimalValue} ≈ ${percentValue.toFixed(percentPrecision)}%`;
+            const explanation = fractionToPercentExplanation(num, den, percentPrecision);
             const answer: number | number[] = specificAnswers && specificAnswers[num]
                 ? specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)))
                 : parseFloat(percentValue.toFixed(percentPrecision));

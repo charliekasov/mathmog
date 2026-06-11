@@ -3,6 +3,47 @@ export { A as AdaptiveData, M as MissedMathmogProblem, a as MissedMathmogProblem
 import { ClassValue } from 'clsx';
 
 declare const simplifyFraction: (num: number, den: number) => string;
+/** Lowest accepted precision for repeating denominators (Charlie-ratified). */
+declare const REPEATING_PRECISION_FLOOR = 2;
+/** num/den truncated at `places` — exact (integer arithmetic, no float drift). */
+declare const truncateFraction: (num: number, den: number, places: number) => number;
+/** num/den rounded at `places` (round half up — the schoolroom convention). */
+declare const roundFraction: (num: number, den: number, places: number) => number;
+/**
+ * The per-denominator precision policy. This is the tuning surface for the
+ * family generator: adjust floors/ceilings here, never per-fact values.
+ */
+declare const fractionPrecisionPolicy: (den: number) => {
+    floorPlaces: number;
+    canonicalPlaces: number;
+    ceilingPlaces: number;
+};
+/**
+ * Every decimal the Drill grades correct for num/den, derived from the
+ * policy. Order is precision-major, truncation before rounding — also the
+ * render order when the family is displayed ("0.66 or 0.67 or 0.666 or
+ * 0.667"). The 2A.4 Recall grader and the Drill share this list, so Learn
+ * and Drill cannot disagree about a family (review finding #3).
+ */
+declare const acceptedDecimalFamily: (num: number, den: number) => number[];
+/**
+ * The repeating expansion for display: enough digits to show the repetend
+ * (at least four for short cycles), then an ellipsis — "0.6666…",
+ * "0.1666…", "0.142857…". Also handles shifted values for percent display
+ * (200/3 → "66.6666…"). Throws on terminating fractions.
+ */
+declare const repeatingDecimalDisplay: (num: number, den: number) => string;
+/**
+ * fracToDec explanation. Repeating fractions show the repeating form and
+ * lead with the truncated canonical — the same number Learn teaches and the
+ * reference card lists first (2A.2 truncated-canonical ruling); the rounded
+ * form rides along as the schoolroom alternative. Replaces the old
+ * `toFixed` string, which ROUNDED ("0.67") while Learn taught the truncated
+ * canonical (0.66) — same student, two different "the answers".
+ */
+declare const fractionToDecimalExplanation: (num: number, den: number) => string;
+/** fracToPerc explanation, same truncated-canonical alignment as fracToDec. */
+declare const fractionToPercentExplanation: (num: number, den: number, percentPlaces: number) => string;
 declare const commonFractionConversions: {
     frac: string;
     decimal: string;
@@ -387,10 +428,11 @@ declare const PERFECT_SQUARES_LEARN_MODULES: LearnModuleDef<string, number>[];
 declare const PERFECT_CUBES_LEARN_MODULES: LearnModuleDef<string, number>[];
 
 /**
- * Every decimal the Drill grades as correct, per item — `specificAnswers`
- * for the repeating denominators, the exact value otherwise. The 2A.4
- * Recall grader accepts any member (matching the Drill's number input);
- * curation excludes all members from the item's distractor pool.
+ * Every decimal the Drill grades as correct, per item — derived straight
+ * from the 2D.1 precision policy, the same function that builds the Drill's
+ * `answers` maps, so Learn and Drill cannot disagree about a family. The
+ * 2A.4 Recall grader accepts any member (matching the Drill's number
+ * input); curation excludes all members from the item's distractor pool.
  */
 declare const FRACTION_ACCEPTED_DECIMALS: Record<string, number[]>;
 /**
@@ -444,4 +486,4 @@ declare function parseMathmogLearnModuleId(moduleId: string): {
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnActionResult, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnRoundTrace, type LearnSessionConfig, type LearnSessionEvent, type LearnSessionPhase, type LearnSessionState, type LearnTier, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, type ScopeDef, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, dropTier, escalateTier, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnActionResult, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnRoundTrace, type LearnSessionConfig, type LearnSessionEvent, type LearnSessionPhase, type LearnSessionState, type LearnTier, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, REPEATING_PRECISION_FLOOR, type ScopeDef, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, dropTier, escalateTier, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, truncateFraction, validateLearnModuleDef };

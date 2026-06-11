@@ -81,7 +81,11 @@
 // single doubled-digit decoy misses 25% of presentations. Upgrading means a
 // second signature-bearing decoy per affected pool.
 
-import { fractionBasesByDenominator } from '../../math-problems';
+import {
+  acceptedDecimalFamily,
+  fractionBasesByDenominator,
+  truncateFraction,
+} from '../../math-problems';
 import type { LearnDistractorSet, LearnItem, LearnModuleDef } from '../types';
 import { mathmogLearnModuleId } from '../mathmog-binding';
 import { registryScopeLabel } from './scope-label';
@@ -134,31 +138,27 @@ const FRACTION_DISTRACTORS: Record<string, number[]> = {
 };
 
 /**
- * The truncated repeating form at the Drill's prompt precision (den 7
- * prompts at 3 places; everything else at the base precision). Implemented
- * as round-at-one-extra-place-then-drop so float artifacts can't flip a
- * digit; for our 27 facts the extra-place rounding never carries.
+ * The truncated repeating form at the Drill's prompt precision — exact
+ * integer truncation via the 2D.1 policy helpers (no float artifacts).
  */
-const canonicalDecimal = (num: number, den: number): number => {
-  const places = den === 7 ? 3 : fractionBasesByDenominator[den].precision;
-  return parseFloat((num / den).toFixed(places + 1).slice(0, -1));
-};
+const canonicalDecimal = (num: number, den: number): number =>
+  truncateFraction(num, den, fractionBasesByDenominator[den].precision);
 
 /**
- * Every decimal the Drill grades as correct, per item — `specificAnswers`
- * for the repeating denominators, the exact value otherwise. The 2A.4
- * Recall grader accepts any member (matching the Drill's number input);
- * curation excludes all members from the item's distractor pool.
+ * Every decimal the Drill grades as correct, per item — derived straight
+ * from the 2D.1 precision policy, the same function that builds the Drill's
+ * `answers` maps, so Learn and Drill cannot disagree about a family. The
+ * 2A.4 Recall grader accepts any member (matching the Drill's number
+ * input); curation excludes all members from the item's distractor pool.
  */
 export const FRACTION_ACCEPTED_DECIMALS: Record<string, number[]> =
   Object.fromEntries(
-    ALL_DENOMINATORS.flatMap(den => {
-      const { numerators, answers } = fractionBasesByDenominator[den];
-      return numerators.map(num => [
+    ALL_DENOMINATORS.flatMap(den =>
+      fractionBasesByDenominator[den].numerators.map(num => [
         `${num}/${den}`,
-        answers?.[num] ?? [canonicalDecimal(num, den)],
-      ]);
-    })
+        acceptedDecimalFamily(num, den),
+      ])
+    )
   );
 
 const fractionItem = (num: number, den: number): LearnItem<string, number> => ({

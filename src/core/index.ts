@@ -21,6 +21,16 @@ export {
   perfectFourthPowers,
   perfectFifthPowers,
   generateProblem,
+  // Phase 2D.1 — fraction precision policy (2A.4 Recall grading + 2D.3
+  // enrichment consume these)
+  REPEATING_PRECISION_FLOOR,
+  truncateFraction,
+  roundFraction,
+  fractionPrecisionPolicy,
+  acceptedDecimalFamily,
+  repeatingDecimalDisplay,
+  fractionToDecimalExplanation,
+  fractionToPercentExplanation,
 } from './math-problems';
 
 export type {

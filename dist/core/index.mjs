@@ -13,56 +13,84 @@ var simplifyFraction = (num, den) => {
   const reducedDen = absDen / common;
   return `${reducedNum === 0 ? 0 : sign * reducedNum}/${reducedDen}`;
 };
-var fractionBasesByDenominator = {
+var REPEATING_PRECISION_FLOOR = 2;
+var FRACTION_BASES = {
   2: { numerators: [1], precision: 1, repeating: false },
-  3: {
-    numerators: [1, 2],
-    precision: 2,
-    repeating: true,
-    answers: {
-      1: [0.3, 0.33, 0.333],
-      2: [0.6, 0.66, 0.67, 0.666, 0.667]
-    }
-  },
+  3: { numerators: [1, 2], precision: 2, repeating: true },
   4: { numerators: [1, 3], precision: 2, repeating: false },
   5: { numerators: [1, 2, 3, 4], precision: 1, repeating: false },
-  6: {
-    numerators: [1, 5],
-    precision: 3,
-    repeating: true,
-    answers: {
-      1: [0.16, 0.17, 0.166, 0.167, 0.1666, 0.1667],
-      5: [0.83, 0.833, 0.8333]
-    }
-  },
-  7: {
-    numerators: [1, 2, 3, 4, 5, 6],
-    precision: 3,
-    repeating: true,
-    answers: {
-      1: [0.14, 0.142, 0.143, 0.1428, 0.1429],
-      2: [0.28, 0.29, 0.285, 0.286, 0.2857],
-      3: [0.42, 0.43, 0.428, 0.429, 0.4285, 0.4286],
-      4: [0.57, 0.571, 0.572, 0.5714],
-      5: [0.71, 0.714, 0.715, 0.7142, 0.7143],
-      6: [0.85, 0.86, 0.857, 0.858, 0.8571]
-    }
-  },
+  6: { numerators: [1, 5], precision: 3, repeating: true },
+  7: { numerators: [1, 2, 3, 4, 5, 6], precision: 3, repeating: true },
   8: { numerators: [1, 3, 5, 7], precision: 3, repeating: false },
-  9: {
-    numerators: [1, 2, 4, 5, 7, 8],
-    precision: 2,
-    repeating: true,
-    answers: {
-      1: [0.1, 0.11, 0.111],
-      2: [0.2, 0.22, 0.222],
-      4: [0.4, 0.44, 0.444],
-      5: [0.5, 0.55, 0.56, 0.555, 0.556],
-      7: [0.7, 0.77, 0.78, 0.777, 0.778],
-      8: [0.8, 0.88, 0.89, 0.888, 0.889]
+  9: { numerators: [1, 2, 4, 5, 7, 8], precision: 2, repeating: true }
+};
+var truncateFraction = (num, den, places) => Math.floor(num * 10 ** places / den) / 10 ** places;
+var roundFraction = (num, den, places) => Math.round(num * 10 ** places / den) / 10 ** places;
+var fractionPrecisionPolicy = (den) => {
+  const { precision, repeating } = FRACTION_BASES[den];
+  return repeating ? { floorPlaces: REPEATING_PRECISION_FLOOR, canonicalPlaces: precision, ceilingPlaces: precision + 1 } : { floorPlaces: precision, canonicalPlaces: precision, ceilingPlaces: precision };
+};
+var acceptedDecimalFamily = (num, den) => {
+  const { repeating } = FRACTION_BASES[den];
+  const { floorPlaces, ceilingPlaces } = fractionPrecisionPolicy(den);
+  if (!repeating) return [truncateFraction(num, den, ceilingPlaces)];
+  const family = [];
+  for (let places = floorPlaces; places <= ceilingPlaces; places++) {
+    for (const v of [truncateFraction(num, den, places), roundFraction(num, den, places)]) {
+      if (!family.includes(v)) family.push(v);
     }
   }
+  return family;
 };
+var repeatingDecimalDisplay = (num, den) => {
+  const whole = Math.floor(num / den);
+  const seen = /* @__PURE__ */ new Map();
+  let remainder = num % den;
+  let digits = "";
+  while (remainder !== 0 && !seen.has(remainder)) {
+    seen.set(remainder, digits.length);
+    remainder = remainder * 10;
+    digits += Math.floor(remainder / den);
+    remainder = remainder % den;
+  }
+  if (remainder === 0) throw new RangeError(`repeatingDecimalDisplay: ${num}/${den} terminates`);
+  const cycle = digits.slice(seen.get(remainder));
+  while (digits.length < 4) digits += cycle;
+  return `${whole}.${digits}\u2026`;
+};
+var canonicalFractionForms = (num, den) => {
+  const { canonicalPlaces } = fractionPrecisionPolicy(den);
+  const truncated = truncateFraction(num, den, canonicalPlaces);
+  const rounded = roundFraction(num, den, canonicalPlaces);
+  return truncated === rounded ? `${truncated}` : `${truncated} or ${rounded}`;
+};
+var fractionToDecimalExplanation = (num, den) => {
+  const { repeating, precision } = FRACTION_BASES[den];
+  if (!repeating) return `${num}/${den} = ${num} \xF7 ${den} = ${truncateFraction(num, den, precision)}`;
+  return `${num}/${den} = ${num} \xF7 ${den} = ${repeatingDecimalDisplay(num, den)} \u2014 to ${precision} decimal places, ${canonicalFractionForms(num, den)}`;
+};
+var fractionToPercentExplanation = (num, den, percentPlaces) => {
+  const { repeating, precision } = FRACTION_BASES[den];
+  if (!repeating) {
+    return `${num}/${den} = ${truncateFraction(num, den, precision)} = ${truncateFraction(num * 100, den, percentPlaces)}%`;
+  }
+  const truncated = truncateFraction(num * 100, den, percentPlaces);
+  const rounded = roundFraction(num * 100, den, percentPlaces);
+  const forms = truncated === rounded ? `${truncated}%` : `${truncated}% or ${rounded}%`;
+  const atPrecision = percentPlaces === 0 ? `as a whole-number percent, ${forms}` : `to ${percentPlaces} decimal place${percentPlaces === 1 ? "" : "s"}, ${forms}`;
+  return `${num}/${den} = ${repeatingDecimalDisplay(num, den)} = ${repeatingDecimalDisplay(num * 100, den)}% \u2014 ${atPrecision}`;
+};
+var fractionBasesByDenominator = Object.fromEntries(
+  Object.entries(FRACTION_BASES).map(([den, base]) => [
+    den,
+    base.repeating ? {
+      ...base,
+      answers: Object.fromEntries(
+        base.numerators.map((num) => [num, acceptedDecimalFamily(num, Number(den))])
+      )
+    } : { ...base }
+  ])
+);
 var commonFractionConversions = [
   { frac: "1/2", decimal: "0.5", percent: "50%" },
   { frac: "1/3", decimal: "0.33", percent: "33.3%" },
@@ -346,7 +374,7 @@ var generateLevel1Problem = (difficulty, history) => {
       case "fracToDec": {
         const places = den === 7 ? 3 : precision;
         const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
-        const explanation = `${num}/${den} = ${num} \xF7 ${den} \u2248 ${decimalValue.toFixed(places)}`;
+        const explanation = fractionToDecimalExplanation(num, den);
         const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num] : parseFloat(decimalValue.toFixed(precision));
         return { question: questionText, answer, type: "Fraction to Decimal", explanation, inputType: "number" };
       }
@@ -363,7 +391,7 @@ var generateLevel1Problem = (difficulty, history) => {
       case "fracToPerc": {
         const percentPrecision = den === 7 || den === 6 ? 1 : Math.max(0, precision - 2);
         const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
-        const explanation = `${num}/${den} = ${decimalValue} \u2248 ${percentValue.toFixed(percentPrecision)}%`;
+        const explanation = fractionToPercentExplanation(num, den, percentPrecision);
         const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num].map((d) => parseFloat((d * 100).toFixed(percentPrecision))) : parseFloat(percentValue.toFixed(percentPrecision));
         return { question: questionText, answer, type: "Fraction to Percent", explanation, inputType: "number" };
       }
@@ -1013,7 +1041,7 @@ var generateFractionProblem_allDenominators = (scope) => {
     case "fracToDec": {
       const places = den === 7 ? 3 : precision;
       const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
-      const explanation = `${num}/${den} = ${num} \xF7 ${den} \u2248 ${decimalValue.toFixed(places)}`;
+      const explanation = fractionToDecimalExplanation(num, den);
       const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num] : parseFloat(decimalValue.toFixed(precision));
       return { question: questionText, answer, type: "Fraction to Decimal", explanation, inputType: "number" };
     }
@@ -1025,7 +1053,7 @@ var generateFractionProblem_allDenominators = (scope) => {
     case "fracToPerc": {
       const percentPrecision = den === 7 || den === 6 ? 1 : Math.max(0, precision - 2);
       const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
-      const explanation = `${num}/${den} = ${decimalValue} \u2248 ${percentValue.toFixed(percentPrecision)}%`;
+      const explanation = fractionToPercentExplanation(num, den, percentPrecision);
       const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num].map((d) => parseFloat((d * 100).toFixed(percentPrecision))) : parseFloat(percentValue.toFixed(percentPrecision));
       return { question: questionText, answer, type: "Fraction to Percent", explanation, inputType: "number" };
     }
@@ -1881,18 +1909,14 @@ var FRACTION_DISTRACTORS = {
   "7/9": [0.79, 0.875, 0.22, 0.87],
   "8/9": [0.98, 0.875, 0.11, 0.83]
 };
-var canonicalDecimal = (num, den) => {
-  const places = den === 7 ? 3 : fractionBasesByDenominator[den].precision;
-  return parseFloat((num / den).toFixed(places + 1).slice(0, -1));
-};
+var canonicalDecimal = (num, den) => truncateFraction(num, den, fractionBasesByDenominator[den].precision);
 var FRACTION_ACCEPTED_DECIMALS = Object.fromEntries(
-  ALL_DENOMINATORS.flatMap((den) => {
-    const { numerators, answers } = fractionBasesByDenominator[den];
-    return numerators.map((num) => [
+  ALL_DENOMINATORS.flatMap(
+    (den) => fractionBasesByDenominator[den].numerators.map((num) => [
       `${num}/${den}`,
-      answers?.[num] ?? [canonicalDecimal(num, den)]
-    ]);
-  })
+      acceptedDecimalFamily(num, den)
+    ])
+  )
 );
 var fractionItem = (num, den) => ({
   id: `${num}/${den}`,
@@ -1939,6 +1963,6 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, dropTier, escalateTier, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, REPEATING_PRECISION_FLOOR, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, dropTier, escalateTier, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, truncateFraction, validateLearnModuleDef };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map
