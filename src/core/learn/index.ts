@@ -1,0 +1,48 @@
+// @peakprep/mathmog/core/learn — barrel (Phase 2A.1).
+
+export type {
+  LearnTier,
+  QuizzedLearnTier,
+  LearnItemStatus,
+  LearnItem,
+  LearnDistractorSet,
+  LearnModuleDef,
+  LearnConfig,
+  LearnItemState,
+  LearnRoundState,
+  LearnRoundSummary,
+} from './types';
+
+export {
+  LEARN_TIER_LADDER,
+  RECOGNIZE_OPTION_COUNT,
+  INITIAL_LEARN_TIER,
+} from './types';
+
+export {
+  isQuizzedTier,
+  escalateTier,
+  dropTier,
+  createInitialItemState,
+  createInitialItemStates,
+  applySeen,
+  applyCorrectAnswer,
+  applyMiss,
+  isItemSolid,
+  deriveItemStatus,
+  solidProgress,
+  isModuleComplete,
+  assembleRecognizeOptions,
+  validateLearnModuleDef,
+  isLearnEligibleModule,
+  isLearnEligible,
+} from './helpers';
+
+export type { MemorizeLearnTopic } from './mathmog-binding';
+
+export {
+  MATHMOG_LEARN_CONFIG,
+  MEMORIZE_LEARN_TOPICS,
+  mathmogLearnModuleId,
+  parseMathmogLearnModuleId,
+} from './mathmog-binding';

@@ -36,4 +36,44 @@ export {
   topicHasDifficulty,
 } from './drill-topics';
 
+export type {
+  LearnTier,
+  QuizzedLearnTier,
+  LearnItemStatus,
+  LearnItem,
+  LearnDistractorSet,
+  LearnModuleDef,
+  LearnConfig,
+  LearnItemState,
+  LearnRoundState,
+  LearnRoundSummary,
+  MemorizeLearnTopic,
+} from './learn';
+
+export {
+  LEARN_TIER_LADDER,
+  RECOGNIZE_OPTION_COUNT,
+  INITIAL_LEARN_TIER,
+  isQuizzedTier,
+  escalateTier,
+  dropTier,
+  createInitialItemState,
+  createInitialItemStates,
+  applySeen,
+  applyCorrectAnswer,
+  applyMiss,
+  isItemSolid,
+  deriveItemStatus,
+  solidProgress,
+  isModuleComplete,
+  assembleRecognizeOptions,
+  validateLearnModuleDef,
+  isLearnEligibleModule,
+  isLearnEligible,
+  MATHMOG_LEARN_CONFIG,
+  MEMORIZE_LEARN_TOPICS,
+  mathmogLearnModuleId,
+  parseMathmogLearnModuleId,
+} from './learn';
+
 export { cn } from './cn';

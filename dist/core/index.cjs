@@ -1265,21 +1265,209 @@ function topicHasDifficulty(topicId) {
   const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
   return topic ? topic.hasDifficulty : false;
 }
+
+// src/core/learn/types.ts
+var LEARN_TIER_LADDER = ["see", "recognize", "recall"];
+var RECOGNIZE_OPTION_COUNT = 4;
+var INITIAL_LEARN_TIER = "recognize";
+
+// src/core/learn/helpers.ts
+function isQuizzedTier(tier) {
+  return tier !== "see";
+}
+function escalateTier(tier) {
+  const i = LEARN_TIER_LADDER.indexOf(tier);
+  return LEARN_TIER_LADDER[Math.min(i + 1, LEARN_TIER_LADDER.length - 1)];
+}
+function dropTier(tier) {
+  const i = LEARN_TIER_LADDER.indexOf(tier);
+  return LEARN_TIER_LADDER[Math.max(i - 1, 0)];
+}
+function createInitialItemState(itemId) {
+  return {
+    itemId,
+    tier: INITIAL_LEARN_TIER,
+    correctRecalls: 0,
+    attempts: 0,
+    misses: 0
+  };
+}
+function createInitialItemStates(def) {
+  return def.items.map((item) => createInitialItemState(item.id));
+}
+function applySeen(state) {
+  if (state.tier !== "see") return state;
+  return { ...state, tier: escalateTier(state.tier) };
+}
+function applyCorrectAnswer(state) {
+  if (state.tier === "see") return state;
+  return {
+    ...state,
+    tier: escalateTier(state.tier),
+    attempts: state.attempts + 1,
+    correctRecalls: state.tier === "recall" ? state.correctRecalls + 1 : state.correctRecalls
+  };
+}
+function applyMiss(state) {
+  if (state.tier === "see") return state;
+  return {
+    ...state,
+    tier: dropTier(state.tier),
+    attempts: state.attempts + 1,
+    misses: state.misses + 1
+  };
+}
+function isItemSolid(state, config) {
+  return state.correctRecalls >= config.recallsToSolid;
+}
+function deriveItemStatus(state, config) {
+  if (isItemSolid(state, config)) return "solid";
+  return state.attempts === 0 ? "new" : "learning";
+}
+function solidProgress(states, config) {
+  return {
+    solid: states.filter((s) => isItemSolid(s, config)).length,
+    total: states.length
+  };
+}
+function isModuleComplete(states, config) {
+  return states.length > 0 && states.every((s) => isItemSolid(s, config));
+}
+function assembleRecognizeOptions(item, set, rng = Math.random) {
+  const pool = [...set.distractors];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const chosen = pool.slice(0, RECOGNIZE_OPTION_COUNT - 1);
+  const correctIndex = Math.floor(rng() * (chosen.length + 1));
+  const options = [
+    ...chosen.slice(0, correctIndex),
+    item.answer,
+    ...chosen.slice(correctIndex)
+  ];
+  return { options, correctIndex };
+}
+function validateLearnModuleDef(def) {
+  const problems = [];
+  if (def.items.length === 0) {
+    problems.push(`module "${def.id}" has no items`);
+  }
+  const itemIds = /* @__PURE__ */ new Set();
+  for (const item of def.items) {
+    if (item.id === "") {
+      problems.push(`module "${def.id}" has an item with an empty id`);
+      continue;
+    }
+    if (itemIds.has(item.id)) {
+      problems.push(`module "${def.id}" has duplicate item id "${item.id}"`);
+    }
+    itemIds.add(item.id);
+  }
+  const coveredIds = /* @__PURE__ */ new Set();
+  for (const set of def.distractorSets) {
+    if (!itemIds.has(set.itemId)) {
+      problems.push(
+        `module "${def.id}" has a distractor set for unknown item "${set.itemId}"`
+      );
+      continue;
+    }
+    if (coveredIds.has(set.itemId)) {
+      problems.push(
+        `module "${def.id}" has duplicate distractor sets for item "${set.itemId}"`
+      );
+    }
+    coveredIds.add(set.itemId);
+    if (set.distractors.length < RECOGNIZE_OPTION_COUNT - 1) {
+      problems.push(
+        `item "${set.itemId}" has ${set.distractors.length} distractors; needs at least ${RECOGNIZE_OPTION_COUNT - 1}`
+      );
+    }
+    if (new Set(set.distractors).size !== set.distractors.length) {
+      problems.push(`item "${set.itemId}" has duplicate distractors`);
+    }
+    const item = def.items.find((i) => i.id === set.itemId);
+    if (item && set.distractors.some((d) => d === item.answer)) {
+      problems.push(
+        `item "${set.itemId}" has a distractor equal to its correct answer`
+      );
+    }
+  }
+  for (const id of itemIds) {
+    if (!coveredIds.has(id)) {
+      problems.push(`item "${id}" has no distractor set`);
+    }
+  }
+  return problems;
+}
+function isLearnEligibleModule(def) {
+  return validateLearnModuleDef(def).length === 0;
+}
+function isLearnEligible(modules, moduleId) {
+  const def = modules.find((m) => m.id === moduleId);
+  return def !== void 0 && isLearnEligibleModule(def);
+}
+
+// src/core/learn/mathmog-binding.ts
+var MEMORIZE_LEARN_TOPICS = [
+  "times_tables",
+  "perfect_squares",
+  "perfect_cubes",
+  "fraction_conversions",
+  "advanced_squares",
+  "advanced_cubes",
+  "higher_powers",
+  "common_multiples"
+];
+var MATHMOG_LEARN_CONFIG = {
+  recallsToSolid: 2
+};
+function mathmogLearnModuleId(topic, scopeId) {
+  return `${topic}/${scopeId}`;
+}
+function parseMathmogLearnModuleId(moduleId) {
+  const parts = moduleId.split("/");
+  if (parts.length !== 2 || parts[0] === "" || parts[1] === "") return null;
+  return { topic: parts[0], scopeId: parts[1] };
+}
 function cn(...inputs) {
   return tailwindMerge.twMerge(clsx.clsx(inputs));
 }
 
 exports.DRILL_TOPIC_REGISTRY = DRILL_TOPIC_REGISTRY;
+exports.INITIAL_LEARN_TIER = INITIAL_LEARN_TIER;
+exports.LEARN_TIER_LADDER = LEARN_TIER_LADDER;
+exports.MATHMOG_LEARN_CONFIG = MATHMOG_LEARN_CONFIG;
+exports.MEMORIZE_LEARN_TOPICS = MEMORIZE_LEARN_TOPICS;
+exports.RECOGNIZE_OPTION_COUNT = RECOGNIZE_OPTION_COUNT;
+exports.applyCorrectAnswer = applyCorrectAnswer;
+exports.applyMiss = applyMiss;
+exports.applySeen = applySeen;
+exports.assembleRecognizeOptions = assembleRecognizeOptions;
 exports.cn = cn;
 exports.commonFractionConversions = commonFractionConversions;
+exports.createInitialItemState = createInitialItemState;
+exports.createInitialItemStates = createInitialItemStates;
+exports.deriveItemStatus = deriveItemStatus;
+exports.dropTier = dropTier;
+exports.escalateTier = escalateTier;
 exports.generateProblem = generateProblem;
 exports.getTopicInfo = getTopicInfo;
 exports.getTopicsForLevel = getTopicsForLevel;
+exports.isItemSolid = isItemSolid;
+exports.isLearnEligible = isLearnEligible;
+exports.isLearnEligibleModule = isLearnEligibleModule;
+exports.isModuleComplete = isModuleComplete;
+exports.isQuizzedTier = isQuizzedTier;
+exports.mathmogLearnModuleId = mathmogLearnModuleId;
+exports.parseMathmogLearnModuleId = parseMathmogLearnModuleId;
 exports.perfectCubes = perfectCubes;
 exports.perfectFifthPowers = perfectFifthPowers;
 exports.perfectFourthPowers = perfectFourthPowers;
 exports.perfectSquares = perfectSquares;
 exports.simplifyFraction = simplifyFraction;
+exports.solidProgress = solidProgress;
 exports.topicHasDifficulty = topicHasDifficulty;
+exports.validateLearnModuleDef = validateLearnModuleDef;
 //# sourceMappingURL=index.cjs.map
 //# sourceMappingURL=index.cjs.map
