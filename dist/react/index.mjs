@@ -3301,6 +3301,1686 @@ function StudyGuide({ onOpen } = {}) {
   ] });
 }
 
-export { CraftyContent, DifficultyScalingContent, ElapsedTimer, EstimateContent, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, PrintableStudyGuideProvider, ProblemDisplay, ProblemProvider, ScoreDisplay, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, TrainerConfigSelector, TrainerModeProvider, TrainerStateProvider, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
+// src/core/learn/types.ts
+var LEARN_TIER_LADDER = ["see", "recognize", "recall"];
+var RECOGNIZE_OPTION_COUNT = 4;
+var INITIAL_LEARN_TIER = "recognize";
+
+// src/core/learn/helpers.ts
+function escalateTier(tier) {
+  const i = LEARN_TIER_LADDER.indexOf(tier);
+  return LEARN_TIER_LADDER[Math.min(i + 1, LEARN_TIER_LADDER.length - 1)];
+}
+function dropTier(tier) {
+  const i = LEARN_TIER_LADDER.indexOf(tier);
+  return LEARN_TIER_LADDER[Math.max(i - 1, 0)];
+}
+function createInitialItemState(itemId) {
+  return {
+    itemId,
+    tier: INITIAL_LEARN_TIER,
+    correctRecalls: 0,
+    attempts: 0,
+    misses: 0
+  };
+}
+function createInitialItemStates(def) {
+  return def.items.map((item) => createInitialItemState(item.id));
+}
+function applySeen(state) {
+  if (state.tier !== "see") return state;
+  return { ...state, tier: escalateTier(state.tier) };
+}
+function applyCorrectAnswer(state) {
+  if (state.tier === "see") return state;
+  return {
+    ...state,
+    tier: escalateTier(state.tier),
+    attempts: state.attempts + 1,
+    correctRecalls: state.tier === "recall" ? state.correctRecalls + 1 : state.correctRecalls
+  };
+}
+function applyMiss(state) {
+  if (state.tier === "see") return state;
+  return {
+    ...state,
+    tier: dropTier(state.tier),
+    attempts: state.attempts + 1,
+    misses: state.misses + 1
+  };
+}
+function isItemSolid(state, config) {
+  return state.correctRecalls >= config.recallsToSolid;
+}
+function solidProgress(states, config) {
+  return {
+    solid: states.filter((s) => isItemSolid(s, config)).length,
+    total: states.length
+  };
+}
+function isModuleComplete(states, config) {
+  return states.length > 0 && states.every((s) => isItemSolid(s, config));
+}
+function assembleRecognizeOptions(item, set, rng = Math.random) {
+  const pool = [...set.distractors];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const chosen = pool.slice(0, RECOGNIZE_OPTION_COUNT - 1);
+  const correctIndex = Math.floor(rng() * (chosen.length + 1));
+  const options = [
+    ...chosen.slice(0, correctIndex),
+    item.answer,
+    ...chosen.slice(correctIndex)
+  ];
+  return { options, correctIndex };
+}
+function validateLearnModuleDef(def) {
+  const problems = [];
+  if (def.items.length === 0) {
+    problems.push(`module "${def.id}" has no items`);
+  }
+  const itemIds = /* @__PURE__ */ new Set();
+  for (const item of def.items) {
+    if (item.id === "") {
+      problems.push(`module "${def.id}" has an item with an empty id`);
+      continue;
+    }
+    if (itemIds.has(item.id)) {
+      problems.push(`module "${def.id}" has duplicate item id "${item.id}"`);
+    }
+    itemIds.add(item.id);
+  }
+  const coveredIds = /* @__PURE__ */ new Set();
+  for (const set of def.distractorSets) {
+    if (!itemIds.has(set.itemId)) {
+      problems.push(
+        `module "${def.id}" has a distractor set for unknown item "${set.itemId}"`
+      );
+      continue;
+    }
+    if (coveredIds.has(set.itemId)) {
+      problems.push(
+        `module "${def.id}" has duplicate distractor sets for item "${set.itemId}"`
+      );
+    }
+    coveredIds.add(set.itemId);
+    if (set.distractors.length < RECOGNIZE_OPTION_COUNT - 1) {
+      problems.push(
+        `item "${set.itemId}" has ${set.distractors.length} distractors; needs at least ${RECOGNIZE_OPTION_COUNT - 1}`
+      );
+    }
+    if (new Set(set.distractors).size !== set.distractors.length) {
+      problems.push(`item "${set.itemId}" has duplicate distractors`);
+    }
+    const item = def.items.find((i) => i.id === set.itemId);
+    if (item && set.distractors.some((d) => d === item.answer)) {
+      problems.push(
+        `item "${set.itemId}" has a distractor equal to its correct answer`
+      );
+    }
+  }
+  for (const id of itemIds) {
+    if (!coveredIds.has(id)) {
+      problems.push(`item "${id}" has no distractor set`);
+    }
+  }
+  return problems;
+}
+
+// src/core/learn/machine.ts
+function emptyTrace() {
+  return {
+    presentedItemIds: [],
+    missedItemIds: [],
+    newlySolidItemIds: []
+  };
+}
+function appendUnique(ids, id) {
+  return ids.includes(id) ? ids : [...ids, id];
+}
+function assembleRoundQueue(itemStates, config, rng) {
+  const remaining = itemStates.filter((s) => !isItemSolid(s, config));
+  if (remaining.length === 0) return [];
+  const rounds = Math.ceil(remaining.length / config.maxRoundSize);
+  const chunk = remaining.slice(0, Math.ceil(remaining.length / rounds));
+  const ids = chunk.map((s) => s.itemId);
+  if (chunk.every((s) => s.attempts === 0)) return ids;
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+  return ids;
+}
+function createLearnSession(def, config) {
+  const problems = validateLearnModuleDef(def);
+  if (problems.length > 0) {
+    throw new Error(
+      `createLearnSession: module "${def.id}" is not Learn-eligible: ${problems.join("; ")}`
+    );
+  }
+  const itemStates = createInitialItemStates(def);
+  return {
+    moduleId: def.id,
+    itemStates,
+    // Round 1 is all first-contact items, so assembly is deterministic
+    // (canonical order) — no rng seam needed here.
+    round: {
+      roundNumber: 1,
+      queue: assembleRoundQueue(itemStates, config, Math.random)
+    },
+    roundTrace: emptyTrace(),
+    roundSummaries: []
+  };
+}
+function currentLearnItemId(session) {
+  return session.round.queue.length > 0 ? session.round.queue[0] : null;
+}
+function getLearnItemState(session, itemId) {
+  return session.itemStates.find((s) => s.itemId === itemId);
+}
+function learnSessionPhase(session, config) {
+  if (session.round.queue.length > 0) return "in-round";
+  return isModuleComplete(session.itemStates, config) ? "module-complete" : "round-complete";
+}
+function requeue(rest, itemId, config) {
+  const at = Math.min(config.requeueGap, rest.length);
+  return [...rest.slice(0, at), itemId, ...rest.slice(at)];
+}
+function replaceItemState(itemStates, next) {
+  return itemStates.map((s) => s.itemId === next.itemId ? next : s);
+}
+function applyLearnAnswer(session, config, correct) {
+  const itemId = currentLearnItemId(session);
+  if (itemId === null) return { session, events: [] };
+  const state = getLearnItemState(session, itemId);
+  if (state === void 0 || state.tier === "see") {
+    return { session, events: [] };
+  }
+  const next = correct ? applyCorrectAnswer(state) : applyMiss(state);
+  const becameSolid = !isItemSolid(state, config) && isItemSolid(next, config);
+  const events = [];
+  if (next.tier !== state.tier) {
+    events.push({
+      type: "tier-changed",
+      itemId,
+      from: state.tier,
+      to: next.tier,
+      cause: correct ? "correct" : "miss"
+    });
+  }
+  if (becameSolid) {
+    events.push({ type: "item-solid", itemId });
+  }
+  const itemStates = replaceItemState(session.itemStates, next);
+  const rest = session.round.queue.slice(1);
+  const queue = correct ? rest : requeue(rest, itemId, config);
+  const trace = {
+    presentedItemIds: appendUnique(session.roundTrace.presentedItemIds, itemId),
+    missedItemIds: correct ? session.roundTrace.missedItemIds : appendUnique(session.roundTrace.missedItemIds, itemId),
+    newlySolidItemIds: becameSolid ? appendUnique(session.roundTrace.newlySolidItemIds, itemId) : session.roundTrace.newlySolidItemIds
+  };
+  if (queue.length > 0) {
+    return {
+      session: {
+        ...session,
+        itemStates,
+        round: { ...session.round, queue },
+        roundTrace: trace
+      },
+      events
+    };
+  }
+  const summary = {
+    roundNumber: session.round.roundNumber,
+    presentedItemIds: trace.presentedItemIds,
+    missedItemIds: trace.missedItemIds,
+    newlySolidItemIds: trace.newlySolidItemIds
+  };
+  events.push({ type: "round-complete", summary });
+  if (isModuleComplete(itemStates, config)) {
+    events.push({ type: "module-complete" });
+  }
+  return {
+    session: {
+      ...session,
+      itemStates,
+      round: { ...session.round, queue },
+      roundTrace: emptyTrace(),
+      roundSummaries: [...session.roundSummaries, summary]
+    },
+    events
+  };
+}
+function applyLearnSeen(session, config) {
+  const itemId = currentLearnItemId(session);
+  if (itemId === null) return { session, events: [] };
+  const state = getLearnItemState(session, itemId);
+  if (state === void 0 || state.tier !== "see") {
+    return { session, events: [] };
+  }
+  const next = applySeen(state);
+  return {
+    session: {
+      ...session,
+      itemStates: replaceItemState(session.itemStates, next),
+      round: {
+        ...session.round,
+        queue: requeue(session.round.queue.slice(1), itemId, config)
+      },
+      roundTrace: {
+        ...session.roundTrace,
+        presentedItemIds: appendUnique(
+          session.roundTrace.presentedItemIds,
+          itemId
+        )
+      }
+    },
+    events: [
+      {
+        type: "tier-changed",
+        itemId,
+        from: state.tier,
+        to: next.tier,
+        cause: "seen"
+      }
+    ]
+  };
+}
+function startNextLearnRound(session, config, rng = Math.random) {
+  if (learnSessionPhase(session, config) !== "round-complete") {
+    return { session, events: [] };
+  }
+  return {
+    session: {
+      ...session,
+      round: {
+        roundNumber: session.round.roundNumber + 1,
+        queue: assembleRoundQueue(session.itemStates, config, rng)
+      },
+      roundTrace: emptyTrace()
+    },
+    events: []
+  };
+}
+
+// src/core/learn/mathmog-binding.ts
+var MEMORIZE_LEARN_TOPICS = [
+  "times_tables",
+  "perfect_squares",
+  "perfect_cubes",
+  "fraction_conversions",
+  "advanced_squares",
+  "advanced_cubes",
+  "higher_powers",
+  "common_multiples"
+];
+var MATHMOG_LEARN_CONFIG = {
+  recallsToSolid: 2,
+  maxRoundSize: 12,
+  requeueGap: 3
+};
+function mathmogLearnModuleId(topic, scopeId) {
+  return `${topic}/${scopeId}`;
+}
+function parseMathmogLearnModuleId(moduleId) {
+  const parts = moduleId.split("/");
+  if (parts.length !== 2 || parts[0] === "" || parts[1] === "") return null;
+  return { topic: parts[0], scopeId: parts[1] };
+}
+
+// src/core/learn/modules/times-tables.ts
+var TT_FACTORS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+var TT_FACT_DISTRACTORS = {
+  // 2× row
+  "2x2": [6, 8, 2, 5],
+  "2x3": [4, 8, 9, 5],
+  "2x4": [6, 10, 12, 9],
+  "2x5": [8, 12, 15, 20],
+  "2x6": [10, 14, 18, 13],
+  "2x7": [12, 16, 21, 13],
+  "2x8": [14, 18, 24, 15],
+  "2x9": [16, 20, 27, 17],
+  "2x10": [18, 22, 30, 21],
+  "2x11": [20, 24, 33, 21],
+  "2x12": [22, 26, 36, 28],
+  // 3× row
+  "3x3": [6, 12, 8, 27, 15],
+  "3x4": [9, 15, 16, 8],
+  "3x5": [12, 18, 25, 35],
+  "3x6": [15, 21, 24, 12],
+  "3x7": [24, 28, 27, 15],
+  "3x8": [21, 27, 32, 16],
+  "3x9": [24, 36, 21, 33],
+  "3x10": [27, 33, 40, 20],
+  "3x11": [44, 30, 27, 39],
+  "3x12": [33, 39, 48, 24],
+  // 4× row
+  "4x4": [12, 20, 18, 8],
+  "4x5": [16, 24, 25, 15],
+  "4x6": [20, 28, 30, 18],
+  "4x7": [24, 32, 35, 21],
+  "4x8": [28, 36, 40, 24],
+  "4x9": [32, 40, 45, 27],
+  "4x10": [36, 44, 50, 30],
+  "4x11": [40, 48, 55, 33],
+  "4x12": [44, 52, 60, 36],
+  // 5× row
+  "5x5": [20, 30, 35, 24, 15],
+  "5x6": [25, 35, 36, 24],
+  "5x7": [30, 40, 45, 25],
+  "5x8": [35, 45, 48, 32],
+  "5x9": [40, 54, 35, 55],
+  "5x10": [45, 55, 60, 40],
+  "5x11": [50, 60, 45, 65],
+  "5x12": [55, 65, 72, 48],
+  // 6× row
+  "6x6": [30, 42, 35, 48],
+  "6x7": [36, 48, 49, 35],
+  "6x8": [42, 54, 56, 40],
+  "6x9": [48, 60, 63, 45, 56],
+  "6x10": [54, 66, 70, 50],
+  "6x11": [60, 72, 77, 55],
+  "6x12": [66, 78, 84, 60],
+  // 7× row
+  "7x7": [42, 56, 48, 63, 35],
+  "7x8": [54, 63, 48, 64, 65],
+  "7x9": [56, 54, 72, 49, 81],
+  "7x10": [63, 77, 80, 60],
+  "7x11": [70, 84, 63, 91],
+  "7x12": [77, 91, 96, 72],
+  // 8× row
+  "8x8": [56, 72, 63, 48],
+  "8x9": [64, 80, 81, 63],
+  "8x10": [72, 88, 90, 70],
+  "8x11": [80, 96, 99, 77],
+  "8x12": [88, 104, 108, 84],
+  // 9× row
+  "9x9": [72, 90, 63, 99],
+  "9x10": [81, 99, 100, 80],
+  "9x11": [90, 108, 81, 121],
+  "9x12": [99, 117, 120, 96],
+  // 10× row
+  "10x10": [90, 110, 99, 120],
+  "10x11": [100, 120, 121, 99],
+  "10x12": [110, 130, 132, 108],
+  // 11× row
+  "11x11": [110, 132, 111, 99],
+  "11x12": [121, 144, 120, 122],
+  // 12× row
+  "12x12": [132, 121, 156, 124]
+};
+var factKey = (a, b) => a <= b ? `${a}x${b}` : `${b}x${a}`;
+var ttItem = (a, b) => ({
+  id: `${a}x${b}`,
+  prompt: `${a} \xD7 ${b}`,
+  answer: a * b
+});
+var ttDistractorSet = (item) => {
+  const [a, b] = item.id.split("x").map(Number);
+  return { itemId: item.id, distractors: TT_FACT_DISTRACTORS[factKey(a, b)] };
+};
+var rowItems = (row) => TT_FACTORS.map((b) => ttItem(row, b));
+var multiRowItems = (rows) => {
+  const seen = /* @__PURE__ */ new Set();
+  const items = [];
+  for (const a of [...rows].sort((x, y) => x - y)) {
+    for (const b of TT_FACTORS) {
+      const key = factKey(a, b);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(a >= b ? ttItem(a, b) : ttItem(b, a));
+    }
+  }
+  return items;
+};
+var ttScopeLabel = (scopeId) => {
+  const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === "times_tables");
+  const scope = topic?.scopes?.find((s) => s.id === scopeId);
+  if (!scope) throw new Error(`Unknown times_tables scope: ${scopeId}`);
+  return scope.label;
+};
+var ttModule = (scopeId, items) => ({
+  id: mathmogLearnModuleId("times_tables", scopeId),
+  label: ttScopeLabel(scopeId),
+  items,
+  distractorSets: items.map(ttDistractorSet)
+});
+[
+  ttModule("tt_full", multiRowItems([...TT_FACTORS])),
+  ttModule("tt_easy", multiRowItems([2, 5, 10])),
+  ttModule("tt_2_5", multiRowItems([2, 3, 4, 5])),
+  ttModule("tt_6_9", multiRowItems([6, 7, 8, 9])),
+  ttModule("tt_10_12", multiRowItems([10, 11, 12])),
+  ttModule("tt_just_6", rowItems(6)),
+  ttModule("tt_just_7", rowItems(7)),
+  ttModule("tt_just_8", rowItems(8)),
+  ttModule("tt_just_9", rowItems(9))
+];
+
+// src/core/learn/modules/scope-label.ts
+var registryScopeLabel = (topicId, scopeId) => {
+  const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === topicId);
+  const scope = topic?.scopes?.find((s) => s.id === scopeId);
+  if (!scope) throw new Error(`Unknown ${topicId} scope: ${scopeId}`);
+  return scope.label;
+};
+
+// src/core/learn/modules/perfect-squares.ts
+var SQUARE_DISTRACTORS = {
+  1: [2, 4, 9, 11],
+  2: [6, 8, 9, 2],
+  3: [6, 12, 16, 27, 15],
+  4: [12, 20, 9, 25],
+  5: [20, 30, 16, 35, 15],
+  6: [30, 42, 25, 49],
+  7: [36, 64, 42, 63, 35],
+  8: [56, 72, 49, 81],
+  9: [72, 90, 64, 63, 99],
+  10: [90, 110, 81, 121],
+  11: [110, 132, 144, 111, 99],
+  12: [132, 121, 156, 169],
+  13: [156, 196, 144, 121, 225],
+  14: [182, 210, 169, 225],
+  15: [210, 240, 196, 125, 289],
+  16: [240, 272, 225, 289, 265],
+  17: [272, 324, 256, 225, 361],
+  18: [306, 342, 289, 361],
+  19: [342, 380, 324, 289, 441],
+  20: [380, 420, 361, 441]
+};
+var squareItem = (n) => ({
+  id: `${n}^2`,
+  prompt: `${n}\xB2`,
+  answer: n * n
+});
+var rangeItems = (lo, hi) => {
+  const items = [];
+  for (let n = lo; n <= hi; n++) items.push(squareItem(n));
+  return items;
+};
+var squaresModule = (scopeId, lo, hi) => {
+  const items = rangeItems(lo, hi);
+  return {
+    id: mathmogLearnModuleId("perfect_squares", scopeId),
+    label: registryScopeLabel("perfect_squares", scopeId),
+    items,
+    distractorSets: items.map((item) => ({
+      itemId: item.id,
+      distractors: SQUARE_DISTRACTORS[Number(item.id.split("^")[0])]
+    }))
+  };
+};
+[
+  squaresModule("squares_full", 1, 20),
+  squaresModule("squares_1_5", 1, 5),
+  squaresModule("squares_1_10", 1, 10),
+  squaresModule("squares_11_15", 11, 15),
+  squaresModule("squares_11_20", 11, 20),
+  squaresModule("squares_16_20", 16, 20)
+];
+
+// src/core/learn/modules/perfect-cubes.ts
+var CUBE_DISTRACTORS = {
+  1: [3, 13, 8, 27],
+  2: [4, 6, 27, 16],
+  3: [9, 64, 81, 18],
+  4: [16, 27, 125, 32],
+  5: [25, 75, 64, 625],
+  6: [36, 125, 343, 126],
+  7: [49, 216, 512, 147],
+  8: [64, 343, 729, 256],
+  9: [81, 512, 1e3, 243],
+  10: [100, 1e4, 729, 300]
+};
+var cubeItem = (n) => ({
+  id: `${n}^3`,
+  prompt: `${n}\xB3`,
+  answer: n * n * n
+});
+var rangeItems2 = (lo, hi) => {
+  const items = [];
+  for (let n = lo; n <= hi; n++) items.push(cubeItem(n));
+  return items;
+};
+var cubesModule = (scopeId, lo, hi) => {
+  const items = rangeItems2(lo, hi);
+  return {
+    id: mathmogLearnModuleId("perfect_cubes", scopeId),
+    label: registryScopeLabel("perfect_cubes", scopeId),
+    items,
+    distractorSets: items.map((item) => ({
+      itemId: item.id,
+      distractors: CUBE_DISTRACTORS[Number(item.id.split("^")[0])]
+    }))
+  };
+};
+[
+  cubesModule("cubes_full", 1, 10),
+  cubesModule("cubes_1_3", 1, 3),
+  cubesModule("cubes_1_5", 1, 5),
+  cubesModule("cubes_6_10", 6, 10)
+];
+
+// src/core/learn/modules/fractions.ts
+var ALL_DENOMINATORS = [2, 3, 4, 5, 6, 7, 8, 9];
+var FRACTION_DISTRACTORS = {
+  // halves — 0.5
+  "1/2": [0.12, 0.2, 0.25, 0.75],
+  // thirds — 0.33 / 0.66
+  "1/3": [0.67, 0.66, 0.13, 0.25, 0.44],
+  "2/3": [0.33, 0.23, 0.75, 0.56],
+  // fourths — 0.25 / 0.75
+  "1/4": [0.4, 0.14, 0.75, 0.2],
+  "3/4": [0.25, 0.34, 0.8, 0.67],
+  // fifths — 0.2 / 0.4 / 0.6 / 0.8
+  "1/5": [0.5, 0.15, 0.25, 0.05],
+  "2/5": [0.25, 0.5, 0.2, 0.6],
+  "3/5": [0.35, 0.4, 0.3, 0.57, 0.75],
+  "4/5": [0.45, 0.4, 0.2, 0.75, 0.875],
+  // sixths — 0.166 / 0.833
+  "1/6": [0.6, 0.125, 0.2, 0.667],
+  "5/6": [0.56, 0.875, 0.6, 0.857],
+  // sevenths — the 142857 rotations; complements are the rotation slips
+  "1/7": [0.17, 0.125, 0.134, 0.286],
+  "2/7": [0.27, 0.143, 0.268, 0.25, 0.429],
+  "3/7": [0.37, 0.492, 0.571, 0.4],
+  "4/7": [0.47, 0.517, 0.429, 0.6],
+  "5/7": [0.57, 0.741, 0.75, 0.286],
+  "6/7": [0.67, 0.875, 0.833, 0.143],
+  // eighths — 0.125 / 0.375 / 0.625 / 0.875
+  "1/8": [0.8, 0.18, 0.25, 0.375, 0.111],
+  "3/8": [0.38, 0.625, 0.35, 0.357],
+  "5/8": [0.58, 0.375, 0.652, 0.6],
+  "7/8": [0.78, 0.857, 0.125, 0.8, 0.89],
+  // ninths — the 0.nn repeaters
+  "1/9": [0.19, 0.9, 0.125, 0.22, 0.09],
+  "2/9": [0.29, 0.25, 0.11, 0.286],
+  "4/9": [0.49, 0.45, 0.33, 0.429],
+  "5/9": [0.59, 0.44, 0.571, 0.65],
+  "7/9": [0.79, 0.875, 0.22, 0.87],
+  "8/9": [0.98, 0.875, 0.11, 0.83]
+};
+var canonicalDecimal = (num, den) => truncateFraction(num, den, fractionBasesByDenominator[den].precision);
+var FRACTION_ACCEPTED_DECIMALS = Object.fromEntries(
+  ALL_DENOMINATORS.flatMap(
+    (den) => fractionBasesByDenominator[den].numerators.map((num) => [
+      `${num}/${den}`,
+      acceptedDecimalFamily(num, den)
+    ])
+  )
+);
+var fractionItem = (num, den) => ({
+  id: `${num}/${den}`,
+  prompt: `${num}/${den} as a decimal`,
+  answer: canonicalDecimal(num, den)
+});
+var itemsForDenominators = (dens) => dens.flatMap(
+  (den) => fractionBasesByDenominator[den].numerators.map((num) => fractionItem(num, den))
+);
+var fractionsModule = (scopeId, dens) => {
+  const items = itemsForDenominators(dens);
+  return {
+    id: mathmogLearnModuleId("fraction_conversions", scopeId),
+    label: registryScopeLabel("fraction_conversions", scopeId),
+    items,
+    distractorSets: items.map(
+      (item) => ({
+        itemId: item.id,
+        distractors: FRACTION_DISTRACTORS[item.id]
+      })
+    )
+  };
+};
+[
+  fractionsModule("fractions_full", ALL_DENOMINATORS),
+  fractionsModule("fractions_friendly", [2, 4, 5]),
+  fractionsModule("fractions_halves_fourths", [2, 4]),
+  fractionsModule("fractions_fifths", [5]),
+  fractionsModule("fractions_eighths", [8]),
+  fractionsModule("fractions_thirds", [3]),
+  fractionsModule("fractions_sixths", [6]),
+  fractionsModule("fractions_sevenths", [7]),
+  fractionsModule("fractions_ninths", [9])
+];
+
+// src/react/components/learn/grading.ts
+function learnModuleTopic(moduleId) {
+  const parsed = parseMathmogLearnModuleId(moduleId);
+  if (parsed === null) return null;
+  return MEMORIZE_LEARN_TOPICS.includes(parsed.topic) ? parsed.topic : null;
+}
+function acceptedLearnAnswers(item) {
+  return FRACTION_ACCEPTED_DECIMALS[item.id] ?? [item.answer];
+}
+function parseFractionItemId(id) {
+  const match = /^(\d+)\/(\d+)$/.exec(id);
+  return match ? { num: Number(match[1]), den: Number(match[2]) } : null;
+}
+var MAX_TRANSCRIPTION_PLACES = 10;
+function gradeLearnRecall(item, typed) {
+  const trimmed = typed.trim();
+  if (trimmed === "") return { correct: false, value: null };
+  const value = Number(trimmed);
+  if (!Number.isFinite(value)) return { correct: false, value: null };
+  if (acceptedLearnAnswers(item).includes(value)) return { correct: true, value };
+  const family = FRACTION_ACCEPTED_DECIMALS[item.id];
+  if (family !== void 0 && family.length > 1) {
+    const frac = parseFractionItemId(item.id);
+    const places = (trimmed.split(".")[1] ?? "").length;
+    if (frac !== null && places >= fractionPrecisionPolicy(frac.den).floorPlaces && places <= MAX_TRANSCRIPTION_PLACES && (value === truncateFraction(frac.num, frac.den, places) || value === roundFraction(frac.num, frac.den, places))) {
+      return { correct: true, value };
+    }
+  }
+  return { correct: false, value };
+}
+function learnAnswerDisplay(item) {
+  const family = FRACTION_ACCEPTED_DECIMALS[item.id];
+  if (family !== void 0 && family.length > 1) {
+    const frac = parseFractionItemId(item.id);
+    if (frac) return repeatingDecimalDisplay(frac.num, frac.den);
+  }
+  return String(item.answer);
+}
+function learnAnswerRevealDisplay(item) {
+  const family = FRACTION_ACCEPTED_DECIMALS[item.id];
+  if (family === void 0 || family.length <= 1) return learnAnswerDisplay(item);
+  const frac = parseFractionItemId(item.id);
+  if (!frac) return learnAnswerDisplay(item);
+  const { canonicalPlaces } = fractionPrecisionPolicy(frac.den);
+  const truncated = truncateFraction(frac.num, frac.den, canonicalPlaces);
+  const rounded = roundFraction(frac.num, frac.den, canonicalPlaces);
+  const forms = truncated === rounded ? `${truncated}` : `${truncated} or ${rounded}`;
+  const placeWord = canonicalPlaces === 1 ? "decimal place" : "decimal places";
+  return `${repeatingDecimalDisplay(frac.num, frac.den)} (${forms} at ${canonicalPlaces} ${placeWord})`;
+}
+function LearnRoundSummaryBody({
+  summary,
+  items
+}) {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const resolve = (ids) => ids.flatMap((id) => {
+    const item = byId.get(id);
+    return item === void 0 ? [] : [item];
+  });
+  const missed = resolve(summary.missedItemIds);
+  const newlySolid = resolve(summary.newlySolidItemIds);
+  if (missed.length === 0 && newlySolid.length === 0) return null;
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-4 text-left max-w-md mx-auto", children: [
+    missed.length > 0 && /* @__PURE__ */ jsxs("div", { "data-learn-summary-missed": true, children: [
+      /* @__PURE__ */ jsx("div", { className: "text-sm font-medium text-amber-700 dark:text-amber-500 mb-1", children: "Worth another look" }),
+      /* @__PURE__ */ jsx("ul", { className: "space-y-1", children: missed.map((item) => /* @__PURE__ */ jsxs("li", { className: "text-base", children: [
+        item.prompt,
+        " = ",
+        learnAnswerDisplay(item)
+      ] }, item.id)) })
+    ] }),
+    newlySolid.length > 0 && /* @__PURE__ */ jsxs("div", { "data-learn-summary-solid": true, children: [
+      /* @__PURE__ */ jsx("div", { className: "text-sm font-medium text-green-700 dark:text-green-500 mb-1", children: "Now solid from memory" }),
+      /* @__PURE__ */ jsx("ul", { className: "space-y-1", children: newlySolid.map((item) => /* @__PURE__ */ jsxs("li", { className: "text-base text-muted-foreground", children: [
+        item.prompt,
+        " = ",
+        learnAnswerDisplay(item)
+      ] }, item.id)) })
+    ] })
+  ] });
+}
+function LearnRoundSummaryScreen({
+  summary,
+  items,
+  progress,
+  onContinue
+}) {
+  const ui = useMathmogUI();
+  return /* @__PURE__ */ jsx(
+    ui.Card,
+    {
+      "data-tour": "mathmog-learn-round-summary",
+      className: "border-t-2 border-t-amber-300 shadow-md",
+      children: /* @__PURE__ */ jsxs(ui.CardContent, { className: "pt-6 pb-8 space-y-6 text-center", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsxs("h2", { className: "text-xl font-semibold", children: [
+            "Round ",
+            summary.roundNumber,
+            " complete"
+          ] }),
+          /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground mt-1", children: [
+            "You worked through ",
+            summary.presentedItemIds.length,
+            " ",
+            summary.presentedItemIds.length === 1 ? "fact" : "facts",
+            " this round."
+          ] }),
+          /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground mt-1", children: [
+            "Facts solid: ",
+            progress.solid,
+            " of ",
+            progress.total
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(LearnRoundSummaryBody, { summary, items }),
+        /* @__PURE__ */ jsx("div", { className: "flex justify-center", children: /* @__PURE__ */ jsxs(ui.Button, { onClick: onContinue, className: "text-lg h-14 sm:h-11 px-8", children: [
+          "Keep going ",
+          /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4 ml-2" })
+        ] }) })
+      ] })
+    }
+  );
+}
+function LearnCompletionScreen({
+  moduleLabel,
+  totalFacts,
+  finalSummary,
+  items,
+  completionSlot
+}) {
+  const ui = useMathmogUI();
+  return /* @__PURE__ */ jsx(
+    ui.Card,
+    {
+      "data-tour": "mathmog-learn-complete",
+      className: "border-t-2 border-t-green-600 shadow-md",
+      children: /* @__PURE__ */ jsxs(ui.CardContent, { className: "pt-6 pb-8 space-y-6 text-center", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("div", { className: "text-xs uppercase tracking-wide text-muted-foreground mb-2", children: moduleLabel }),
+          /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold", children: totalFacts === 1 ? "You recalled this fact from memory." : `You recalled all ${totalFacts} facts from memory.` }),
+          /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground mt-1", children: [
+            "Facts solid: ",
+            totalFacts,
+            " of ",
+            totalFacts
+          ] })
+        ] }),
+        finalSummary !== null && /* @__PURE__ */ jsx(LearnRoundSummaryBody, { summary: finalSummary, items }),
+        completionSlot !== void 0 && completionSlot !== null && /* @__PURE__ */ jsx("div", { "data-learn-completion-slot": true, children: completionSlot })
+      ] })
+    }
+  );
+}
+
+// src/core/diagnosis/fraction-identities.ts
+var FRACTION_DISTRACTOR_IDENTITIES = {
+  "1/2": [
+    { value: 0.12, identity: { kind: "digits" } },
+    { value: 0.2, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } }
+  ],
+  "1/3": [
+    { value: 0.67, identity: { kind: "complement", fraction: "2/3" } },
+    { value: 0.66, identity: { kind: "complement", fraction: "2/3" } },
+    { value: 0.13, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.44, identity: { kind: "other-fact", fraction: "4/9" } }
+  ],
+  "2/3": [
+    { value: 0.33, identity: { kind: "complement", fraction: "1/3" } },
+    { value: 0.23, identity: { kind: "digits" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } },
+    { value: 0.56, identity: { kind: "other-fact", fraction: "5/9" } }
+  ],
+  "1/4": [
+    { value: 0.4, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.14, identity: { kind: "digits" } },
+    { value: 0.75, identity: { kind: "complement", fraction: "3/4" } },
+    { value: 0.2, identity: { kind: "other-fact", fraction: "1/5" } }
+  ],
+  "3/4": [
+    { value: 0.25, identity: { kind: "complement", fraction: "1/4" } },
+    { value: 0.34, identity: { kind: "digits" } },
+    { value: 0.8, identity: { kind: "other-fact", fraction: "4/5" } },
+    { value: 0.67, identity: { kind: "other-fact", fraction: "2/3" } }
+  ],
+  "1/5": [
+    { value: 0.5, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.15, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.05, identity: { kind: "percent-slip" } }
+  ],
+  "2/5": [
+    { value: 0.25, identity: { kind: "digits" } },
+    { value: 0.5, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.2, identity: { kind: "part-as-decimal", part: "numerator" } },
+    { value: 0.6, identity: { kind: "complement", fraction: "3/5" } }
+  ],
+  "3/5": [
+    { value: 0.35, identity: { kind: "digits" } },
+    { value: 0.4, identity: { kind: "complement", fraction: "2/5" } },
+    { value: 0.3, identity: { kind: "part-as-decimal", part: "numerator" } },
+    { value: 0.57, identity: { kind: "other-fact", fraction: "4/7" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } }
+  ],
+  "4/5": [
+    { value: 0.45, identity: { kind: "digits" } },
+    { value: 0.4, identity: { kind: "part-as-decimal", part: "numerator" } },
+    { value: 0.2, identity: { kind: "complement", fraction: "1/5" } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } }
+  ],
+  "1/6": [
+    { value: 0.6, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.125, identity: { kind: "other-fact", fraction: "1/8" } },
+    // shadowed by under-precision (0.2 = 1/6 rounded at one place)
+    { value: 0.2, identity: { kind: "other-fact", fraction: "1/5" } },
+    { value: 0.667, identity: { kind: "other-fact", fraction: "2/3" } }
+  ],
+  "5/6": [
+    { value: 0.56, identity: { kind: "digits" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.6, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.857, identity: { kind: "other-fact", fraction: "6/7" } }
+  ],
+  "1/7": [
+    { value: 0.17, identity: { kind: "digits" } },
+    { value: 0.125, identity: { kind: "other-fact", fraction: "1/8" } },
+    { value: 0.134, identity: { kind: "digit-swap", of: 0.143 } },
+    { value: 0.286, identity: { kind: "rotation", fraction: "2/7" } }
+  ],
+  "2/7": [
+    { value: 0.27, identity: { kind: "digits" } },
+    { value: 0.143, identity: { kind: "rotation", fraction: "1/7" } },
+    { value: 0.268, identity: { kind: "digit-swap", of: 0.286 } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.429, identity: { kind: "rotation", fraction: "3/7" } }
+  ],
+  "3/7": [
+    { value: 0.37, identity: { kind: "digits" } },
+    { value: 0.492, identity: { kind: "digit-swap", of: 0.429 } },
+    { value: 0.571, identity: { kind: "rotation", fraction: "4/7" } },
+    // shadowed by under-precision (0.4 = 3/7 truncated at one place)
+    { value: 0.4, identity: { kind: "other-fact", fraction: "2/5" } }
+  ],
+  "4/7": [
+    { value: 0.47, identity: { kind: "digits" } },
+    { value: 0.517, identity: { kind: "digit-swap", of: 0.571 } },
+    { value: 0.429, identity: { kind: "rotation", fraction: "3/7" } },
+    // shadowed by under-precision (0.6 = 4/7 rounded at one place)
+    { value: 0.6, identity: { kind: "other-fact", fraction: "3/5" } }
+  ],
+  "5/7": [
+    { value: 0.57, identity: { kind: "digits" } },
+    { value: 0.741, identity: { kind: "digit-swap", of: 0.714 } },
+    { value: 0.75, identity: { kind: "other-fact", fraction: "3/4" } },
+    { value: 0.286, identity: { kind: "rotation", fraction: "2/7" } }
+  ],
+  "6/7": [
+    { value: 0.67, identity: { kind: "digits" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.833, identity: { kind: "other-fact", fraction: "5/6" } },
+    { value: 0.143, identity: { kind: "rotation", fraction: "1/7" } }
+  ],
+  "1/8": [
+    { value: 0.8, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.18, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.375, identity: { kind: "other-fact", fraction: "3/8" } },
+    { value: 0.111, identity: { kind: "other-fact", fraction: "1/9" } }
+  ],
+  "3/8": [
+    { value: 0.38, identity: { kind: "digits" } },
+    { value: 0.625, identity: { kind: "complement", fraction: "5/8" } },
+    { value: 0.357, identity: { kind: "digit-swap", of: 0.375 } }
+    // 0.35: deliberately unannotated
+  ],
+  "5/8": [
+    { value: 0.58, identity: { kind: "digits" } },
+    { value: 0.375, identity: { kind: "complement", fraction: "3/8" } },
+    { value: 0.652, identity: { kind: "digit-swap", of: 0.625 } },
+    { value: 0.6, identity: { kind: "other-fact", fraction: "3/5" } }
+  ],
+  "7/8": [
+    { value: 0.78, identity: { kind: "digits" } },
+    { value: 0.857, identity: { kind: "other-fact", fraction: "6/7" } },
+    { value: 0.125, identity: { kind: "complement", fraction: "1/8" } },
+    { value: 0.8, identity: { kind: "other-fact", fraction: "4/5" } },
+    { value: 0.89, identity: { kind: "other-fact", fraction: "8/9" } }
+  ],
+  "1/9": [
+    { value: 0.19, identity: { kind: "digits" } },
+    { value: 0.9, identity: { kind: "part-as-decimal", part: "denominator" } },
+    { value: 0.125, identity: { kind: "other-fact", fraction: "1/8" } },
+    { value: 0.22, identity: { kind: "other-fact", fraction: "2/9" } },
+    { value: 0.09, identity: { kind: "percent-slip" } }
+  ],
+  "2/9": [
+    { value: 0.29, identity: { kind: "digits" } },
+    { value: 0.25, identity: { kind: "other-fact", fraction: "1/4" } },
+    { value: 0.11, identity: { kind: "other-fact", fraction: "1/9" } },
+    { value: 0.286, identity: { kind: "other-fact", fraction: "2/7" } }
+  ],
+  "4/9": [
+    { value: 0.49, identity: { kind: "digits" } },
+    { value: 0.33, identity: { kind: "other-fact", fraction: "1/3" } },
+    { value: 0.429, identity: { kind: "other-fact", fraction: "3/7" } }
+    // 0.45: deliberately unannotated (last-digit detector covers it)
+  ],
+  "5/9": [
+    { value: 0.59, identity: { kind: "digits" } },
+    { value: 0.44, identity: { kind: "other-fact", fraction: "4/9" } },
+    { value: 0.571, identity: { kind: "other-fact", fraction: "4/7" } },
+    { value: 0.65, identity: { kind: "digit-swap", of: 0.56 } }
+  ],
+  "7/9": [
+    { value: 0.79, identity: { kind: "digits" } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.22, identity: { kind: "complement", fraction: "2/9" } },
+    { value: 0.87, identity: { kind: "other-fact", fraction: "7/8" } }
+  ],
+  "8/9": [
+    { value: 0.98, identity: { kind: "digit-swap", of: 0.89 } },
+    { value: 0.875, identity: { kind: "other-fact", fraction: "7/8" } },
+    { value: 0.11, identity: { kind: "complement", fraction: "1/9" } },
+    { value: 0.83, identity: { kind: "other-fact", fraction: "5/6" } }
+  ]
+};
+
+// src/core/diagnosis/diagnose.ts
+var decimalPlaces = (v) => (String(v).split(".")[1] ?? "").length;
+var sortedDigits = (v) => String(v).replace(".", "").split("").sort().join("");
+var isDigitSwap = (wrong, target) => wrong !== target && String(target).replace(".", "").length > 1 && sortedDigits(wrong) === sortedDigits(target);
+var endSentence = (text) => text.endsWith("\u2026") ? text : `${text}.`;
+var TT_OFFSETS = [
+  { da: 0, db: -1, code: "tt-adjacent-product" },
+  { da: 0, db: 1, code: "tt-adjacent-product" },
+  { da: -1, db: 0, code: "tt-adjacent-product" },
+  { da: 1, db: 0, code: "tt-adjacent-product" },
+  { da: -1, db: 1, code: "tt-neighbor-fact" },
+  { da: 1, db: -1, code: "tt-neighbor-fact" },
+  { da: -1, db: -1, code: "tt-near-product" },
+  { da: 1, db: 1, code: "tt-near-product" },
+  { da: 0, db: -2, code: "tt-near-product" },
+  { da: 0, db: 2, code: "tt-near-product" },
+  { da: -2, db: 0, code: "tt-near-product" },
+  { da: 2, db: 0, code: "tt-near-product" }
+];
+var diagnoseTimesTablesMiss = (a, b, wrong) => {
+  const answer = a * b;
+  for (const { da, db, code } of TT_OFFSETS) {
+    const f1 = a + da;
+    const f2 = b + db;
+    if (f1 < 1 || f2 < 1 || f1 * f2 !== wrong) continue;
+    if (code === "tt-adjacent-product") {
+      const step = da === 0 ? a : b;
+      const direction = wrong > answer ? "less" : "more";
+      return {
+        code,
+        message: `${wrong} is ${f1} \xD7 ${f2}. ${a} \xD7 ${b} is one ${step} ${direction}: ${answer}.`
+      };
+    }
+    if (code === "tt-neighbor-fact") {
+      return {
+        code,
+        message: `${wrong} is ${f1} \xD7 ${f2} \u2014 a neighbor fact. ${a} \xD7 ${b} = ${answer}.`
+      };
+    }
+    return {
+      code,
+      message: `${wrong} is ${f1} \xD7 ${f2}. ${a} \xD7 ${b} = ${answer}.`
+    };
+  }
+  if (wrong === a + b) {
+    return {
+      code: "tt-added-instead",
+      message: `${wrong} is ${a} + ${b}. Multiplying: ${a} \xD7 ${b} = ${answer}.`
+    };
+  }
+  if (isDigitSwap(wrong, answer)) {
+    return {
+      code: "tt-digit-swap",
+      message: `${wrong} is ${answer} with the digits swapped. ${a} \xD7 ${b} = ${answer}.`
+    };
+  }
+  return null;
+};
+var diagnoseSquareMiss = (n, wrong) => {
+  const answer = n * n;
+  for (const m of [n - 1, n + 1]) {
+    if (m >= 1 && m * m === wrong) {
+      return { code: "sq-adjacent-square", message: `${wrong} is ${m}\xB2. ${n}\xB2 = ${answer}.` };
+    }
+  }
+  for (const m of [n - 1, n + 1]) {
+    if (m >= 1 && n * m === wrong) {
+      const relation = m < n ? "short of" : "past";
+      return {
+        code: "sq-row-product",
+        message: `${wrong} is ${n} \xD7 ${m} \u2014 one ${n} ${relation} ${n} \xD7 ${n}. ${n}\xB2 = ${answer}.`
+      };
+    }
+  }
+  if (n >= 2 && wrong === n * n * n) {
+    return {
+      code: "sq-cube-slip",
+      message: `${wrong} is ${n}\xB3 \u2014 three ${n}s multiplied. Squaring uses two: ${n} \xD7 ${n} = ${answer}.`
+    };
+  }
+  for (const m of [n - 2, n + 2]) {
+    if (m >= 1 && m * m === wrong) {
+      return { code: "sq-near-square", message: `${wrong} is ${m}\xB2. ${n}\xB2 = ${answer}.` };
+    }
+  }
+  for (const m of [n - 2, n + 2]) {
+    if (m >= 1 && n * m === wrong) {
+      return {
+        code: "sq-near-product",
+        message: `${wrong} is ${n} \xD7 ${m}. ${n}\xB2 is ${n} \xD7 ${n}: ${answer}.`
+      };
+    }
+  }
+  if (isDigitSwap(wrong, answer)) {
+    return {
+      code: "sq-digit-swap",
+      message: `${wrong} is ${answer} with its digits rearranged. ${n}\xB2 = ${answer}.`
+    };
+  }
+  return null;
+};
+var diagnoseCubeMiss = (n, wrong) => {
+  const answer = n * n * n;
+  if (n >= 2 && wrong === n * n) {
+    return {
+      code: "cb-square-slip",
+      message: `${wrong} is ${n}\xB2 \u2014 two ${n}s. A cube multiplies three: ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
+    };
+  }
+  for (const m of [n - 1, n + 1]) {
+    if (m >= 1 && m * m * m === wrong) {
+      return { code: "cb-adjacent-cube", message: `${wrong} is ${m}\xB3. ${n}\xB3 = ${answer}.` };
+    }
+  }
+  if (wrong === 3 * n && wrong !== answer) {
+    return {
+      code: "cb-times-three",
+      message: `${wrong} is ${n} \xD7 3. ${n}\xB3 means ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
+    };
+  }
+  for (const k of [2, 3]) {
+    if (n >= 2 && wrong === n * n * k) {
+      return {
+        code: "cb-square-multiple",
+        message: `${wrong} is ${n}\xB2 \xD7 ${k}. Cubing multiplies by ${n} again: ${n}\xB2 \xD7 ${n} = ${answer}.`
+      };
+    }
+  }
+  for (const [power, label] of [[4, "\u2074 \u2014 four"], [5, "\u2075 \u2014 five"]]) {
+    if (n >= 2 && wrong === n ** power) {
+      return {
+        code: "cb-power-slip",
+        message: `${wrong} is ${n}${label} ${n}s. A cube is three: ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
+      };
+    }
+  }
+  for (const m of [n - 2, n + 2]) {
+    if (m >= 1 && m * m * m === wrong) {
+      return { code: "cb-near-cube", message: `${wrong} is ${m}\xB3. ${n}\xB3 = ${answer}.` };
+    }
+  }
+  if (isDigitSwap(wrong, answer)) {
+    return {
+      code: "cb-digit-swap",
+      message: `${wrong} is ${answer} with its digits rearranged. ${n}\xB3 = ${answer}.`
+    };
+  }
+  return null;
+};
+var fractionValueDisplay = (num, den) => {
+  const { repeating, precision } = fractionBasesByDenominator[den];
+  return repeating ? repeatingDecimalDisplay(num, den) : String(truncateFraction(num, den, precision));
+};
+var acceptedFormsAt = (num, den, places) => {
+  const truncated = truncateFraction(num, den, places);
+  const rounded = roundFraction(num, den, places);
+  return truncated === rounded ? `${truncated}` : `${truncated} or ${rounded}`;
+};
+var parseFractionId = (itemId) => {
+  const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(itemId);
+  if (!match) return null;
+  const num = Number(match[1]);
+  const den = Number(match[2]);
+  if (!fractionBasesByDenominator[den]?.numerators.includes(num)) return null;
+  return { num, den };
+};
+var detectUnderPrecision = (num, den, wrong) => {
+  const { repeating } = fractionBasesByDenominator[den];
+  const { floorPlaces, canonicalPlaces } = fractionPrecisionPolicy(den);
+  const places = decimalPlaces(wrong);
+  if (wrong <= 0 || wrong >= 1 || places < 1 || places >= floorPlaces) return null;
+  const itemId = `${num}/${den}`;
+  const display = fractionValueDisplay(num, den);
+  if (wrong === truncateFraction(num, den, places)) {
+    return {
+      code: "frac-under-precision",
+      message: repeating ? `Right idea \u2014 ${itemId} starts with ${wrong}, but the digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right start \u2014 ${itemId} does begin with ${wrong}. The full value is ${display}.`
+    };
+  }
+  if (wrong === roundFraction(num, den, places)) {
+    const placeWord = places === 1 ? "decimal" : "decimals";
+    return {
+      code: "frac-under-precision",
+      message: repeating ? `Right idea \u2014 ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right idea \u2014 ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The full value is ${display}.`
+    };
+  }
+  return null;
+};
+var detectLastDigitSlip = (num, den, wrong) => {
+  const { floorPlaces, ceilingPlaces } = fractionPrecisionPolicy(den);
+  const places = decimalPlaces(wrong);
+  if (wrong <= 0 || wrong >= 1 || places < floorPlaces || places > ceilingPlaces) return null;
+  const scale = 10 ** places;
+  const wrongScaled = Math.round(wrong * scale);
+  const truncScaled = Math.round(truncateFraction(num, den, places) * scale);
+  const roundScaled = Math.round(roundFraction(num, den, places) * scale);
+  if (Math.abs(wrongScaled - truncScaled) !== 1 && Math.abs(wrongScaled - roundScaled) !== 1) {
+    return null;
+  }
+  const placeWord = places === 1 ? "decimal" : "decimals";
+  return {
+    code: "frac-last-digit",
+    message: `So close \u2014 ${wrong} is one digit off in the last place. ${num}/${den} = ${endSentence(fractionValueDisplay(num, den))} At ${places} ${placeWord}, that's ${acceptedFormsAt(num, den, places)}.`
+  };
+};
+var fractionIdentityMessage = (num, den, wrong, identity) => {
+  const itemId = `${num}/${den}`;
+  const display = endSentence(fractionValueDisplay(num, den));
+  switch (identity.kind) {
+    case "other-fact": {
+      const [refNum, refDen] = identity.fraction.split("/").map(Number);
+      const inFamily = acceptedDecimalFamily(refNum, refDen).includes(wrong);
+      const comparison = num / den > wrong ? "more" : "less";
+      const closeness = Math.abs(num / den - wrong) < 0.1 ? "a bit " : "";
+      if (inFamily) {
+        return `${wrong} is what ${identity.fraction} comes to. ${itemId} is ${closeness}${comparison}: ${display}`;
+      }
+      return `${wrong} is ${identity.fraction} cut short \u2014 ${identity.fraction} = ${endSentence(fractionValueDisplay(refNum, refDen))} ${itemId} is ${closeness}${comparison}: ${display}`;
+    }
+    case "complement":
+      return `${wrong} is what ${identity.fraction} comes to \u2014 that's the rest of the whole after ${itemId}. ${itemId} itself is ${display}`;
+    case "rotation":
+      return `${wrong} is what ${identity.fraction} comes to \u2014 sevenths all run the same 142857 loop, just starting at different digits. ${itemId} is ${display}`;
+    case "digits":
+      return `${wrong} reads the ${num} and ${den} straight across. ${itemId} means ${num} \xF7 ${den}: ${display}`;
+    case "digit-swap":
+      return `${wrong} is ${identity.of} with two digits swapped. ${itemId} is ${display}`;
+    case "percent-slip": {
+      const wrongPercent = Math.round(wrong * 100);
+      const percentDisplay = fractionBasesByDenominator[den].repeating ? repeatingDecimalDisplay(num * 100, den) : String(truncateFraction(num * 100, den, 1));
+      return `${wrong} means ${wrongPercent}%. ${itemId} is ${percentDisplay}% \u2014 as a decimal, ${display}`;
+    }
+    case "part-as-decimal": {
+      const digit = identity.part === "numerator" ? num : den;
+      const position = identity.part === "numerator" ? "top" : "bottom";
+      return `${wrong} grabs the ${digit} from the ${position} of ${itemId}. ${itemId} means ${num} \xF7 ${den}: ${display}`;
+    }
+  }
+};
+var diagnoseFractionMiss = (num, den, wrong) => {
+  if (acceptedDecimalFamily(num, den).includes(wrong)) return null;
+  const poolEntry = FRACTION_DISTRACTOR_IDENTITIES[`${num}/${den}`]?.find((e) => e.value === wrong);
+  const poolDiagnosis = poolEntry ? {
+    code: `frac-${poolEntry.identity.kind}`,
+    message: fractionIdentityMessage(num, den, wrong, poolEntry.identity)
+  } : null;
+  if (fractionBasesByDenominator[den].repeating) {
+    return detectUnderPrecision(num, den, wrong) ?? poolDiagnosis ?? detectLastDigitSlip(num, den, wrong);
+  }
+  return poolDiagnosis ?? detectUnderPrecision(num, den, wrong) ?? detectLastDigitSlip(num, den, wrong);
+};
+var parseBase = (itemId, exponent) => {
+  const match = new RegExp(`^([1-9]\\d*)\\^${exponent}$`).exec(itemId);
+  return match ? Number(match[1]) : null;
+};
+var diagnoseMiss = (topic, itemId, wrongAnswer) => {
+  if (!Number.isFinite(wrongAnswer)) return null;
+  switch (topic) {
+    case "times_tables": {
+      const match = /^([1-9]\d*)x([1-9]\d*)$/.exec(itemId);
+      if (!match) return null;
+      const a = Number(match[1]);
+      const b = Number(match[2]);
+      if (wrongAnswer === a * b) return null;
+      return diagnoseTimesTablesMiss(a, b, wrongAnswer);
+    }
+    case "perfect_squares": {
+      const n = parseBase(itemId, 2);
+      if (n === null || wrongAnswer === n * n) return null;
+      return diagnoseSquareMiss(n, wrongAnswer);
+    }
+    case "perfect_cubes": {
+      const n = parseBase(itemId, 3);
+      if (n === null || wrongAnswer === n * n * n) return null;
+      return diagnoseCubeMiss(n, wrongAnswer);
+    }
+    case "fraction_conversions": {
+      const parsed = parseFractionId(itemId);
+      if (!parsed) return null;
+      return diagnoseFractionMiss(parsed.num, parsed.den, wrongAnswer);
+    }
+    default:
+      return null;
+  }
+};
+var IGNORED_KEYS = /* @__PURE__ */ new Set([
+  "Shift",
+  "Control",
+  "Alt",
+  "Meta",
+  "Tab",
+  "CapsLock",
+  "Escape"
+]);
+var ANY_KEY_ARMING_DELAY_MS = 300;
+function useAnyKeyContinue(active, onContinue) {
+  const callbackRef = useRef(onContinue);
+  callbackRef.current = onContinue;
+  useEffect(() => {
+    if (!active) return;
+    let armed = false;
+    const armTimer = setTimeout(() => {
+      armed = true;
+    }, ANY_KEY_ARMING_DELAY_MS);
+    const handle = (e) => {
+      if (!armed) return;
+      if (e.repeat) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (IGNORED_KEYS.has(e.key)) return;
+      e.preventDefault();
+      callbackRef.current();
+    };
+    window.addEventListener("keydown", handle);
+    return () => {
+      clearTimeout(armTimer);
+      window.removeEventListener("keydown", handle);
+    };
+  }, [active]);
+}
+function LearnRecallCard({ item, topic, onAnswer }) {
+  const ui = useMathmogUI();
+  const [typed, setTyped] = React.useState("");
+  const [phase, setPhase] = React.useState("answering");
+  const [diagnosis, setDiagnosis] = React.useState(null);
+  const inputRef = React.useRef(null);
+  const answering = phase === "answering";
+  React.useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
+  }, []);
+  const check = () => {
+    if (!answering || typed.trim() === "") return;
+    const verdict = gradeLearnRecall(item, typed);
+    if (verdict.correct) {
+      setPhase("correct");
+      return;
+    }
+    setDiagnosis(
+      topic !== null && verdict.value !== null ? diagnoseMiss(topic, item.id, verdict.value) : null
+    );
+    setPhase("miss");
+  };
+  const finish = () => onAnswer(phase === "correct");
+  useAnyKeyContinue(!answering, finish);
+  return /* @__PURE__ */ jsx(
+    ui.Card,
+    {
+      "data-tour": "mathmog-learn-recall",
+      className: "border-t-2 border-t-amber-300 shadow-md",
+      children: /* @__PURE__ */ jsxs(ui.CardContent, { className: "pt-6 pb-8 space-y-6", children: [
+        /* @__PURE__ */ jsxs("p", { className: "text-2xl md:text-3xl font-bold text-center", children: [
+          item.prompt,
+          " = ?"
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "max-w-md mx-auto space-y-3", children: [
+          /* @__PURE__ */ jsx(
+            ui.Input,
+            {
+              ref: inputRef,
+              type: "number",
+              value: typed,
+              onChange: (e) => setTyped(e.target.value),
+              onKeyPress: (e) => {
+                if (e.key === "Enter") check();
+              },
+              placeholder: "Your answer...",
+              "data-tour": "mathmog-learn-recall-input",
+              className: "p-4 text-xl text-center h-14 focus-visible:ring-amber-500",
+              disabled: !answering
+            }
+          ),
+          answering && /* @__PURE__ */ jsxs(Fragment, { children: [
+            /* @__PURE__ */ jsxs(
+              ui.Button,
+              {
+                onClick: check,
+                disabled: typed.trim() === "",
+                className: "w-full text-lg h-14 sm:h-11",
+                children: [
+                  /* @__PURE__ */ jsx(Check, { className: "w-5 h-5 mr-2" }),
+                  " Check Answer"
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsx("div", { className: "flex justify-center", children: /* @__PURE__ */ jsx(
+              ui.Button,
+              {
+                variant: "ghost",
+                size: "sm",
+                className: "h-11 sm:h-9",
+                onClick: () => setPhase("dont-know"),
+                children: "Don't know?"
+              }
+            ) })
+          ] })
+        ] }),
+        phase === "correct" && /* @__PURE__ */ jsx("div", { className: "text-center text-lg font-semibold text-green-600", children: "Correct!" }),
+        phase === "miss" && /* @__PURE__ */ jsxs("div", { className: "text-center space-y-2", children: [
+          /* @__PURE__ */ jsx("div", { className: "text-lg font-semibold text-amber-600 dark:text-amber-500", children: "Not quite." }),
+          diagnosis !== null && /* @__PURE__ */ jsx(
+            "p",
+            {
+              "data-learn-diagnosis": true,
+              className: "text-sm text-muted-foreground max-w-md mx-auto",
+              children: diagnosis.message
+            }
+          ),
+          /* @__PURE__ */ jsxs("p", { className: "text-base font-medium", children: [
+            item.prompt,
+            " = ",
+            learnAnswerRevealDisplay(item)
+          ] })
+        ] }),
+        phase === "dont-know" && /* @__PURE__ */ jsxs("div", { className: "text-center space-y-2", children: [
+          /* @__PURE__ */ jsx("div", { className: "text-lg font-semibold text-amber-600 dark:text-amber-500", children: "No problem. Here it is:" }),
+          /* @__PURE__ */ jsxs("p", { className: "text-base font-medium", children: [
+            item.prompt,
+            " = ",
+            learnAnswerRevealDisplay(item)
+          ] }),
+          /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "You'll get another shot at it in a moment." })
+        ] }),
+        !answering && /* @__PURE__ */ jsx("div", { className: "flex justify-center", children: /* @__PURE__ */ jsxs(ui.Button, { onClick: finish, className: "text-lg h-14 sm:h-11 px-8", children: [
+          "Continue ",
+          /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4 ml-2" })
+        ] }) })
+      ] })
+    }
+  );
+}
+function LearnRecognizeCard({
+  item,
+  distractorSet,
+  topic,
+  rng = Math.random,
+  onAnswer
+}) {
+  const ui = useMathmogUI();
+  const [options] = React.useState(
+    () => assembleRecognizeOptions(item, distractorSet, rng).options
+  );
+  const [phase, setPhase] = React.useState("answering");
+  const [pickedIndex, setPickedIndex] = React.useState(null);
+  const [highlightIndex, setHighlightIndex] = React.useState(null);
+  const [diagnosis, setDiagnosis] = React.useState(null);
+  const answering = phase === "answering";
+  const correctIndex = options.indexOf(item.answer);
+  const pick = React.useCallback(
+    (index) => {
+      if (phase !== "answering") return;
+      setPickedIndex(index);
+      if (options[index] === item.answer) {
+        setPhase("correct");
+        return;
+      }
+      setDiagnosis(
+        topic === null ? null : diagnoseMiss(topic, item.id, options[index])
+      );
+      setPhase("miss");
+    },
+    [phase, options, item, topic]
+  );
+  const finish = () => onAnswer(phase === "correct");
+  useAnyKeyContinue(!answering, finish);
+  React.useEffect(() => {
+    if (!answering) return;
+    const handle = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const digit = Number(e.key);
+      if (Number.isInteger(digit) && digit >= 1 && digit <= options.length) {
+        e.preventDefault();
+        pick(digit - 1);
+        return;
+      }
+      if (["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(e.key)) {
+        e.preventDefault();
+        const delta = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1;
+        setHighlightIndex(
+          (current) => current === null ? delta === 1 ? 0 : options.length - 1 : (current + delta + options.length) % options.length
+        );
+        return;
+      }
+      if (e.key === "Enter" && highlightIndex !== null) {
+        e.preventDefault();
+        pick(highlightIndex);
+      }
+    };
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [answering, options.length, highlightIndex, pick]);
+  const optionClasses = (index) => {
+    if (answering) {
+      return index === highlightIndex ? "ring-2 ring-amber-400" : "";
+    }
+    if (index === correctIndex) {
+      return "border-2 border-green-600 text-green-700 dark:text-green-500";
+    }
+    if (index === pickedIndex) {
+      return "border-2 border-amber-400 text-amber-700 dark:text-amber-500";
+    }
+    return "opacity-50";
+  };
+  return /* @__PURE__ */ jsx(
+    ui.Card,
+    {
+      "data-tour": "mathmog-learn-recognize",
+      className: "border-t-2 border-t-amber-300 shadow-md",
+      children: /* @__PURE__ */ jsxs(ui.CardContent, { className: "pt-6 pb-8 space-y-6", children: [
+        /* @__PURE__ */ jsxs("p", { className: "text-2xl md:text-3xl font-bold text-center", children: [
+          item.prompt,
+          " = ?"
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto", children: options.map((option, index) => /* @__PURE__ */ jsxs(
+          ui.Button,
+          {
+            variant: "outline",
+            onClick: () => pick(index),
+            "data-learn-option": String(index + 1),
+            className: `h-14 text-xl justify-start gap-3 border-2 ${answering ? "" : "pointer-events-none"} ${optionClasses(index)}`,
+            children: [
+              /* @__PURE__ */ jsx("span", { className: "hidden sm:inline text-sm text-muted-foreground font-normal", children: index + 1 }),
+              String(option),
+              !answering && index === correctIndex && /* @__PURE__ */ jsx(Check, { className: "w-5 h-5 ml-auto" })
+            ]
+          },
+          `${option}-${index}`
+        )) }),
+        answering && /* @__PURE__ */ jsx("div", { className: "flex justify-center", children: /* @__PURE__ */ jsx(
+          ui.Button,
+          {
+            variant: "ghost",
+            size: "sm",
+            className: "h-11 sm:h-9",
+            onClick: () => {
+              setPickedIndex(null);
+              setPhase("dont-know");
+            },
+            children: "Don't know?"
+          }
+        ) }),
+        phase === "correct" && /* @__PURE__ */ jsx("div", { className: "text-center text-lg font-semibold text-green-600", children: "Correct!" }),
+        phase === "miss" && /* @__PURE__ */ jsxs("div", { className: "text-center space-y-2", children: [
+          /* @__PURE__ */ jsx("div", { className: "text-lg font-semibold text-amber-600 dark:text-amber-500", children: "Not quite." }),
+          diagnosis !== null && /* @__PURE__ */ jsx(
+            "p",
+            {
+              "data-learn-diagnosis": true,
+              className: "text-sm text-muted-foreground max-w-md mx-auto",
+              children: diagnosis.message
+            }
+          ),
+          /* @__PURE__ */ jsxs("p", { className: "text-base font-medium", children: [
+            item.prompt,
+            " = ",
+            learnAnswerRevealDisplay(item)
+          ] })
+        ] }),
+        phase === "dont-know" && /* @__PURE__ */ jsxs("div", { className: "text-center space-y-2", children: [
+          /* @__PURE__ */ jsx("div", { className: "text-lg font-semibold text-amber-600 dark:text-amber-500", children: "No problem. Here it is:" }),
+          /* @__PURE__ */ jsxs("p", { className: "text-base font-medium", children: [
+            item.prompt,
+            " = ",
+            learnAnswerRevealDisplay(item)
+          ] }),
+          /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "You'll get another shot at it in a moment." })
+        ] }),
+        !answering && /* @__PURE__ */ jsx("div", { className: "flex justify-center", children: /* @__PURE__ */ jsxs(ui.Button, { onClick: finish, className: "text-lg h-14 sm:h-11 px-8", children: [
+          "Continue ",
+          /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4 ml-2" })
+        ] }) })
+      ] })
+    }
+  );
+}
+function LearnSeeCard({ item, onContinue }) {
+  const ui = useMathmogUI();
+  useAnyKeyContinue(true, onContinue);
+  return /* @__PURE__ */ jsx(
+    ui.Card,
+    {
+      "data-tour": "mathmog-learn-see",
+      className: "border-t-2 border-t-amber-300 shadow-md",
+      children: /* @__PURE__ */ jsxs(ui.CardContent, { className: "pt-6 pb-8 space-y-6 text-center", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-xs uppercase tracking-wide text-muted-foreground", children: "Take another look" }),
+        /* @__PURE__ */ jsxs("p", { className: "text-2xl md:text-3xl font-bold", children: [
+          item.prompt,
+          " = ",
+          learnAnswerDisplay(item)
+        ] }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "You'll get a chance at this one again in a moment." }),
+        /* @__PURE__ */ jsx("div", { className: "flex justify-center", children: /* @__PURE__ */ jsxs(
+          ui.Button,
+          {
+            onClick: onContinue,
+            className: "text-lg h-14 sm:h-11 px-8",
+            children: [
+              "Got it ",
+              /* @__PURE__ */ jsx(ArrowRight, { className: "w-4 h-4 ml-2" })
+            ]
+          }
+        ) })
+      ] })
+    }
+  );
+}
+function LearnSessionHost({
+  module,
+  config = MATHMOG_LEARN_CONFIG,
+  initialSession,
+  onSessionChange,
+  completionSlot,
+  rng = Math.random
+}) {
+  const ui = useMathmogUI();
+  const [session, setSession] = React.useState(() => {
+    if (initialSession !== void 0) {
+      if (initialSession.moduleId !== module.id) {
+        throw new Error(
+          `LearnSessionHost: initialSession is for module "${initialSession.moduleId}", not "${module.id}"`
+        );
+      }
+      return initialSession;
+    }
+    return createLearnSession(module, config);
+  });
+  const [step, setStep] = React.useState(0);
+  const apply = (result) => {
+    if (result.session === session) return;
+    setSession(result.session);
+    setStep((s) => s + 1);
+    onSessionChange?.(result.session, result.events);
+  };
+  const phase = learnSessionPhase(session, config);
+  const progress = solidProgress(session.itemStates, config);
+  const topic = learnModuleTopic(module.id);
+  const lastSummary = session.roundSummaries.length > 0 ? session.roundSummaries[session.roundSummaries.length - 1] : null;
+  if (phase === "module-complete") {
+    return /* @__PURE__ */ jsx("div", { "data-noah": "mathmog-learn-session", className: "space-y-4", children: /* @__PURE__ */ jsx(
+      LearnCompletionScreen,
+      {
+        moduleLabel: module.label,
+        totalFacts: module.items.length,
+        finalSummary: lastSummary,
+        items: module.items,
+        completionSlot
+      }
+    ) });
+  }
+  if (phase === "round-complete") {
+    return /* @__PURE__ */ jsx("div", { "data-noah": "mathmog-learn-session", className: "space-y-4", children: /* @__PURE__ */ jsx(
+      LearnRoundSummaryScreen,
+      {
+        summary: lastSummary,
+        items: module.items,
+        progress,
+        onContinue: () => apply(startNextLearnRound(session, config, rng))
+      }
+    ) });
+  }
+  const itemId = currentLearnItemId(session);
+  const item = module.items.find((i) => i.id === itemId);
+  const itemState = getLearnItemState(session, itemId);
+  const distractorSet = module.distractorSets.find((s) => s.itemId === itemId);
+  if (itemState?.tier === "recognize" && distractorSet === void 0) {
+    throw new Error(
+      `LearnSessionHost: no distractor set for item "${itemId}" in module "${module.id}"`
+    );
+  }
+  if (item === void 0 || itemState === void 0) {
+    return /* @__PURE__ */ jsxs(ui.Alert, { variant: "destructive", children: [
+      /* @__PURE__ */ jsx(ui.AlertTitle, { children: "Something went wrong" }),
+      /* @__PURE__ */ jsx(ui.AlertDescription, { children: "This Learn session doesn't match its fact set. Please start the module again." })
+    ] });
+  }
+  const onAnswer = (correct) => apply(applyLearnAnswer(session, config, correct));
+  return /* @__PURE__ */ jsxs("div", { "data-noah": "mathmog-learn-session", className: "space-y-4", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-baseline justify-between gap-4 text-sm text-muted-foreground", children: [
+      /* @__PURE__ */ jsx("span", { className: "font-medium truncate", title: module.label, children: module.label }),
+      /* @__PURE__ */ jsxs("span", { className: "whitespace-nowrap", children: [
+        "Facts solid: ",
+        progress.solid,
+        " of ",
+        progress.total
+      ] })
+    ] }),
+    itemState.tier === "see" ? /* @__PURE__ */ jsx(
+      LearnSeeCard,
+      {
+        item,
+        onContinue: () => apply(applyLearnSeen(session, config))
+      },
+      step
+    ) : itemState.tier === "recognize" ? /* @__PURE__ */ jsx(
+      LearnRecognizeCard,
+      {
+        item,
+        distractorSet,
+        topic,
+        rng,
+        onAnswer
+      },
+      step
+    ) : /* @__PURE__ */ jsx(LearnRecallCard, { item, topic, onAnswer }, step)
+  ] });
+}
+
+export { CraftyContent, DifficultyScalingContent, ElapsedTimer, EstimateContent, LearnSessionHost, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, PrintableStudyGuideProvider, ProblemDisplay, ProblemProvider, ScoreDisplay, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, TrainerConfigSelector, TrainerModeProvider, TrainerStateProvider, acceptedLearnAnswers, gradeLearnRecall, learnAnswerDisplay, learnAnswerRevealDisplay, learnModuleTopic, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

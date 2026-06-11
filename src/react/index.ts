@@ -57,3 +57,21 @@ export {
   DifficultyScalingContent,
   PrintableStudyGuideProvider,
 } from './components/study-guide';
+
+// ── Learn mode (Phase 2A.4) ──────────────────────────────────────────
+// The session host is the 2B.2 mounting surface; the tier components are
+// internal to it and deliberately not exported. `gradeLearnRecall` is
+// exported for the 2B.6 per-answer telemetry call sites (the verdict is
+// known where it's graded).
+export {
+  LearnSessionHost,
+  type LearnSessionHostProps,
+} from './components/learn/learn-session-host';
+export {
+  gradeLearnRecall,
+  acceptedLearnAnswers,
+  learnAnswerDisplay,
+  learnAnswerRevealDisplay,
+  learnModuleTopic,
+  type LearnRecallVerdict,
+} from './components/learn/grading';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ComponentType, ReactNode, MouseEvent, ForwardRefExoticComponent, InputHTMLAttributes, RefAttributes, Dispatch, SetStateAction } from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { D as Difficulty, b as Problem, A as AdaptiveData, M as MissedMathmogProblem, S as SpeedChallengeState } from '../miss-types-Chf6mwut.js';
+import { D as Difficulty, t as Problem, A as AdaptiveData, r as MissedMathmogProblem, S as SpeedChallengeState, g as LearnModuleDef, k as LearnSessionConfig, n as LearnSessionState, l as LearnSessionEvent, d as LearnItem, q as MemorizeLearnTopic } from '../mathmog-binding-DCzR0CkV.js';
 
 /**
  * Generic data-attribute passthrough. Allows package components to anchor
@@ -420,4 +420,92 @@ declare function StudyGuide({ onOpen }?: {
     onOpen?: () => void;
 }): react_jsx_runtime.JSX.Element;
 
-export { CraftyContent, DifficultyScalingContent, ElapsedTimer, EstimateContent, type EstimationTier, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, type OnSaveSession, PrintableStudyGuideProvider, type ProblemContextValue, ProblemDisplay, ProblemProvider, type SavePracticeSessionPayload, ScoreDisplay, type SpeedChallengeContextValue, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, TrainerConfigSelector, type TrainerMode, type TrainerModeContextValue, TrainerModeProvider, type TrainerStateContextValue, TrainerStateProvider, type UIPrimitiveBag, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
+interface LearnSessionHostProps {
+    /** The curated module to run (the caller resolves it from the registry). */
+    module: LearnModuleDef<string, number>;
+    /** Defaults to `MATHMOG_LEARN_CONFIG`. */
+    config?: LearnSessionConfig;
+    /**
+     * Resume seam (2B.1): a previously-emitted `LearnSessionState`, persisted
+     * verbatim and handed back verbatim (it JSON round-trips by machine
+     * contract). Omit to start fresh. Must belong to `module` — a mismatched
+     * id throws loudly.
+     */
+    initialSession?: LearnSessionState;
+    /**
+     * Fires after every machine action that changed the session, with the new
+     * aggregate and the action's events. This is BOTH the 2B.1 persistence
+     * seam (store `session` verbatim) and the 2B.6 telemetry seam (map
+     * `events` to `mathmog_events` — the host itself emits nothing). Note the
+     * machine's contract: a non-crossing recall correct is deliberately
+     * eventless, so per-answer telemetry needs the call sites inside the tier
+     * components' `onAnswer`, not these events.
+     */
+    onSessionChange?: (session: LearnSessionState, events: LearnSessionEvent[]) => void;
+    /** Rendered inside the completion screen — the 2A.5 composition point. */
+    completionSlot?: React.ReactNode;
+    /** Injectable for deterministic tests (option draws + review-round shuffles). */
+    rng?: () => number;
+}
+/**
+ * The Learn session driver — the component slice 2B.2 mounts in the portal
+ * trainer. Consumes the 2A.3 machine without re-deriving any of it: the UI
+ * routes off the returned session + `learnSessionPhase` (never off events),
+ * presents `currentLearnItemId` at `getLearnItemState(...).tier`, and maps
+ * each surface to its machine action:
+ *
+ *   see        → LearnSeeCard        → applyLearnSeen
+ *   recognize  → LearnRecognizeCard  → applyLearnAnswer(verdict)
+ *   recall     → LearnRecallCard     → applyLearnAnswer(verdict)
+ *   round-complete → LearnRoundSummaryScreen → startNextLearnRound
+ *   module-complete → LearnCompletionScreen (final summary merged)
+ *
+ * Grading lives in the tier components (`gradeLearnRecall` accepts any
+ * accepted-family member); the machine only ever sees the verdict.
+ * Tier components are keyed by a presentation counter so every presentation
+ * mounts fresh (a re-queued recognize item draws a new option layout).
+ *
+ * Within-module progress is the "Facts solid: N of M" count text only — no
+ * bar, no percentage (Learn doc Q4; gamification line).
+ */
+declare function LearnSessionHost({ module, config, initialSession, onSessionChange, completionSlot, rng, }: LearnSessionHostProps): react_jsx_runtime.JSX.Element;
+
+/**
+ * The topic segment of a Learn module id, narrowed to the diagnosable
+ * union — the shape `diagnoseMiss` takes. Null when the id doesn't parse or
+ * the topic isn't a Memorize topic (no diagnosis; the See re-teach is the
+ * designed fallback).
+ */
+declare function learnModuleTopic(moduleId: string): MemorizeLearnTopic | null;
+/**
+ * Every value the Recall grader accepts for an item: the live Drill family
+ * for fraction items (any `FRACTION_ACCEPTED_DECIMALS` member — the 2A.2 /
+ * 2D.1 contract), the exact answer for everything else.
+ */
+declare function acceptedLearnAnswers(item: LearnItem<string, number>): number[];
+interface LearnRecallVerdict {
+    correct: boolean;
+    /** The parsed numeric answer (for `diagnoseMiss`); null if unparseable. */
+    value: number | null;
+}
+/** Grades a Recall-tier typed answer. Blank or non-numeric input is a miss. */
+declare function gradeLearnRecall(item: LearnItem<string, number>, typed: string): LearnRecallVerdict;
+/**
+ * How an item's answer renders on teach and reveal surfaces. A multi-member
+ * accepted family marks a repeating decimal (terminating fractions and
+ * non-fraction topics are single-member by construction), rendered as the
+ * full repeating form with trailing ellipsis ("0.8333…").
+ */
+declare function learnAnswerDisplay(item: LearnItem<string, number>): string;
+/**
+ * The miss/decline reveal variant: for repeating decimals, the repeating
+ * form plus the canonical anchor — "0.6666… (0.66 or 0.67 at 2 decimal
+ * places)" — so the reveal and the Recognize option (the bare canonical)
+ * never read as two different right answers on one screen, and the Recall
+ * student knows what a sufficient typed answer looks like (2A.4 math-ed
+ * reviewer recommendation; truncation-first order per 2D.1). Everything
+ * else renders as `learnAnswerDisplay`.
+ */
+declare function learnAnswerRevealDisplay(item: LearnItem<string, number>): string;
+
+export { CraftyContent, DifficultyScalingContent, ElapsedTimer, EstimateContent, type EstimationTier, type LearnRecallVerdict, LearnSessionHost, type LearnSessionHostProps, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, type OnSaveSession, PrintableStudyGuideProvider, type ProblemContextValue, ProblemDisplay, ProblemProvider, type SavePracticeSessionPayload, ScoreDisplay, type SpeedChallengeContextValue, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, TrainerConfigSelector, type TrainerMode, type TrainerModeContextValue, TrainerModeProvider, type TrainerStateContextValue, TrainerStateProvider, type UIPrimitiveBag, acceptedLearnAnswers, gradeLearnRecall, learnAnswerDisplay, learnAnswerRevealDisplay, learnModuleTopic, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
