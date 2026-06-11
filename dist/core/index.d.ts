@@ -246,6 +246,17 @@ declare function isLearnEligibleModule<TPrompt, TAnswer>(def: LearnModuleDef<TPr
 declare function isLearnEligible(modules: LearnModuleDef<unknown, unknown>[], moduleId: string): boolean;
 
 /**
+ * One Learn module per registry scope (design doc §6.5: every finite
+ * Memorize fact set; the scope and the module are the same content unit
+ * viewed two ways). A test pins this list against the registry so a new
+ * scope can't ship without its module decision.
+ */
+declare const TIMES_TABLES_LEARN_MODULES: LearnModuleDef<string, number>[];
+
+/** Every curated Math Mog Learn module across all topics shipped so far. */
+declare const MATHMOG_LEARN_MODULES: LearnModuleDef<string, number>[];
+
+/**
  * The Memorize (level 1) topics — the only ones whose content is a finite
  * enumerable fact set, hence the only ones that can ever bind to a Learn
  * module (curriculum doc §6.1). Estimate / Get Crafty topics are excluded at
@@ -278,4 +289,4 @@ declare function parseMathmogLearnModuleId(moduleId: string): {
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnTier, MATHMOG_LEARN_CONFIG, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, type ScopeDef, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, type LearnConfig, type LearnDistractorSet, type LearnItem, type LearnItemState, type LearnItemStatus, type LearnModuleDef, type LearnRoundState, type LearnRoundSummary, type LearnTier, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, type MemorizeLearnTopic, Problem, type QuizzedLearnTier, RECOGNIZE_OPTION_COUNT, type ScopeDef, TIMES_TABLES_LEARN_MODULES, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, dropTier, escalateTier, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, simplifyFraction, solidProgress, topicHasDifficulty, validateLearnModuleDef };

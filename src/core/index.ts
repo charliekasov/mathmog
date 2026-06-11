@@ -70,6 +70,8 @@ export {
   validateLearnModuleDef,
   isLearnEligibleModule,
   isLearnEligible,
+  TIMES_TABLES_LEARN_MODULES,
+  MATHMOG_LEARN_MODULES,
   MATHMOG_LEARN_CONFIG,
   MEMORIZE_LEARN_TOPICS,
   mathmogLearnModuleId,

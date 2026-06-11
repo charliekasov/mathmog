@@ -1430,6 +1430,140 @@ function parseMathmogLearnModuleId(moduleId) {
   if (parts.length !== 2 || parts[0] === "" || parts[1] === "") return null;
   return { topic: parts[0], scopeId: parts[1] };
 }
+
+// src/core/learn/modules/times-tables.ts
+var TT_FACTORS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+var TT_FACT_DISTRACTORS = {
+  // 2× row
+  "2x2": [6, 8, 2, 5],
+  "2x3": [4, 8, 9, 5],
+  "2x4": [6, 10, 12, 9],
+  "2x5": [8, 12, 15, 20],
+  "2x6": [10, 14, 18, 13],
+  "2x7": [12, 16, 21, 13],
+  "2x8": [14, 18, 24, 15],
+  "2x9": [16, 20, 27, 17],
+  "2x10": [18, 22, 30, 21],
+  "2x11": [20, 24, 33, 21],
+  "2x12": [22, 26, 36, 28],
+  // 3× row
+  "3x3": [6, 12, 8, 27, 15],
+  "3x4": [9, 15, 16, 8],
+  "3x5": [12, 18, 25, 35],
+  "3x6": [15, 21, 24, 12],
+  "3x7": [24, 28, 27, 15],
+  "3x8": [21, 27, 32, 16],
+  "3x9": [24, 36, 21, 33],
+  "3x10": [27, 33, 40, 20],
+  "3x11": [44, 30, 27, 39],
+  "3x12": [33, 39, 48, 24],
+  // 4× row
+  "4x4": [12, 20, 18, 8],
+  "4x5": [16, 24, 25, 15],
+  "4x6": [20, 28, 30, 18],
+  "4x7": [24, 32, 35, 21],
+  "4x8": [28, 36, 40, 24],
+  "4x9": [32, 40, 45, 27],
+  "4x10": [36, 44, 50, 30],
+  "4x11": [40, 48, 55, 33],
+  "4x12": [44, 52, 60, 36],
+  // 5× row
+  "5x5": [20, 30, 35, 24, 15],
+  "5x6": [25, 35, 36, 24],
+  "5x7": [30, 40, 45, 25],
+  "5x8": [35, 45, 48, 32],
+  "5x9": [40, 54, 35, 55],
+  "5x10": [45, 55, 60, 40],
+  "5x11": [50, 60, 45, 65],
+  "5x12": [55, 65, 72, 48],
+  // 6× row
+  "6x6": [30, 42, 35, 48],
+  "6x7": [36, 48, 49, 35],
+  "6x8": [42, 54, 56, 40],
+  "6x9": [48, 60, 63, 45, 56],
+  "6x10": [54, 66, 70, 50],
+  "6x11": [60, 72, 77, 55],
+  "6x12": [66, 78, 84, 60],
+  // 7× row
+  "7x7": [42, 56, 48, 63, 35],
+  "7x8": [54, 63, 48, 64, 65],
+  "7x9": [56, 54, 72, 49, 81],
+  "7x10": [63, 77, 80, 60],
+  "7x11": [70, 84, 63, 91],
+  "7x12": [77, 91, 96, 72],
+  // 8× row
+  "8x8": [56, 72, 63, 48],
+  "8x9": [64, 80, 81, 63],
+  "8x10": [72, 88, 90, 70],
+  "8x11": [80, 96, 99, 77],
+  "8x12": [88, 104, 108, 84],
+  // 9× row
+  "9x9": [72, 90, 63, 99],
+  "9x10": [81, 99, 100, 80],
+  "9x11": [90, 108, 81, 121],
+  "9x12": [99, 117, 120, 96],
+  // 10× row
+  "10x10": [90, 110, 99, 120],
+  "10x11": [100, 120, 121, 99],
+  "10x12": [110, 130, 132, 108],
+  // 11× row
+  "11x11": [110, 132, 111, 99],
+  "11x12": [121, 144, 120, 122],
+  // 12× row
+  "12x12": [132, 121, 156, 124]
+};
+var factKey = (a, b) => a <= b ? `${a}x${b}` : `${b}x${a}`;
+var ttItem = (a, b) => ({
+  id: `${a}x${b}`,
+  prompt: `${a} \xD7 ${b}`,
+  answer: a * b
+});
+var ttDistractorSet = (item) => {
+  const [a, b] = item.id.split("x").map(Number);
+  return { itemId: item.id, distractors: TT_FACT_DISTRACTORS[factKey(a, b)] };
+};
+var rowItems = (row) => TT_FACTORS.map((b) => ttItem(row, b));
+var multiRowItems = (rows) => {
+  const seen = /* @__PURE__ */ new Set();
+  const items = [];
+  for (const a of [...rows].sort((x, y) => x - y)) {
+    for (const b of TT_FACTORS) {
+      const key = factKey(a, b);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(a >= b ? ttItem(a, b) : ttItem(b, a));
+    }
+  }
+  return items;
+};
+var ttScopeLabel = (scopeId) => {
+  const topic = DRILL_TOPIC_REGISTRY.find((t) => t.id === "times_tables");
+  const scope = topic?.scopes?.find((s) => s.id === scopeId);
+  if (!scope) throw new Error(`Unknown times_tables scope: ${scopeId}`);
+  return scope.label;
+};
+var ttModule = (scopeId, items) => ({
+  id: mathmogLearnModuleId("times_tables", scopeId),
+  label: ttScopeLabel(scopeId),
+  items,
+  distractorSets: items.map(ttDistractorSet)
+});
+var TIMES_TABLES_LEARN_MODULES = [
+  ttModule("tt_full", multiRowItems([...TT_FACTORS])),
+  ttModule("tt_easy", multiRowItems([2, 5, 10])),
+  ttModule("tt_2_5", multiRowItems([2, 3, 4, 5])),
+  ttModule("tt_6_9", multiRowItems([6, 7, 8, 9])),
+  ttModule("tt_10_12", multiRowItems([10, 11, 12])),
+  ttModule("tt_just_6", rowItems(6)),
+  ttModule("tt_just_7", rowItems(7)),
+  ttModule("tt_just_8", rowItems(8)),
+  ttModule("tt_just_9", rowItems(9))
+];
+
+// src/core/learn/modules/index.ts
+var MATHMOG_LEARN_MODULES = [
+  ...TIMES_TABLES_LEARN_MODULES
+];
 function cn(...inputs) {
   return tailwindMerge.twMerge(clsx.clsx(inputs));
 }
@@ -1438,8 +1572,10 @@ exports.DRILL_TOPIC_REGISTRY = DRILL_TOPIC_REGISTRY;
 exports.INITIAL_LEARN_TIER = INITIAL_LEARN_TIER;
 exports.LEARN_TIER_LADDER = LEARN_TIER_LADDER;
 exports.MATHMOG_LEARN_CONFIG = MATHMOG_LEARN_CONFIG;
+exports.MATHMOG_LEARN_MODULES = MATHMOG_LEARN_MODULES;
 exports.MEMORIZE_LEARN_TOPICS = MEMORIZE_LEARN_TOPICS;
 exports.RECOGNIZE_OPTION_COUNT = RECOGNIZE_OPTION_COUNT;
+exports.TIMES_TABLES_LEARN_MODULES = TIMES_TABLES_LEARN_MODULES;
 exports.applyCorrectAnswer = applyCorrectAnswer;
 exports.applyMiss = applyMiss;
 exports.applySeen = applySeen;

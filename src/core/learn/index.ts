@@ -38,6 +38,11 @@ export {
   isLearnEligible,
 } from './helpers';
 
+export {
+  TIMES_TABLES_LEARN_MODULES,
+  MATHMOG_LEARN_MODULES,
+} from './modules';
+
 export type { MemorizeLearnTopic } from './mathmog-binding';
 
 export {
