@@ -123,4 +123,14 @@ export {
   parseMathmogLearnModuleId,
 } from './learn';
 
+// Phase 2A.5 offer engine — the 2B.2 portal seam. (Omitted from this index
+// when 2A.5 shipped; restored in v0.7.1 so the portal can consume it.)
+export type { AcquiredModulePredicate, MathmogOffer } from './learn';
+
+export {
+  resolveLearnNextModule,
+  validateLearnAdjacency,
+  mathmogLearnCompletionOffers,
+} from './learn';
+
 export { cn } from './cn';

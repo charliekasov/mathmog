@@ -2542,10 +2542,80 @@ var MATHMOG_LEARN_MODULES = [
   ...PERFECT_CUBES_LEARN_MODULES,
   ...FRACTION_CONVERSIONS_LEARN_MODULES
 ];
+
+// src/core/learn/offers.ts
+function resolveLearnNextModule(completed, modules, isAcquired) {
+  const visited = /* @__PURE__ */ new Set([completed.id]);
+  let nextId = completed.nextModuleId;
+  while (nextId !== void 0 && !visited.has(nextId)) {
+    visited.add(nextId);
+    const next = modules.find((m) => m.id === nextId);
+    if (next === void 0) return null;
+    if (isLearnEligibleModule(next) && !isAcquired(next.id)) return next;
+    nextId = next.nextModuleId;
+  }
+  return null;
+}
+function validateLearnAdjacency(modules) {
+  const problems = [];
+  const ids = new Set(modules.map((m) => m.id));
+  for (const m of modules) {
+    if (m.nextModuleId === void 0) continue;
+    if (m.nextModuleId === m.id) {
+      problems.push(`module "${m.id}" lists itself as nextModuleId`);
+    } else if (!ids.has(m.nextModuleId)) {
+      problems.push(
+        `module "${m.id}" lists unknown nextModuleId "${m.nextModuleId}"`
+      );
+    }
+  }
+  return problems;
+}
+function mathmogLearnCompletionOffers(args) {
+  const { completedModuleId, isAcquired } = args;
+  const modules = args.modules ?? MATHMOG_LEARN_MODULES;
+  const parsed = parseMathmogLearnModuleId(completedModuleId);
+  if (parsed === null) {
+    throw new Error(
+      `mathmogLearnCompletionOffers: malformed module id "${completedModuleId}"`
+    );
+  }
+  const completed = modules.find((m) => m.id === completedModuleId);
+  if (completed === void 0) {
+    throw new Error(
+      `mathmogLearnCompletionOffers: unknown module "${completedModuleId}"`
+    );
+  }
+  const offers = [
+    {
+      kind: "drill-scope",
+      topic: parsed.topic,
+      scopeId: parsed.scopeId,
+      scopeLabel: registryScopeLabel(parsed.topic, parsed.scopeId)
+    }
+  ];
+  const next = resolveLearnNextModule(completed, modules, isAcquired);
+  if (next !== null) {
+    const nextParsed = parseMathmogLearnModuleId(next.id);
+    if (nextParsed === null) {
+      throw new Error(
+        `mathmogLearnCompletionOffers: malformed nextModuleId "${next.id}"`
+      );
+    }
+    offers.push({
+      kind: "learn-module",
+      moduleId: next.id,
+      moduleLabel: next.label,
+      topic: nextParsed.topic,
+      scopeId: nextParsed.scopeId
+    });
+  }
+  return offers;
+}
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MAX_TRANSCRIPTION_PLACES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, REPEATING_PRECISION_FLOOR, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionEnrichmentPostscript, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isFaithfulFractionTranscription, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, truncateFraction, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MAX_TRANSCRIPTION_PLACES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, REPEATING_PRECISION_FLOOR, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionEnrichmentPostscript, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isFaithfulFractionTranscription, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnCompletionOffers, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, resolveLearnNextModule, roundFraction, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, truncateFraction, validateLearnAdjacency, validateLearnModuleDef };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

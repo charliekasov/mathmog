@@ -413,4 +413,87 @@ declare function parseMathmogLearnModuleId(moduleId: string): {
     scopeId: string;
 } | null;
 
-export { type AdaptiveData as A, getLearnItemState as B, learnSessionPhase as C, type Difficulty as D, mathmogLearnModuleId as E, parseMathmogLearnModuleId as F, startNextLearnRound as G, INITIAL_LEARN_TIER as I, LEARN_TIER_LADDER as L, MATHMOG_LEARN_CONFIG as M, type PendingLevelUp as P, type QuizzedLearnTier as Q, RECOGNIZE_OPTION_COUNT as R, type SpeedChallengeState as S, type LearnActionResult as a, type LearnConfig as b, type LearnDistractorSet as c, type LearnItem as d, type LearnItemState as e, type LearnItemStatus as f, type LearnModuleDef as g, type LearnRoundState as h, type LearnRoundSummary as i, type LearnRoundTrace as j, type LearnSessionConfig as k, type LearnSessionEvent as l, type LearnSessionPhase as m, type LearnSessionState as n, type LearnTier as o, MEMORIZE_LEARN_TOPICS as p, type MemorizeLearnTopic as q, type MissDiagnosis as r, type MissedMathmogProblem as s, type MissedMathmogProblemKind as t, type Problem as u, type ProblemFact as v, applyLearnAnswer as w, applyLearnSeen as x, createLearnSession as y, currentLearnItemId as z };
+/**
+ * The 2B.2 seam: has this student ACQUIRED the fact set this module covers?
+ * One bit per (student, module) — exactly what F1 needs to route between
+ * Learn-side and Drill-side moves. Callers without persistence (Free Play
+ * before 2B.2 lands, tests) can pass `() => false`.
+ *
+ * CONTRACT (2A.5 reviewer REQUIRED, pinned by test): "acquired" means every
+ * fact in the module is covered by the student's completed modules, NOT
+ * literal completion of this module id. Modules overlap (the TT singles
+ * are subsets of tt_6_9; squares_1_5 is a subset of squares_1_10), and a
+ * module-id-equality implementation re-creates the exact F1 anti-pattern
+ * this engine exists to kill: a student who climbed just_6 … just_9 would
+ * be offered "Learn 6× through 9×" — an all-review module for facts the
+ * system has on record. 2B.2 owns the subsumption-aware implementation;
+ * note that the same TT fact carries different item ids across modules
+ * ("7x12" in tt_just_7, "12x7" in multi-row modules), so fact-coverage
+ * computation needs factKey-style normalization, not item-id equality.
+ */
+type AcquiredModulePredicate = (moduleId: string) => boolean;
+/**
+ * Resolves the acquisition next step after completing `completed`: follows
+ * the Learn-side `nextModuleId` rail to the first module that is structurally
+ * Learn-eligible and NOT yet acquired. Walking past acquired modules (rather
+ * than stopping at the first hop) is the F1-awareness: a student who already
+ * Learned the stored neighbor elsewhere should be offered the next genuinely
+ * new set on the ladder, not silence. A visited set guards the mutual-pair
+ * cycles the curated rails deliberately contain; when every reachable module
+ * is acquired or the rail ends, there is no acquisition offer — and the
+ * absence is the message (curriculum §3.7: no "you're at the top!" copy).
+ */
+declare function resolveLearnNextModule<TPrompt, TAnswer>(completed: LearnModuleDef<TPrompt, TAnswer>, modules: LearnModuleDef<TPrompt, TAnswer>[], isAcquired: AcquiredModulePredicate): LearnModuleDef<TPrompt, TAnswer> | null;
+/**
+ * Registry-level integrity check for the Learn-side adjacency rails — the
+ * cross-module half that `validateLearnModuleDef` (single-def) can't see.
+ * Returns human-readable problems; empty array = sound. A test pins this
+ * against `MATHMOG_LEARN_MODULES` so a curation slip (dangling or
+ * self-referential rail) fails CI loudly.
+ */
+declare function validateLearnAdjacency(modules: LearnModuleDef<unknown, unknown>[]): string[];
+/**
+ * One offer on a completion surface. The union is the Phase 3 inheritance
+ * point: the Drill loop's widen/narrow offers reuse these two kinds (a
+ * Drill offer at a different scope, a Learn offer for unacquired content)
+ * rather than minting a third vocabulary.
+ * - `drill-scope`: run Drill mode over a (topic, scope) — the retention
+ *   move, only honest for acquired content.
+ * - `learn-module`: start a Learn module — the acquisition move, only
+ *   offered for unacquired content.
+ * Both carry (topic, scopeId) because for Math Mog a module IS a scope
+ * viewed as a Learn target; the call site builds its trainer URL from
+ * either kind the same way.
+ */
+type MathmogOffer = {
+    kind: 'drill-scope';
+    topic: string;
+    scopeId: string;
+    /** Registry scope label — what the Drill dropdown shows. */
+    scopeLabel: string;
+} | {
+    kind: 'learn-module';
+    moduleId: string;
+    /** Module label (same string as the registry scope label). */
+    moduleLabel: string;
+    topic: string;
+    scopeId: string;
+};
+/**
+ * The §6.6 Learn-completion offer set, in order:
+ * 1. Drill the just-completed set (retention — always present; completing
+ *    the module is precisely what makes this set Drill-honest), then
+ * 2. Learn the next set (acquisition — present only when the rail resolves
+ *    to an unacquired, eligible module).
+ * Throws loudly on a module id that doesn't parse or isn't in the registry
+ * (same posture as `LearnSessionHost`'s session/module mismatch): a typo'd
+ * id is a build bug, not a student-facing fallback case.
+ */
+declare function mathmogLearnCompletionOffers(args: {
+    completedModuleId: string;
+    isAcquired: AcquiredModulePredicate;
+    /** Defaults to the full curated registry; injectable for tests. */
+    modules?: LearnModuleDef<string, number>[];
+}): MathmogOffer[];
+
+export { type AcquiredModulePredicate as A, createLearnSession as B, currentLearnItemId as C, type Difficulty as D, getLearnItemState as E, learnSessionPhase as F, mathmogLearnCompletionOffers as G, mathmogLearnModuleId as H, INITIAL_LEARN_TIER as I, parseMathmogLearnModuleId as J, resolveLearnNextModule as K, LEARN_TIER_LADDER as L, MATHMOG_LEARN_CONFIG as M, startNextLearnRound as N, validateLearnAdjacency as O, type PendingLevelUp as P, type QuizzedLearnTier as Q, RECOGNIZE_OPTION_COUNT as R, type SpeedChallengeState as S, type AdaptiveData as a, type LearnActionResult as b, type LearnConfig as c, type LearnDistractorSet as d, type LearnItem as e, type LearnItemState as f, type LearnItemStatus as g, type LearnModuleDef as h, type LearnRoundState as i, type LearnRoundSummary as j, type LearnRoundTrace as k, type LearnSessionConfig as l, type LearnSessionEvent as m, type LearnSessionPhase as n, type LearnSessionState as o, type LearnTier as p, MEMORIZE_LEARN_TOPICS as q, type MathmogOffer as r, type MemorizeLearnTopic as s, type MissDiagnosis as t, type MissedMathmogProblem as u, type MissedMathmogProblemKind as v, type Problem as w, type ProblemFact as x, applyLearnAnswer as y, applyLearnSeen as z };

@@ -1,35 +1,7 @@
 import * as React from 'react';
 import { ComponentType, ReactNode, MouseEvent, ForwardRefExoticComponent, InputHTMLAttributes, RefAttributes, Dispatch, SetStateAction } from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { D as Difficulty, u as Problem, r as MissDiagnosis, A as AdaptiveData, s as MissedMathmogProblem, S as SpeedChallengeState, g as LearnModuleDef, k as LearnSessionConfig, n as LearnSessionState, l as LearnSessionEvent, d as LearnItem, q as MemorizeLearnTopic } from '../mathmog-binding-CckcqDZ9.cjs';
-
-/**
- * One offer on a completion surface. The union is the Phase 3 inheritance
- * point: the Drill loop's widen/narrow offers reuse these two kinds (a
- * Drill offer at a different scope, a Learn offer for unacquired content)
- * rather than minting a third vocabulary.
- * - `drill-scope`: run Drill mode over a (topic, scope) — the retention
- *   move, only honest for acquired content.
- * - `learn-module`: start a Learn module — the acquisition move, only
- *   offered for unacquired content.
- * Both carry (topic, scopeId) because for Math Mog a module IS a scope
- * viewed as a Learn target; the call site builds its trainer URL from
- * either kind the same way.
- */
-type MathmogOffer = {
-    kind: 'drill-scope';
-    topic: string;
-    scopeId: string;
-    /** Registry scope label — what the Drill dropdown shows. */
-    scopeLabel: string;
-} | {
-    kind: 'learn-module';
-    moduleId: string;
-    /** Module label (same string as the registry scope label). */
-    moduleLabel: string;
-    topic: string;
-    scopeId: string;
-};
+import { D as Difficulty, w as Problem, t as MissDiagnosis, a as AdaptiveData, u as MissedMathmogProblem, S as SpeedChallengeState, h as LearnModuleDef, l as LearnSessionConfig, o as LearnSessionState, m as LearnSessionEvent, e as LearnItem, s as MemorizeLearnTopic, r as MathmogOffer } from '../offers-BxZYU1VI.cjs';
 
 /**
  * Generic data-attribute passthrough. Allows package components to anchor

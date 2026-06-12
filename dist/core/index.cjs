@@ -2544,6 +2544,76 @@ var MATHMOG_LEARN_MODULES = [
   ...PERFECT_CUBES_LEARN_MODULES,
   ...FRACTION_CONVERSIONS_LEARN_MODULES
 ];
+
+// src/core/learn/offers.ts
+function resolveLearnNextModule(completed, modules, isAcquired) {
+  const visited = /* @__PURE__ */ new Set([completed.id]);
+  let nextId = completed.nextModuleId;
+  while (nextId !== void 0 && !visited.has(nextId)) {
+    visited.add(nextId);
+    const next = modules.find((m) => m.id === nextId);
+    if (next === void 0) return null;
+    if (isLearnEligibleModule(next) && !isAcquired(next.id)) return next;
+    nextId = next.nextModuleId;
+  }
+  return null;
+}
+function validateLearnAdjacency(modules) {
+  const problems = [];
+  const ids = new Set(modules.map((m) => m.id));
+  for (const m of modules) {
+    if (m.nextModuleId === void 0) continue;
+    if (m.nextModuleId === m.id) {
+      problems.push(`module "${m.id}" lists itself as nextModuleId`);
+    } else if (!ids.has(m.nextModuleId)) {
+      problems.push(
+        `module "${m.id}" lists unknown nextModuleId "${m.nextModuleId}"`
+      );
+    }
+  }
+  return problems;
+}
+function mathmogLearnCompletionOffers(args) {
+  const { completedModuleId, isAcquired } = args;
+  const modules = args.modules ?? MATHMOG_LEARN_MODULES;
+  const parsed = parseMathmogLearnModuleId(completedModuleId);
+  if (parsed === null) {
+    throw new Error(
+      `mathmogLearnCompletionOffers: malformed module id "${completedModuleId}"`
+    );
+  }
+  const completed = modules.find((m) => m.id === completedModuleId);
+  if (completed === void 0) {
+    throw new Error(
+      `mathmogLearnCompletionOffers: unknown module "${completedModuleId}"`
+    );
+  }
+  const offers = [
+    {
+      kind: "drill-scope",
+      topic: parsed.topic,
+      scopeId: parsed.scopeId,
+      scopeLabel: registryScopeLabel(parsed.topic, parsed.scopeId)
+    }
+  ];
+  const next = resolveLearnNextModule(completed, modules, isAcquired);
+  if (next !== null) {
+    const nextParsed = parseMathmogLearnModuleId(next.id);
+    if (nextParsed === null) {
+      throw new Error(
+        `mathmogLearnCompletionOffers: malformed nextModuleId "${next.id}"`
+      );
+    }
+    offers.push({
+      kind: "learn-module",
+      moduleId: next.id,
+      moduleLabel: next.label,
+      topic: nextParsed.topic,
+      scopeId: nextParsed.scopeId
+    });
+  }
+  return offers;
+}
 function cn(...inputs) {
   return tailwindMerge.twMerge(clsx.clsx(inputs));
 }
@@ -2595,6 +2665,7 @@ exports.isLearnEligibleModule = isLearnEligibleModule;
 exports.isModuleComplete = isModuleComplete;
 exports.isQuizzedTier = isQuizzedTier;
 exports.learnSessionPhase = learnSessionPhase;
+exports.mathmogLearnCompletionOffers = mathmogLearnCompletionOffers;
 exports.mathmogLearnModuleId = mathmogLearnModuleId;
 exports.parseMathmogLearnModuleId = parseMathmogLearnModuleId;
 exports.perfectCubes = perfectCubes;
@@ -2602,12 +2673,14 @@ exports.perfectFifthPowers = perfectFifthPowers;
 exports.perfectFourthPowers = perfectFourthPowers;
 exports.perfectSquares = perfectSquares;
 exports.repeatingDecimalDisplay = repeatingDecimalDisplay;
+exports.resolveLearnNextModule = resolveLearnNextModule;
 exports.roundFraction = roundFraction;
 exports.simplifyFraction = simplifyFraction;
 exports.solidProgress = solidProgress;
 exports.startNextLearnRound = startNextLearnRound;
 exports.topicHasDifficulty = topicHasDifficulty;
 exports.truncateFraction = truncateFraction;
+exports.validateLearnAdjacency = validateLearnAdjacency;
 exports.validateLearnModuleDef = validateLearnModuleDef;
 //# sourceMappingURL=index.cjs.map
 //# sourceMappingURL=index.cjs.map
