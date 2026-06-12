@@ -1,4 +1,29 @@
 type Difficulty = 'Easy' | 'Medium' | 'Hard';
+/**
+ * 2D.3: the (topic, itemId) identity of the underlying Memorize fact,
+ * stamped at generation by the branches that know their operands (times
+ * tables, perfect squares, perfect cubes, fraction conversions). Consumed
+ * by the feedback surfaces: the `diagnoseMiss` lookup at miss time (live
+ * identity line + capture-time storage on `MissedMathmogProblem`), the
+ * correct-but-enriched postscript, and the validator's
+ * faithful-transcription check. Absent on estimation problems, Level-2/3
+ * types, text-input conversion directions (decToFrac / percToFrac),
+ * advanced topics without a diagnoser, and pre-existing records —
+ * consumers silently skip diagnosis when missing.
+ */
+interface ProblemFact {
+    /** The four topics with 2D.2 diagnosers (subset of `MemorizeLearnTopic`). */
+    topic: 'times_tables' | 'perfect_squares' | 'perfect_cubes' | 'fraction_conversions';
+    /** Learn item id, doubling as fact id: "6x8", "7^2", "7^3", "5/6". */
+    itemId: string;
+    /**
+     * Present on fracToPerc problems: the typed answer lives in the percent
+     * shift of the fact's value (83.33 for 5/6). Decimal-space consumers
+     * (`diagnoseMiss`, the enrichment postscript) skip these; the validator's
+     * faithful-transcription check runs in percent space instead.
+     */
+    percentShift?: true;
+}
 interface Problem {
     question: string | string[];
     answer: any;
@@ -6,6 +31,8 @@ interface Problem {
     explanation: string;
     inputType: 'number' | 'text' | 'buttons' | 'multi-text';
     options?: string[];
+    /** See `ProblemFact` — absent on problems with no diagnosable fact. */
+    fact?: ProblemFact;
     /**
      * Maximum acceptable relative deviation for estimation problems (e.g. 0.20
      * = 20% off still counts as correct). Read by the estimation branch of the
@@ -59,6 +86,8 @@ interface MissedMathmogProblem {
     validationKind?: MissedMathmogProblemKind;
     correctAnswerNumeric?: number;
     explanation?: string;
+    diagnosisMessage?: string;
+    diagnosisCode?: string;
 }
 
 /**
@@ -354,4 +383,4 @@ declare function parseMathmogLearnModuleId(moduleId: string): {
     scopeId: string;
 } | null;
 
-export { type AdaptiveData as A, mathmogLearnModuleId as B, parseMathmogLearnModuleId as C, type Difficulty as D, startNextLearnRound as E, INITIAL_LEARN_TIER as I, LEARN_TIER_LADDER as L, MATHMOG_LEARN_CONFIG as M, type PendingLevelUp as P, type QuizzedLearnTier as Q, RECOGNIZE_OPTION_COUNT as R, type SpeedChallengeState as S, type LearnActionResult as a, type LearnConfig as b, type LearnDistractorSet as c, type LearnItem as d, type LearnItemState as e, type LearnItemStatus as f, type LearnModuleDef as g, type LearnRoundState as h, type LearnRoundSummary as i, type LearnRoundTrace as j, type LearnSessionConfig as k, type LearnSessionEvent as l, type LearnSessionPhase as m, type LearnSessionState as n, type LearnTier as o, MEMORIZE_LEARN_TOPICS as p, type MemorizeLearnTopic as q, type MissedMathmogProblem as r, type MissedMathmogProblemKind as s, type Problem as t, applyLearnAnswer as u, applyLearnSeen as v, createLearnSession as w, currentLearnItemId as x, getLearnItemState as y, learnSessionPhase as z };
+export { type AdaptiveData as A, learnSessionPhase as B, mathmogLearnModuleId as C, type Difficulty as D, parseMathmogLearnModuleId as E, startNextLearnRound as F, INITIAL_LEARN_TIER as I, LEARN_TIER_LADDER as L, MATHMOG_LEARN_CONFIG as M, type PendingLevelUp as P, type QuizzedLearnTier as Q, RECOGNIZE_OPTION_COUNT as R, type SpeedChallengeState as S, type LearnActionResult as a, type LearnConfig as b, type LearnDistractorSet as c, type LearnItem as d, type LearnItemState as e, type LearnItemStatus as f, type LearnModuleDef as g, type LearnRoundState as h, type LearnRoundSummary as i, type LearnRoundTrace as j, type LearnSessionConfig as k, type LearnSessionEvent as l, type LearnSessionPhase as m, type LearnSessionState as n, type LearnTier as o, MEMORIZE_LEARN_TOPICS as p, type MemorizeLearnTopic as q, type MissedMathmogProblem as r, type MissedMathmogProblemKind as s, type Problem as t, type ProblemFact as u, applyLearnAnswer as v, applyLearnSeen as w, createLearnSession as x, currentLearnItemId as y, getLearnItemState as z };

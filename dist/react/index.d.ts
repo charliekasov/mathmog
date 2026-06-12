@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ComponentType, ReactNode, MouseEvent, ForwardRefExoticComponent, InputHTMLAttributes, RefAttributes, Dispatch, SetStateAction } from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { D as Difficulty, t as Problem, A as AdaptiveData, r as MissedMathmogProblem, S as SpeedChallengeState, g as LearnModuleDef, k as LearnSessionConfig, n as LearnSessionState, l as LearnSessionEvent, d as LearnItem, q as MemorizeLearnTopic } from '../mathmog-binding-DCzR0CkV.js';
+import { D as Difficulty, t as Problem, A as AdaptiveData, r as MissedMathmogProblem, S as SpeedChallengeState, g as LearnModuleDef, k as LearnSessionConfig, n as LearnSessionState, l as LearnSessionEvent, d as LearnItem, q as MemorizeLearnTopic } from '../mathmog-binding-DLmYvzwC.js';
 
 /**
  * Generic data-attribute passthrough. Allows package components to anchor

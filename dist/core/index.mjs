@@ -42,6 +42,25 @@ var acceptedDecimalFamily = (num, den) => {
   }
   return family;
 };
+var MAX_TRANSCRIPTION_PLACES = 10;
+var isFaithfulFractionTranscription = (itemId, typed, space = "decimal") => {
+  const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(itemId);
+  if (!match) return false;
+  const num = Number(match[1]);
+  const den = Number(match[2]);
+  const base = FRACTION_BASES[den];
+  if (!base?.repeating) return false;
+  const trimmed = typed.trim();
+  if (trimmed === "") return false;
+  const value = Number(trimmed);
+  if (!Number.isFinite(value)) return false;
+  const places = (trimmed.split(".")[1] ?? "").length;
+  const { floorPlaces } = fractionPrecisionPolicy(den);
+  const minPlaces = space === "percent" ? Math.max(0, floorPlaces - 2) : floorPlaces;
+  if (places < minPlaces || places > MAX_TRANSCRIPTION_PLACES) return false;
+  const shiftedNum = space === "percent" ? num * 100 : num;
+  return value === truncateFraction(shiftedNum, den, places) || value === roundFraction(shiftedNum, den, places);
+};
 var repeatingDecimalDisplay = (num, den) => {
   const whole = Math.floor(num / den);
   const seen = /* @__PURE__ */ new Map();
@@ -321,7 +340,14 @@ var generateLevel1Problem = (difficulty, history) => {
       const base = num / 10;
       explanation = `(${num})\xB2 = (${base}\xD710)\xB2 = ${base}\xB2\xD710\xB2 = ${base * base}\xD7100 = ${answer}`;
     }
-    return { question: `${num}\xB2 = ?`, answer, type: "Perfect Squares", explanation, inputType: "number" };
+    return {
+      question: `${num}\xB2 = ?`,
+      answer,
+      type: "Perfect Squares",
+      explanation,
+      inputType: "number",
+      fact: { topic: "perfect_squares", itemId: `${num}^2` }
+    };
   } else if (type === "cube") {
     let num;
     if (difficulty === "Easy") {
@@ -338,7 +364,14 @@ var generateLevel1Problem = (difficulty, history) => {
       const base = num / 10;
       explanation = `(${num})\xB3 = (${base}\xD710)\xB3 = ${base}\xB3\xD710\xB3 = ${base * base * base}\xD71000 = ${answer}`;
     }
-    return { question: `${num}\xB3 = ?`, answer, type: "Perfect Cubes", explanation, inputType: "number" };
+    return {
+      question: `${num}\xB3 = ?`,
+      answer,
+      type: "Perfect Cubes",
+      explanation,
+      inputType: "number",
+      fact: { topic: "perfect_cubes", itemId: `${num}^3` }
+    };
   } else {
     const easyDenominators = [4, 5];
     let mediumDenominators = [3, 6, 8, 9, 7];
@@ -376,7 +409,14 @@ var generateLevel1Problem = (difficulty, history) => {
         const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
         const explanation = fractionToDecimalExplanation(num, den);
         const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num] : parseFloat(decimalValue.toFixed(precision));
-        return { question: questionText, answer, type: "Fraction to Decimal", explanation, inputType: "number" };
+        return {
+          question: questionText,
+          answer,
+          type: "Fraction to Decimal",
+          explanation,
+          inputType: "number",
+          fact: { topic: "fraction_conversions", itemId: `${num}/${den}` }
+        };
       }
       case "decToFrac": {
         const simplified = simplifyFraction(num, den);
@@ -393,7 +433,14 @@ var generateLevel1Problem = (difficulty, history) => {
         const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
         const explanation = fractionToPercentExplanation(num, den, percentPrecision);
         const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num].map((d) => parseFloat((d * 100).toFixed(percentPrecision))) : parseFloat(percentValue.toFixed(percentPrecision));
-        return { question: questionText, answer, type: "Fraction to Percent", explanation, inputType: "number" };
+        return {
+          question: questionText,
+          answer,
+          type: "Fraction to Percent",
+          explanation,
+          inputType: "number",
+          fact: { topic: "fraction_conversions", itemId: `${num}/${den}`, percentShift: true }
+        };
       }
       case "percToFrac": {
         const simplified = simplifyFraction(num, den);
@@ -1005,21 +1052,42 @@ var generateTimesTablesProblem_targeted = (scope) => {
   }
   const answer = a * b;
   const explanation = `${a} \xD7 ${b} = ${answer}.`;
-  return { question: `${a} \xD7 ${b} = ?`, answer, type: "Times Tables", explanation, inputType: "number" };
+  return {
+    question: `${a} \xD7 ${b} = ?`,
+    answer,
+    type: "Times Tables",
+    explanation,
+    inputType: "number",
+    fact: { topic: "times_tables", itemId: `${a}x${b}` }
+  };
 };
 var generatePerfectSquareProblem_targeted = (scope) => {
   const [lo, hi] = squaresRangeForScope(scope);
   const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
   const answer = num * num;
   const explanation = `${num}\xB2 = ${num}\xD7${num} = ${answer}`;
-  return { question: `${num}\xB2 = ?`, answer, type: "Perfect Squares", explanation, inputType: "number" };
+  return {
+    question: `${num}\xB2 = ?`,
+    answer,
+    type: "Perfect Squares",
+    explanation,
+    inputType: "number",
+    fact: { topic: "perfect_squares", itemId: `${num}^2` }
+  };
 };
 var generatePerfectCubeProblem_targeted = (scope) => {
   const [lo, hi] = cubesRangeForScope(scope);
   const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
   const answer = num * num * num;
   const explanation = `${num}\xB3 = ${num}\xD7${num}\xD7${num} = ${answer}`;
-  return { question: `${num}\xB3 = ?`, answer, type: "Perfect Cubes", explanation, inputType: "number" };
+  return {
+    question: `${num}\xB3 = ?`,
+    answer,
+    type: "Perfect Cubes",
+    explanation,
+    inputType: "number",
+    fact: { topic: "perfect_cubes", itemId: `${num}^3` }
+  };
 };
 var generateFractionProblem_allDenominators = (scope) => {
   const allDenominators = fractionDenominatorsForScope(scope);
@@ -1043,7 +1111,14 @@ var generateFractionProblem_allDenominators = (scope) => {
       const questionText = `Convert ${num}/${den} to a decimal (${places} decimal places)`;
       const explanation = fractionToDecimalExplanation(num, den);
       const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num] : parseFloat(decimalValue.toFixed(precision));
-      return { question: questionText, answer, type: "Fraction to Decimal", explanation, inputType: "number" };
+      return {
+        question: questionText,
+        answer,
+        type: "Fraction to Decimal",
+        explanation,
+        inputType: "number",
+        fact: { topic: "fraction_conversions", itemId: `${num}/${den}` }
+      };
     }
     case "decToFrac": {
       const simplified = simplifyFraction(num, den);
@@ -1055,7 +1130,14 @@ var generateFractionProblem_allDenominators = (scope) => {
       const questionText = `Convert ${num}/${den} to a percent (${percentPrecision} decimal places)`;
       const explanation = fractionToPercentExplanation(num, den, percentPrecision);
       const answer = specificAnswers && specificAnswers[num] ? specificAnswers[num].map((d) => parseFloat((d * 100).toFixed(percentPrecision))) : parseFloat(percentValue.toFixed(percentPrecision));
-      return { question: questionText, answer, type: "Fraction to Percent", explanation, inputType: "number" };
+      return {
+        question: questionText,
+        answer,
+        type: "Fraction to Percent",
+        explanation,
+        inputType: "number",
+        fact: { topic: "fraction_conversions", itemId: `${num}/${den}`, percentShift: true }
+      };
     }
     case "percToFrac": {
       const simplified = simplifyFraction(num, den);
@@ -1436,7 +1518,7 @@ var diagnoseTimesTablesMiss = (a, b, wrong) => {
     if (code === "tt-neighbor-fact") {
       return {
         code,
-        message: `${wrong} is ${f1} \xD7 ${f2} \u2014 a neighbor fact. ${a} \xD7 ${b} = ${answer}.`
+        message: `${wrong} is ${f1} \xD7 ${f2}, a neighbor fact. ${a} \xD7 ${b} = ${answer}.`
       };
     }
     return {
@@ -1470,14 +1552,14 @@ var diagnoseSquareMiss = (n, wrong) => {
       const relation = m < n ? "short of" : "past";
       return {
         code: "sq-row-product",
-        message: `${wrong} is ${n} \xD7 ${m} \u2014 one ${n} ${relation} ${n} \xD7 ${n}. ${n}\xB2 = ${answer}.`
+        message: `${wrong} is ${n} \xD7 ${m}, one ${n} ${relation} ${n} \xD7 ${n}. ${n}\xB2 = ${answer}.`
       };
     }
   }
   if (n >= 2 && wrong === n * n * n) {
     return {
       code: "sq-cube-slip",
-      message: `${wrong} is ${n}\xB3 \u2014 three ${n}s multiplied. Squaring uses two: ${n} \xD7 ${n} = ${answer}.`
+      message: `${wrong} is ${n}\xB3, three ${n}s multiplied. Squaring uses two: ${n} \xD7 ${n} = ${answer}.`
     };
   }
   for (const m of [n - 2, n + 2]) {
@@ -1506,7 +1588,7 @@ var diagnoseCubeMiss = (n, wrong) => {
   if (n >= 2 && wrong === n * n) {
     return {
       code: "cb-square-slip",
-      message: `${wrong} is ${n}\xB2 \u2014 two ${n}s. A cube multiplies three: ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
+      message: `${wrong} is ${n}\xB2, two ${n}s. A cube multiplies three: ${n} \xD7 ${n} \xD7 ${n} = ${answer}.`
     };
   }
   for (const m of [n - 1, n + 1]) {
@@ -1528,7 +1610,7 @@ var diagnoseCubeMiss = (n, wrong) => {
       };
     }
   }
-  for (const [power, label] of [[4, "\u2074 \u2014 four"], [5, "\u2075 \u2014 five"]]) {
+  for (const [power, label] of [[4, "\u2074, four"], [5, "\u2075, five"]]) {
     if (n >= 2 && wrong === n ** power) {
       return {
         code: "cb-power-slip",
@@ -1576,14 +1658,14 @@ var detectUnderPrecision = (num, den, wrong) => {
   if (wrong === truncateFraction(num, den, places)) {
     return {
       code: "frac-under-precision",
-      message: repeating ? `Right idea \u2014 ${itemId} starts with ${wrong}, but the digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right start \u2014 ${itemId} does begin with ${wrong}. The full value is ${display}.`
+      message: repeating ? `Right idea. ${itemId} starts with ${wrong}, but the digits keep going: ${display} At ${canonicalPlaces} decimal places, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right start. ${itemId} does begin with ${wrong}. The full value is ${display}.`
     };
   }
   if (wrong === roundFraction(num, den, places)) {
-    const placeWord = places === 1 ? "decimal" : "decimals";
+    const placeWord = places === 1 ? "decimal place" : "decimal places";
     return {
       code: "frac-under-precision",
-      message: repeating ? `Right idea \u2014 ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right idea \u2014 ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The full value is ${display}.`
+      message: repeating ? `Right idea. ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The digits keep going: ${display} At ${canonicalPlaces} decimal places, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.` : `Right idea. ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The full value is ${display}.`
     };
   }
   return null;
@@ -1599,10 +1681,10 @@ var detectLastDigitSlip = (num, den, wrong) => {
   if (Math.abs(wrongScaled - truncScaled) !== 1 && Math.abs(wrongScaled - roundScaled) !== 1) {
     return null;
   }
-  const placeWord = places === 1 ? "decimal" : "decimals";
+  const placeWord = places === 1 ? "decimal place" : "decimal places";
   return {
     code: "frac-last-digit",
-    message: `So close \u2014 ${wrong} is one digit off in the last place. ${num}/${den} = ${endSentence(fractionValueDisplay(num, den))} At ${places} ${placeWord}, that's ${acceptedFormsAt(num, den, places)}.`
+    message: `So close. ${wrong} is one digit off in the last place. ${num}/${den} = ${endSentence(fractionValueDisplay(num, den))} At ${places} ${placeWord}, that's ${acceptedFormsAt(num, den, places)}.`
   };
 };
 var fractionIdentityMessage = (num, den, wrong, identity) => {
@@ -1617,12 +1699,12 @@ var fractionIdentityMessage = (num, den, wrong, identity) => {
       if (inFamily) {
         return `${wrong} is what ${identity.fraction} comes to. ${itemId} is ${closeness}${comparison}: ${display}`;
       }
-      return `${wrong} is ${identity.fraction} cut short \u2014 ${identity.fraction} = ${endSentence(fractionValueDisplay(refNum, refDen))} ${itemId} is ${closeness}${comparison}: ${display}`;
+      return `${wrong} is ${identity.fraction} cut short. ${identity.fraction} = ${endSentence(fractionValueDisplay(refNum, refDen))} ${itemId} is ${closeness}${comparison}: ${display}`;
     }
     case "complement":
-      return `${wrong} is what ${identity.fraction} comes to \u2014 that's the rest of the whole after ${itemId}. ${itemId} itself is ${display}`;
+      return `${wrong} is what ${identity.fraction} comes to. That's the rest of the whole after ${itemId}. ${itemId} itself is ${display}`;
     case "rotation":
-      return `${wrong} is what ${identity.fraction} comes to \u2014 sevenths all run the same 142857 loop, just starting at different digits. ${itemId} is ${display}`;
+      return `${wrong} is what ${identity.fraction} comes to. Sevenths all run the same 142857 loop, just starting at different digits. ${itemId} is ${display}`;
     case "digits":
       return `${wrong} reads the ${num} and ${den} straight across. ${itemId} means ${num} \xF7 ${den}: ${display}`;
     case "digit-swap":
@@ -1630,7 +1712,7 @@ var fractionIdentityMessage = (num, den, wrong, identity) => {
     case "percent-slip": {
       const wrongPercent = Math.round(wrong * 100);
       const percentDisplay = fractionBasesByDenominator[den].repeating ? repeatingDecimalDisplay(num * 100, den) : String(truncateFraction(num * 100, den, 1));
-      return `${wrong} means ${wrongPercent}%. ${itemId} is ${percentDisplay}% \u2014 as a decimal, ${display}`;
+      return `${wrong} means ${wrongPercent}%. ${itemId} is ${percentDisplay}%. As a decimal, ${display}`;
     }
     case "part-as-decimal": {
       const digit = identity.part === "numerator" ? num : den;
@@ -1684,6 +1766,33 @@ var diagnoseMiss = (topic, itemId, wrongAnswer) => {
     default:
       return null;
   }
+};
+
+// src/core/diagnosis/enrichment.ts
+var fractionEnrichmentPostscript = (itemId, typed) => {
+  const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(itemId);
+  if (!match) return null;
+  const num = Number(match[1]);
+  const den = Number(match[2]);
+  const base = fractionBasesByDenominator[den];
+  if (!base?.repeating || !base.numerators.includes(num)) return null;
+  const trimmed = typed.trim();
+  if (trimmed === "") return null;
+  const value = Number(trimmed);
+  if (!Number.isFinite(value)) return null;
+  const accepted = acceptedDecimalFamily(num, den).includes(value) || isFaithfulFractionTranscription(itemId, trimmed);
+  if (!accepted) return null;
+  const { floorPlaces, canonicalPlaces } = fractionPrecisionPolicy(den);
+  if (value === truncateFraction(num, den, canonicalPlaces)) return null;
+  const display = repeatingDecimalDisplay(num, den);
+  const places = (trimmed.split(".")[1] ?? "").length;
+  const truncatedAtTyped = truncateFraction(num, den, places);
+  if (value === roundFraction(num, den, places) && value !== truncatedAtTyped) {
+    return `${value} is the rounded form. The exact value is ${display}, so ${truncatedAtTyped} or ${value} both count.`;
+  }
+  const shortForm = truncateFraction(num, den, floorPlaces);
+  const longerForm = truncateFraction(num, den, floorPlaces + 1);
+  return `Full story: ${itemId} = ${display} The digits repeat forever, so ${shortForm}, ${longerForm}, and so on all count.`;
 };
 
 // src/core/drill-topics.ts
@@ -2425,6 +2534,6 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, REPEATING_PRECISION_FLOOR, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, truncateFraction, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, INITIAL_LEARN_TIER, LEARN_TIER_LADDER, MATHMOG_LEARN_CONFIG, MATHMOG_LEARN_MODULES, MAX_TRANSCRIPTION_PLACES, MEMORIZE_LEARN_TOPICS, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, RECOGNIZE_OPTION_COUNT, REPEATING_PRECISION_FLOOR, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyLearnAnswer, applyLearnSeen, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, createLearnSession, currentLearnItemId, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionEnrichmentPostscript, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getLearnItemState, getTopicInfo, getTopicsForLevel, isFaithfulFractionTranscription, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, learnSessionPhase, mathmogLearnModuleId, parseMathmogLearnModuleId, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, startNextLearnRound, topicHasDifficulty, truncateFraction, validateLearnModuleDef };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

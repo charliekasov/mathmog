@@ -10,3 +10,5 @@ export type {
 export { FRACTION_DISTRACTOR_IDENTITIES } from './fraction-identities';
 
 export { diagnoseMiss } from './diagnose';
+
+export { fractionEnrichmentPostscript } from './enrichment';

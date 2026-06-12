@@ -3,6 +3,7 @@
 export type {
   Difficulty,
   Problem,
+  ProblemFact,
   SpeedChallengeState,
   PendingLevelUp,
   AdaptiveData,
@@ -31,6 +32,11 @@ export {
   repeatingDecimalDisplay,
   fractionToDecimalExplanation,
   fractionToPercentExplanation,
+  // Phase 2D.3 — shared faithful-transcription check (the Learn grader and
+  // the Drill validator consume the same function; Charlie-ratified
+  // unification, 2026-06-11)
+  MAX_TRANSCRIPTION_PLACES,
+  isFaithfulFractionTranscription,
 } from './math-problems';
 
 export type {
@@ -41,6 +47,7 @@ export type {
 
 export {
   diagnoseMiss,
+  fractionEnrichmentPostscript,
   FRACTION_DISTRACTOR_IDENTITIES,
 } from './diagnosis';
 

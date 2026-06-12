@@ -1,5 +1,5 @@
-import { D as Difficulty, t as Problem, q as MemorizeLearnTopic, e as LearnItemState, d as LearnItem, c as LearnDistractorSet, g as LearnModuleDef, b as LearnConfig, f as LearnItemStatus, o as LearnTier, Q as QuizzedLearnTier } from '../mathmog-binding-DCzR0CkV.cjs';
-export { A as AdaptiveData, I as INITIAL_LEARN_TIER, L as LEARN_TIER_LADDER, a as LearnActionResult, h as LearnRoundState, i as LearnRoundSummary, j as LearnRoundTrace, k as LearnSessionConfig, l as LearnSessionEvent, m as LearnSessionPhase, n as LearnSessionState, M as MATHMOG_LEARN_CONFIG, p as MEMORIZE_LEARN_TOPICS, r as MissedMathmogProblem, s as MissedMathmogProblemKind, P as PendingLevelUp, R as RECOGNIZE_OPTION_COUNT, S as SpeedChallengeState, u as applyLearnAnswer, v as applyLearnSeen, w as createLearnSession, x as currentLearnItemId, y as getLearnItemState, z as learnSessionPhase, B as mathmogLearnModuleId, C as parseMathmogLearnModuleId, E as startNextLearnRound } from '../mathmog-binding-DCzR0CkV.cjs';
+import { D as Difficulty, t as Problem, q as MemorizeLearnTopic, e as LearnItemState, d as LearnItem, c as LearnDistractorSet, g as LearnModuleDef, b as LearnConfig, f as LearnItemStatus, o as LearnTier, Q as QuizzedLearnTier } from '../mathmog-binding-DLmYvzwC.cjs';
+export { A as AdaptiveData, I as INITIAL_LEARN_TIER, L as LEARN_TIER_LADDER, a as LearnActionResult, h as LearnRoundState, i as LearnRoundSummary, j as LearnRoundTrace, k as LearnSessionConfig, l as LearnSessionEvent, m as LearnSessionPhase, n as LearnSessionState, M as MATHMOG_LEARN_CONFIG, p as MEMORIZE_LEARN_TOPICS, r as MissedMathmogProblem, s as MissedMathmogProblemKind, P as PendingLevelUp, u as ProblemFact, R as RECOGNIZE_OPTION_COUNT, S as SpeedChallengeState, v as applyLearnAnswer, w as applyLearnSeen, x as createLearnSession, y as currentLearnItemId, z as getLearnItemState, B as learnSessionPhase, C as mathmogLearnModuleId, E as parseMathmogLearnModuleId, F as startNextLearnRound } from '../mathmog-binding-DLmYvzwC.cjs';
 import { ClassValue } from 'clsx';
 
 declare const simplifyFraction: (num: number, den: number) => string;
@@ -26,6 +26,33 @@ declare const fractionPrecisionPolicy: (den: number) => {
  * and Drill cannot disagree about a family (review finding #3).
  */
 declare const acceptedDecimalFamily: (num: number, den: number) => number[];
+/**
+ * Upper bound on typed decimal places the faithful-transcription check will
+ * verify. Past ~10 places float comparison stops being trustworthy; nobody
+ * faithfully transcribes that far from a teach card. (Moved from the 2A.4
+ * Learn grader when the check was unified into the Drill validator — 2D.3.)
+ */
+declare const MAX_TRANSCRIPTION_PLACES = 10;
+/**
+ * THE shared faithful-transcription check (2A.4 §4 grader-side ruling,
+ * unified across Learn and Drill in 2D.3 — Charlie-ratified 2026-06-11).
+ * True when `typed` is a faithful truncation or rounding of the fact's true
+ * value at the typed precision, anywhere from the policy floor up to
+ * `MAX_TRANSCRIPTION_PLACES` — the Learn See card displays the full
+ * repeating form ("0.6666…"), so transcribing its digits (0.3333 for 1/3)
+ * must grade correct everywhere. Repeating denominators only; terminating
+ * fractions and non-fraction item ids return false (their exact value is
+ * the only accepted answer — unchanged).
+ *
+ * `space: 'percent'` runs the same check against the percent shift of the
+ * fact (33.33 for 1/3 as a percent), with the floor shifted two places
+ * accordingly (exact integer arithmetic throughout — no float drift).
+ *
+ * This is validator behavior, deliberately NOT a family change: the 2D.1
+ * policy table (`ceilingPlaces`), the displayed families, and the
+ * explanation strings are Charlie-ratified and stay exactly as-is.
+ */
+declare const isFaithfulFractionTranscription: (itemId: string, typed: string, space?: "decimal" | "percent") => boolean;
 /**
  * The repeating expansion for display: enough digits to show the repetend
  * (at least four for short cycles), then an ellipsis — "0.6666…",
@@ -135,6 +162,14 @@ declare const FRACTION_DISTRACTOR_IDENTITIES: Record<string, FractionDistractorI
  * null: the generic re-teach is the designed failure mode.
  */
 declare const diagnoseMiss: (topic: MemorizeLearnTopic, itemId: string, wrongAnswer: number) => MissDiagnosis | null;
+
+/**
+ * The muted one-liner under "✅ Correct!" for a non-canonical accepted
+ * answer to a repeating-fraction decimal conversion, or null when no
+ * enrichment should render. `typed` is the student's raw input (decimal
+ * space — fracToPerc answers are deliberately not enriched in 2D.3).
+ */
+declare const fractionEnrichmentPostscript: (itemId: string, typed: string) => string | null;
 
 type DrillTopic = 'times_tables' | 'perfect_squares' | 'perfect_cubes' | 'fraction_conversions' | 'advanced_squares' | 'advanced_cubes' | 'higher_powers' | 'common_multiples' | 'multiplication_estimation' | 'root_estimation' | 'fraction_estimation' | 'percentage_calculations' | 'strategic_mul_div' | 'divisibility_3_6_9' | 'divisibility_4_8' | 'divisibility_7';
 interface ScopeDef {
@@ -274,4 +309,4 @@ declare const MATHMOG_LEARN_MODULES: LearnModuleDef<string, number>[];
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, type FractionDistractorIdentity, type FractionDistractorIdentityEntry, LearnConfig, LearnDistractorSet, LearnItem, LearnItemState, LearnItemStatus, LearnModuleDef, LearnTier, MATHMOG_LEARN_MODULES, MemorizeLearnTopic, type MissDiagnosis, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, QuizzedLearnTier, REPEATING_PRECISION_FLOOR, type ScopeDef, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getTopicInfo, getTopicsForLevel, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, topicHasDifficulty, truncateFraction, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, type FractionDistractorIdentity, type FractionDistractorIdentityEntry, LearnConfig, LearnDistractorSet, LearnItem, LearnItemState, LearnItemStatus, LearnModuleDef, LearnTier, MATHMOG_LEARN_MODULES, MAX_TRANSCRIPTION_PLACES, MemorizeLearnTopic, type MissDiagnosis, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, QuizzedLearnTier, REPEATING_PRECISION_FLOOR, type ScopeDef, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionEnrichmentPostscript, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getTopicInfo, getTopicsForLevel, isFaithfulFractionTranscription, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, topicHasDifficulty, truncateFraction, validateLearnModuleDef };

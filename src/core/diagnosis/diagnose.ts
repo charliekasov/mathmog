@@ -95,7 +95,7 @@ const diagnoseTimesTablesMiss = (a: number, b: number, wrong: number): MissDiagn
     if (code === 'tt-neighbor-fact') {
       return {
         code,
-        message: `${wrong} is ${f1} × ${f2} — a neighbor fact. ${a} × ${b} = ${answer}.`,
+        message: `${wrong} is ${f1} × ${f2}, a neighbor fact. ${a} × ${b} = ${answer}.`,
       };
     }
     return {
@@ -134,14 +134,14 @@ const diagnoseSquareMiss = (n: number, wrong: number): MissDiagnosis | null => {
       const relation = m < n ? 'short of' : 'past';
       return {
         code: 'sq-row-product',
-        message: `${wrong} is ${n} × ${m} — one ${n} ${relation} ${n} × ${n}. ${n}² = ${answer}.`,
+        message: `${wrong} is ${n} × ${m}, one ${n} ${relation} ${n} × ${n}. ${n}² = ${answer}.`,
       };
     }
   }
   if (n >= 2 && wrong === n * n * n) {
     return {
       code: 'sq-cube-slip',
-      message: `${wrong} is ${n}³ — three ${n}s multiplied. Squaring uses two: ${n} × ${n} = ${answer}.`,
+      message: `${wrong} is ${n}³, three ${n}s multiplied. Squaring uses two: ${n} × ${n} = ${answer}.`,
     };
   }
   for (const m of [n - 2, n + 2]) {
@@ -176,7 +176,7 @@ const diagnoseCubeMiss = (n: number, wrong: number): MissDiagnosis | null => {
   if (n >= 2 && wrong === n * n) {
     return {
       code: 'cb-square-slip',
-      message: `${wrong} is ${n}² — two ${n}s. A cube multiplies three: ${n} × ${n} × ${n} = ${answer}.`,
+      message: `${wrong} is ${n}², two ${n}s. A cube multiplies three: ${n} × ${n} × ${n} = ${answer}.`,
     };
   }
   for (const m of [n - 1, n + 1]) {
@@ -198,7 +198,7 @@ const diagnoseCubeMiss = (n: number, wrong: number): MissDiagnosis | null => {
       };
     }
   }
-  for (const [power, label] of [[4, '⁴ — four'], [5, '⁵ — five']] as const) {
+  for (const [power, label] of [[4, '⁴, four'], [5, '⁵, five']] as const) {
     if (n >= 2 && wrong === n ** power) {
       return {
         code: 'cb-power-slip',
@@ -264,17 +264,17 @@ const detectUnderPrecision = (num: number, den: number, wrong: number): MissDiag
     return {
       code: 'frac-under-precision',
       message: repeating
-        ? `Right idea — ${itemId} starts with ${wrong}, but the digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.`
-        : `Right start — ${itemId} does begin with ${wrong}. The full value is ${display}.`,
+        ? `Right idea. ${itemId} starts with ${wrong}, but the digits keep going: ${display} At ${canonicalPlaces} decimal places, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.`
+        : `Right start. ${itemId} does begin with ${wrong}. The full value is ${display}.`,
     };
   }
   if (wrong === roundFraction(num, den, places)) {
-    const placeWord = places === 1 ? 'decimal' : 'decimals';
+    const placeWord = places === 1 ? 'decimal place' : 'decimal places';
     return {
       code: 'frac-under-precision',
       message: repeating
-        ? `Right idea — ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The digits keep going: ${display} At ${canonicalPlaces} decimals, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.`
-        : `Right idea — ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The full value is ${display}.`,
+        ? `Right idea. ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The digits keep going: ${display} At ${canonicalPlaces} decimal places, that's ${acceptedFormsAt(num, den, canonicalPlaces)}.`
+        : `Right idea. ${wrong} is ${itemId} rounded at ${places} ${placeWord}. The full value is ${display}.`,
     };
   }
   return null;
@@ -296,10 +296,10 @@ const detectLastDigitSlip = (num: number, den: number, wrong: number): MissDiagn
   if (Math.abs(wrongScaled - truncScaled) !== 1 && Math.abs(wrongScaled - roundScaled) !== 1) {
     return null;
   }
-  const placeWord = places === 1 ? 'decimal' : 'decimals';
+  const placeWord = places === 1 ? 'decimal place' : 'decimal places';
   return {
     code: 'frac-last-digit',
-    message: `So close — ${wrong} is one digit off in the last place. ${num}/${den} = ${endSentence(fractionValueDisplay(num, den))} At ${places} ${placeWord}, that's ${acceptedFormsAt(num, den, places)}.`,
+    message: `So close. ${wrong} is one digit off in the last place. ${num}/${den} = ${endSentence(fractionValueDisplay(num, den))} At ${places} ${placeWord}, that's ${acceptedFormsAt(num, den, places)}.`,
   };
 };
 
@@ -321,14 +321,14 @@ const fractionIdentityMessage = (
       if (inFamily) {
         return `${wrong} is what ${identity.fraction} comes to. ${itemId} is ${closeness}${comparison}: ${display}`;
       }
-      return `${wrong} is ${identity.fraction} cut short — ${identity.fraction} = ${endSentence(fractionValueDisplay(refNum, refDen))} ${itemId} is ${closeness}${comparison}: ${display}`;
+      return `${wrong} is ${identity.fraction} cut short. ${identity.fraction} = ${endSentence(fractionValueDisplay(refNum, refDen))} ${itemId} is ${closeness}${comparison}: ${display}`;
     }
     case 'complement':
-      return `${wrong} is what ${identity.fraction} comes to — that's the rest of the whole after ${itemId}. ${itemId} itself is ${display}`;
+      return `${wrong} is what ${identity.fraction} comes to. That's the rest of the whole after ${itemId}. ${itemId} itself is ${display}`;
     case 'rotation':
       // No directional claim ("starts later") — it would be false for 1/7
       // and 3/7; reviewer R1.
-      return `${wrong} is what ${identity.fraction} comes to — sevenths all run the same 142857 loop, just starting at different digits. ${itemId} is ${display}`;
+      return `${wrong} is what ${identity.fraction} comes to. Sevenths all run the same 142857 loop, just starting at different digits. ${itemId} is ${display}`;
     case 'digits':
       return `${wrong} reads the ${num} and ${den} straight across. ${itemId} means ${num} ÷ ${den}: ${display}`;
     case 'digit-swap':
@@ -338,7 +338,7 @@ const fractionIdentityMessage = (
       const percentDisplay = fractionBasesByDenominator[den].repeating
         ? repeatingDecimalDisplay(num * 100, den)
         : String(truncateFraction(num * 100, den, 1));
-      return `${wrong} means ${wrongPercent}%. ${itemId} is ${percentDisplay}% — as a decimal, ${display}`;
+      return `${wrong} means ${wrongPercent}%. ${itemId} is ${percentDisplay}%. As a decimal, ${display}`;
     }
     case 'part-as-decimal': {
       const digit = identity.part === 'numerator' ? num : den;

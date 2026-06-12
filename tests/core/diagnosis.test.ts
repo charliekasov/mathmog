@@ -131,7 +131,7 @@ describe('diagnoseMiss — fractions: detectors', () => {
     expect(diagnoseMiss('fraction_conversions', '5/9', 0.5)).toEqual({
       code: 'frac-under-precision',
       message:
-        'Right idea — 5/9 starts with 0.5, but the digits keep going: 0.5555… At 2 decimals, that\'s 0.55 or 0.56.',
+        'Right idea. 5/9 starts with 0.5, but the digits keep going: 0.5555… At 2 decimal places, that\'s 0.55 or 0.56.',
     });
   });
 
@@ -140,7 +140,7 @@ describe('diagnoseMiss — fractions: detectors', () => {
     expect(diagnoseMiss('fraction_conversions', '8/9', 0.9)).toEqual({
       code: 'frac-under-precision',
       message:
-        'Right idea — 0.9 is 8/9 rounded at 1 decimal. The digits keep going: 0.8888… At 2 decimals, that\'s 0.88 or 0.89.',
+        'Right idea. 0.9 is 8/9 rounded at 1 decimal place. The digits keep going: 0.8888… At 2 decimal places, that\'s 0.88 or 0.89.',
     });
   });
 
@@ -148,18 +148,18 @@ describe('diagnoseMiss — fractions: detectors', () => {
     expect(diagnoseMiss('fraction_conversions', '5/6', 0.8)).toEqual({
       code: 'frac-under-precision',
       message:
-        'Right idea — 5/6 starts with 0.8, but the digits keep going: 0.8333… At 3 decimals, that\'s 0.833.',
+        'Right idea. 5/6 starts with 0.8, but the digits keep going: 0.8333… At 3 decimal places, that\'s 0.833.',
     });
   });
 
   it('terminating under-precision: 0.12 and 0.13 for 1/8', () => {
     expect(diagnoseMiss('fraction_conversions', '1/8', 0.12)).toEqual({
       code: 'frac-under-precision',
-      message: 'Right start — 1/8 does begin with 0.12. The full value is 0.125.',
+      message: 'Right start. 1/8 does begin with 0.12. The full value is 0.125.',
     });
     expect(diagnoseMiss('fraction_conversions', '1/8', 0.13)).toEqual({
       code: 'frac-under-precision',
-      message: 'Right idea — 0.13 is 1/8 rounded at 2 decimals. The full value is 0.125.',
+      message: 'Right idea. 0.13 is 1/8 rounded at 2 decimal places. The full value is 0.125.',
     });
   });
 
@@ -167,7 +167,7 @@ describe('diagnoseMiss — fractions: detectors', () => {
     expect(diagnoseMiss('fraction_conversions', '5/6', 0.84)).toEqual({
       code: 'frac-last-digit',
       message:
-        'So close — 0.84 is one digit off in the last place. 5/6 = 0.8333… At 2 decimals, that\'s 0.83.',
+        'So close. 0.84 is one digit off in the last place. 5/6 = 0.8333… At 2 decimal places, that\'s 0.83.',
     });
   });
 
@@ -203,7 +203,7 @@ describe('diagnoseMiss — fractions: pool identities (one exact pin per kind)',
   it('other-fact, truncated reference: 0.87 for 7/9', () => {
     expect(diagnoseMiss('fraction_conversions', '7/9', 0.87)).toEqual({
       code: 'frac-other-fact',
-      message: '0.87 is 7/8 cut short — 7/8 = 0.875. 7/9 is a bit less: 0.7777…',
+      message: '0.87 is 7/8 cut short. 7/8 = 0.875. 7/9 is a bit less: 0.7777…',
     });
   });
 
@@ -211,7 +211,7 @@ describe('diagnoseMiss — fractions: pool identities (one exact pin per kind)',
     expect(diagnoseMiss('fraction_conversions', '1/3', 0.67)).toEqual({
       code: 'frac-complement',
       message:
-        '0.67 is what 2/3 comes to — that\'s the rest of the whole after 1/3. 1/3 itself is 0.3333…',
+        '0.67 is what 2/3 comes to. That\'s the rest of the whole after 1/3. 1/3 itself is 0.3333…',
     });
   });
 
@@ -219,7 +219,7 @@ describe('diagnoseMiss — fractions: pool identities (one exact pin per kind)',
     expect(diagnoseMiss('fraction_conversions', '5/7', 0.286)).toEqual({
       code: 'frac-rotation',
       message:
-        '0.286 is what 2/7 comes to — sevenths all run the same 142857 loop, just starting at different digits. 5/7 is 0.714285…',
+        '0.286 is what 2/7 comes to. Sevenths all run the same 142857 loop, just starting at different digits. 5/7 is 0.714285…',
     });
   });
 
@@ -240,7 +240,7 @@ describe('diagnoseMiss — fractions: pool identities (one exact pin per kind)',
   it('percent-slip: 0.05 for 1/5', () => {
     expect(diagnoseMiss('fraction_conversions', '1/5', 0.05)).toEqual({
       code: 'frac-percent-slip',
-      message: '0.05 means 5%. 1/5 is 20% — as a decimal, 0.2.',
+      message: '0.05 means 5%. 1/5 is 20%. As a decimal, 0.2.',
     });
   });
 
@@ -322,7 +322,7 @@ describe('diagnoseMiss — times tables (mechanical)', () => {
   it('neighbor fact: 56 for 6 × 9', () => {
     expect(diagnoseMiss('times_tables', '6x9', 56)).toEqual({
       code: 'tt-neighbor-fact',
-      message: '56 is 7 × 8 — a neighbor fact. 6 × 9 = 54.',
+      message: '56 is 7 × 8, a neighbor fact. 6 × 9 = 54.',
     });
   });
 
@@ -372,14 +372,14 @@ describe('diagnoseMiss — perfect squares (mechanical)', () => {
   it('row product: 72 for 9²', () => {
     expect(diagnoseMiss('perfect_squares', '9^2', 72)).toEqual({
       code: 'sq-row-product',
-      message: '72 is 9 × 8 — one 9 short of 9 × 9. 9² = 81.',
+      message: '72 is 9 × 8, one 9 short of 9 × 9. 9² = 81.',
     });
   });
 
   it('cube slip: 27 for 3²', () => {
     expect(diagnoseMiss('perfect_squares', '3^2', 27)).toEqual({
       code: 'sq-cube-slip',
-      message: '27 is 3³ — three 3s multiplied. Squaring uses two: 3 × 3 = 9.',
+      message: '27 is 3³, three 3s multiplied. Squaring uses two: 3 × 3 = 9.',
     });
   });
 
@@ -403,7 +403,7 @@ describe('diagnoseMiss — perfect cubes (mechanical)', () => {
   it('the square slip — the most common cube error: 49 for 7³', () => {
     expect(diagnoseMiss('perfect_cubes', '7^3', 49)).toEqual({
       code: 'cb-square-slip',
-      message: '49 is 7² — two 7s. A cube multiplies three: 7 × 7 × 7 = 343.',
+      message: '49 is 7², two 7s. A cube multiplies three: 7 × 7 × 7 = 343.',
     });
   });
 
@@ -431,7 +431,7 @@ describe('diagnoseMiss — perfect cubes (mechanical)', () => {
   it('power slip: 625 for 5³', () => {
     expect(diagnoseMiss('perfect_cubes', '5^3', 625)).toEqual({
       code: 'cb-power-slip',
-      message: '625 is 5⁴ — four 5s. A cube is three: 5 × 5 × 5 = 125.',
+      message: '625 is 5⁴, four 5s. A cube is three: 5 × 5 × 5 = 125.',
     });
   });
 

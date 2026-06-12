@@ -97,6 +97,57 @@ export const acceptedDecimalFamily = (num: number, den: number): number[] => {
 };
 
 /**
+ * Upper bound on typed decimal places the faithful-transcription check will
+ * verify. Past ~10 places float comparison stops being trustworthy; nobody
+ * faithfully transcribes that far from a teach card. (Moved from the 2A.4
+ * Learn grader when the check was unified into the Drill validator — 2D.3.)
+ */
+export const MAX_TRANSCRIPTION_PLACES = 10;
+
+/**
+ * THE shared faithful-transcription check (2A.4 §4 grader-side ruling,
+ * unified across Learn and Drill in 2D.3 — Charlie-ratified 2026-06-11).
+ * True when `typed` is a faithful truncation or rounding of the fact's true
+ * value at the typed precision, anywhere from the policy floor up to
+ * `MAX_TRANSCRIPTION_PLACES` — the Learn See card displays the full
+ * repeating form ("0.6666…"), so transcribing its digits (0.3333 for 1/3)
+ * must grade correct everywhere. Repeating denominators only; terminating
+ * fractions and non-fraction item ids return false (their exact value is
+ * the only accepted answer — unchanged).
+ *
+ * `space: 'percent'` runs the same check against the percent shift of the
+ * fact (33.33 for 1/3 as a percent), with the floor shifted two places
+ * accordingly (exact integer arithmetic throughout — no float drift).
+ *
+ * This is validator behavior, deliberately NOT a family change: the 2D.1
+ * policy table (`ceilingPlaces`), the displayed families, and the
+ * explanation strings are Charlie-ratified and stay exactly as-is.
+ */
+export const isFaithfulFractionTranscription = (
+    itemId: string,
+    typed: string,
+    space: 'decimal' | 'percent' = 'decimal'
+): boolean => {
+    const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(itemId);
+    if (!match) return false;
+    const num = Number(match[1]);
+    const den = Number(match[2]);
+    const base = FRACTION_BASES[den];
+    if (!base?.repeating) return false;
+    const trimmed = typed.trim();
+    if (trimmed === '') return false;
+    const value = Number(trimmed);
+    if (!Number.isFinite(value)) return false;
+    const places = (trimmed.split('.')[1] ?? '').length;
+    const { floorPlaces } = fractionPrecisionPolicy(den);
+    const minPlaces = space === 'percent' ? Math.max(0, floorPlaces - 2) : floorPlaces;
+    if (places < minPlaces || places > MAX_TRANSCRIPTION_PLACES) return false;
+    const shiftedNum = space === 'percent' ? num * 100 : num;
+    return value === truncateFraction(shiftedNum, den, places)
+        || value === roundFraction(shiftedNum, den, places);
+};
+
+/**
  * The repeating expansion for display: enough digits to show the repetend
  * (at least four for short cycles), then an ellipsis — "0.6666…",
  * "0.1666…", "0.142857…". Also handles shifted values for percent display
@@ -355,7 +406,10 @@ const generateLevel1Problem = (difficulty: Difficulty, history: string[]): Probl
             const base = num / 10;
             explanation = `(${num})² = (${base}×10)² = ${base}²×10² = ${base*base}×100 = ${answer}`;
         }
-        return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
+        return {
+            question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number',
+            fact: { topic: 'perfect_squares', itemId: `${num}^2` },
+        };
     } else if (type === 'cube') {
         let num: number;
         if (difficulty === 'Easy') {
@@ -374,7 +428,10 @@ const generateLevel1Problem = (difficulty: Difficulty, history: string[]): Probl
             const base = num / 10;
             explanation = `(${num})³ = (${base}×10)³ = ${base}³×10³ = ${base*base*base}×1000 = ${answer}`;
         }
-        return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
+        return {
+            question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number',
+            fact: { topic: 'perfect_cubes', itemId: `${num}^3` },
+        };
     } else { // fraction
         const easyDenominators = [4, 5];
         let mediumDenominators = [3, 6, 8, 9, 7];
@@ -425,7 +482,10 @@ const generateLevel1Problem = (difficulty: Difficulty, history: string[]): Probl
                 const answer: number | number[] = specificAnswers && specificAnswers[num]
                     ? specificAnswers[num]
                     : parseFloat(decimalValue.toFixed(precision));
-                return { question: questionText, answer, type: 'Fraction to Decimal', explanation, inputType: 'number' };
+                return {
+                question: questionText, answer, type: 'Fraction to Decimal', explanation, inputType: 'number',
+                fact: { topic: 'fraction_conversions', itemId: `${num}/${den}` },
+            };
             }
             case 'decToFrac': {
                 const simplified = simplifyFraction(num, den);
@@ -444,7 +504,10 @@ const generateLevel1Problem = (difficulty: Difficulty, history: string[]): Probl
                 const answer: number | number[] = specificAnswers && specificAnswers[num]
                     ? specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)))
                     : parseFloat(percentValue.toFixed(percentPrecision));
-                return { question: questionText, answer, type: 'Fraction to Percent', explanation, inputType: 'number' };
+                return {
+                question: questionText, answer, type: 'Fraction to Percent', explanation, inputType: 'number',
+                fact: { topic: 'fraction_conversions', itemId: `${num}/${den}`, percentShift: true },
+            };
             }
             case 'percToFrac': {
                 const simplified = simplifyFraction(num, den);
@@ -1125,7 +1188,10 @@ const generateTimesTablesProblem_targeted = (scope?: string): Problem => {
     }
     const answer = a * b;
     const explanation = `${a} × ${b} = ${answer}.`;
-    return { question: `${a} × ${b} = ?`, answer, type: 'Times Tables', explanation, inputType: 'number' };
+    return {
+        question: `${a} × ${b} = ?`, answer, type: 'Times Tables', explanation, inputType: 'number',
+        fact: { topic: 'times_tables', itemId: `${a}x${b}` },
+    };
 };
 
 const generatePerfectSquareProblem_targeted = (scope?: string): Problem => {
@@ -1133,7 +1199,10 @@ const generatePerfectSquareProblem_targeted = (scope?: string): Problem => {
     const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
     const answer = num * num;
     const explanation = `${num}² = ${num}×${num} = ${answer}`;
-    return { question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number' };
+    return {
+        question: `${num}² = ?`, answer, type: 'Perfect Squares', explanation, inputType: 'number',
+        fact: { topic: 'perfect_squares', itemId: `${num}^2` },
+    };
 };
 
 const generatePerfectCubeProblem_targeted = (scope?: string): Problem => {
@@ -1141,7 +1210,10 @@ const generatePerfectCubeProblem_targeted = (scope?: string): Problem => {
     const num = Math.floor(Math.random() * (hi - lo + 1)) + lo;
     const answer = num * num * num;
     const explanation = `${num}³ = ${num}×${num}×${num} = ${answer}`;
-    return { question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number' };
+    return {
+        question: `${num}³ = ?`, answer, type: 'Perfect Cubes', explanation, inputType: 'number',
+        fact: { topic: 'perfect_cubes', itemId: `${num}^3` },
+    };
 };
 
 const generateFractionProblem_allDenominators = (scope?: string): Problem => {
@@ -1173,7 +1245,10 @@ const generateFractionProblem_allDenominators = (scope?: string): Problem => {
             const answer: number | number[] = specificAnswers && specificAnswers[num]
                 ? specificAnswers[num]
                 : parseFloat(decimalValue.toFixed(precision));
-            return { question: questionText, answer, type: 'Fraction to Decimal', explanation, inputType: 'number' };
+            return {
+                question: questionText, answer, type: 'Fraction to Decimal', explanation, inputType: 'number',
+                fact: { topic: 'fraction_conversions', itemId: `${num}/${den}` },
+            };
         }
         case 'decToFrac': {
             const simplified = simplifyFraction(num, den);
@@ -1187,7 +1262,10 @@ const generateFractionProblem_allDenominators = (scope?: string): Problem => {
             const answer: number | number[] = specificAnswers && specificAnswers[num]
                 ? specificAnswers[num].map(d => parseFloat((d * 100).toFixed(percentPrecision)))
                 : parseFloat(percentValue.toFixed(percentPrecision));
-            return { question: questionText, answer, type: 'Fraction to Percent', explanation, inputType: 'number' };
+            return {
+                question: questionText, answer, type: 'Fraction to Percent', explanation, inputType: 'number',
+                fact: { topic: 'fraction_conversions', itemId: `${num}/${den}`, percentShift: true },
+            };
         }
         case 'percToFrac': {
             const simplified = simplifyFraction(num, den);

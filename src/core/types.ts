@@ -2,6 +2,32 @@
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
+/**
+ * 2D.3: the (topic, itemId) identity of the underlying Memorize fact,
+ * stamped at generation by the branches that know their operands (times
+ * tables, perfect squares, perfect cubes, fraction conversions). Consumed
+ * by the feedback surfaces: the `diagnoseMiss` lookup at miss time (live
+ * identity line + capture-time storage on `MissedMathmogProblem`), the
+ * correct-but-enriched postscript, and the validator's
+ * faithful-transcription check. Absent on estimation problems, Level-2/3
+ * types, text-input conversion directions (decToFrac / percToFrac),
+ * advanced topics without a diagnoser, and pre-existing records —
+ * consumers silently skip diagnosis when missing.
+ */
+export interface ProblemFact {
+  /** The four topics with 2D.2 diagnosers (subset of `MemorizeLearnTopic`). */
+  topic: 'times_tables' | 'perfect_squares' | 'perfect_cubes' | 'fraction_conversions';
+  /** Learn item id, doubling as fact id: "6x8", "7^2", "7^3", "5/6". */
+  itemId: string;
+  /**
+   * Present on fracToPerc problems: the typed answer lives in the percent
+   * shift of the fact's value (83.33 for 5/6). Decimal-space consumers
+   * (`diagnoseMiss`, the enrichment postscript) skip these; the validator's
+   * faithful-transcription check runs in percent space instead.
+   */
+  percentShift?: true;
+}
+
 export interface Problem {
   question: string | string[];
   answer: any;
@@ -9,6 +35,8 @@ export interface Problem {
   explanation: string;
   inputType: 'number' | 'text' | 'buttons' | 'multi-text';
   options?: string[];
+  /** See `ProblemFact` — absent on problems with no diagnosable fact. */
+  fact?: ProblemFact;
   /**
    * Maximum acceptable relative deviation for estimation problems (e.g. 0.20
    * = 20% off still counts as correct). Read by the estimation branch of the
