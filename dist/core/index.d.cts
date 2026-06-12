@@ -1,5 +1,5 @@
-import { D as Difficulty, t as Problem, q as MemorizeLearnTopic, e as LearnItemState, d as LearnItem, c as LearnDistractorSet, g as LearnModuleDef, b as LearnConfig, f as LearnItemStatus, o as LearnTier, Q as QuizzedLearnTier } from '../mathmog-binding-DLmYvzwC.cjs';
-export { A as AdaptiveData, I as INITIAL_LEARN_TIER, L as LEARN_TIER_LADDER, a as LearnActionResult, h as LearnRoundState, i as LearnRoundSummary, j as LearnRoundTrace, k as LearnSessionConfig, l as LearnSessionEvent, m as LearnSessionPhase, n as LearnSessionState, M as MATHMOG_LEARN_CONFIG, p as MEMORIZE_LEARN_TOPICS, r as MissedMathmogProblem, s as MissedMathmogProblemKind, P as PendingLevelUp, u as ProblemFact, R as RECOGNIZE_OPTION_COUNT, S as SpeedChallengeState, v as applyLearnAnswer, w as applyLearnSeen, x as createLearnSession, y as currentLearnItemId, z as getLearnItemState, B as learnSessionPhase, C as mathmogLearnModuleId, E as parseMathmogLearnModuleId, F as startNextLearnRound } from '../mathmog-binding-DLmYvzwC.cjs';
+import { D as Difficulty, u as Problem, q as MemorizeLearnTopic, r as MissDiagnosis, e as LearnItemState, d as LearnItem, c as LearnDistractorSet, g as LearnModuleDef, b as LearnConfig, f as LearnItemStatus, o as LearnTier, Q as QuizzedLearnTier } from '../mathmog-binding-DjIQYQpm.cjs';
+export { A as AdaptiveData, I as INITIAL_LEARN_TIER, L as LEARN_TIER_LADDER, a as LearnActionResult, h as LearnRoundState, i as LearnRoundSummary, j as LearnRoundTrace, k as LearnSessionConfig, l as LearnSessionEvent, m as LearnSessionPhase, n as LearnSessionState, M as MATHMOG_LEARN_CONFIG, p as MEMORIZE_LEARN_TOPICS, s as MissedMathmogProblem, t as MissedMathmogProblemKind, P as PendingLevelUp, v as ProblemFact, R as RECOGNIZE_OPTION_COUNT, S as SpeedChallengeState, w as applyLearnAnswer, x as applyLearnSeen, y as createLearnSession, z as currentLearnItemId, B as getLearnItemState, C as learnSessionPhase, E as mathmogLearnModuleId, F as parseMathmogLearnModuleId, G as startNextLearnRound } from '../mathmog-binding-DjIQYQpm.cjs';
 import { ClassValue } from 'clsx';
 
 declare const simplifyFraction: (num: number, den: number) => string;
@@ -81,22 +81,6 @@ declare const perfectCubes: Record<number, number>;
 declare const perfectFourthPowers: Record<number, number>;
 declare const perfectFifthPowers: Record<number, number>;
 declare const generateProblem: (level: number, difficulty: Difficulty, history: string[], topic?: string, scope?: string) => Problem;
-
-/** One diagnosed miss: a stable pattern id plus the student-facing line. */
-interface MissDiagnosis {
-    /**
-     * Stable error-pattern id (e.g. "tt-adjacent-product",
-     * "frac-under-precision") for telemetry and tests. Never shown to
-     * students.
-     */
-    code: string;
-    /**
-     * One short student-facing line. States a fact about the number, never
-     * the student's intent; ends with the true value so the re-teach rides
-     * along.
-     */
-    message: string;
-}
 
 /** Why a curated fraction distractor is wrong — the curation's error story. */
 type FractionDistractorIdentity = 
@@ -309,4 +293,4 @@ declare const MATHMOG_LEARN_MODULES: LearnModuleDef<string, number>[];
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, type FractionDistractorIdentity, type FractionDistractorIdentityEntry, LearnConfig, LearnDistractorSet, LearnItem, LearnItemState, LearnItemStatus, LearnModuleDef, LearnTier, MATHMOG_LEARN_MODULES, MAX_TRANSCRIPTION_PLACES, MemorizeLearnTopic, type MissDiagnosis, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, QuizzedLearnTier, REPEATING_PRECISION_FLOOR, type ScopeDef, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionEnrichmentPostscript, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getTopicInfo, getTopicsForLevel, isFaithfulFractionTranscription, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, topicHasDifficulty, truncateFraction, validateLearnModuleDef };
+export { DRILL_TOPIC_REGISTRY, Difficulty, type DrillTopic, type DrillTopicInfo, FRACTION_ACCEPTED_DECIMALS, FRACTION_CONVERSIONS_LEARN_MODULES, FRACTION_DISTRACTOR_IDENTITIES, type FractionDistractorIdentity, type FractionDistractorIdentityEntry, LearnConfig, LearnDistractorSet, LearnItem, LearnItemState, LearnItemStatus, LearnModuleDef, LearnTier, MATHMOG_LEARN_MODULES, MAX_TRANSCRIPTION_PLACES, MemorizeLearnTopic, MissDiagnosis, PERFECT_CUBES_LEARN_MODULES, PERFECT_SQUARES_LEARN_MODULES, Problem, QuizzedLearnTier, REPEATING_PRECISION_FLOOR, type ScopeDef, TIMES_TABLES_LEARN_MODULES, acceptedDecimalFamily, applyCorrectAnswer, applyMiss, applySeen, assembleRecognizeOptions, cn, commonFractionConversions, createInitialItemState, createInitialItemStates, deriveItemStatus, diagnoseMiss, dropTier, escalateTier, fractionEnrichmentPostscript, fractionPrecisionPolicy, fractionToDecimalExplanation, fractionToPercentExplanation, generateProblem, getTopicInfo, getTopicsForLevel, isFaithfulFractionTranscription, isItemSolid, isLearnEligible, isLearnEligibleModule, isModuleComplete, isQuizzedTier, perfectCubes, perfectFifthPowers, perfectFourthPowers, perfectSquares, repeatingDecimalDisplay, roundFraction, simplifyFraction, solidProgress, topicHasDifficulty, truncateFraction, validateLearnModuleDef };

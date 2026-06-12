@@ -46,12 +46,33 @@ function checkRetry(
     return { isCorrect: simplifyFraction(num, den) === miss.correctAnswer };
   }
 
-  if (kind === 'number' && typeof miss.correctAnswerNumeric === 'number') {
+  if (kind === 'number') {
     const userNum = parseFloat(trimmed);
-    if (isNaN(userNum)) {
-      return { isCorrect: trimmed === miss.correctAnswer.toLowerCase() };
+    if (typeof miss.correctAnswerNumeric === 'number') {
+      if (isNaN(userNum)) {
+        return { isCorrect: trimmed === miss.correctAnswer.toLowerCase() };
+      }
+      return { isCorrect: Math.abs(userNum - miss.correctAnswerNumeric) < 0.0001 };
     }
-    return { isCorrect: Math.abs(userNum - miss.correctAnswerNumeric) < 0.0001 };
+    // Array-answer problems (repeating-fraction families) have no single
+    // numeric form; their correctAnswer was captured as "0.83 or 0.833 or
+    // 0.8333". 2D.3 ruling: the retry grades against the CAPTURE-TIME
+    // family — consistent with the stored identity line. (Before 2D.3 this
+    // fell through to a raw string compare against the joined display, so
+    // no individual family member could ever pass a retry.) Known, accepted
+    // asymmetry vs the live validator: an over-precision transcription
+    // beyond the stored members (0.83333) grades wrong HERE — the record
+    // carries no fact id to run the transcription check against.
+    if (!isNaN(userNum)) {
+      const members = miss.correctAnswer
+        .split(' or ')
+        .map((s) => parseFloat(s))
+        .filter((n) => !isNaN(n));
+      if (members.length > 0) {
+        return { isCorrect: members.some((n) => Math.abs(userNum - n) < 0.0001) };
+      }
+    }
+    return { isCorrect: trimmed === miss.correctAnswer.toLowerCase() };
   }
 
   if (kind === 'multi-text') {
@@ -131,6 +152,16 @@ function PerMiss({ miss, onAdvance }: PerMissProps) {
         <p className="text-sm text-muted-foreground text-center">
           {studentAnswerLabel}
         </p>
+
+        {/* 2D.3: error-identity line, captured with the miss (`diagnoseMiss`
+            at miss time) — sits between "You said:" and the retry box so the
+            retry is an informed second attempt. Pre-2D.3 records have no
+            stored line and render exactly as before. */}
+        {miss.diagnosisMessage && (
+          <p className="text-sm text-center max-w-md mx-auto">
+            {miss.diagnosisMessage}
+          </p>
+        )}
 
         {!revealed && !retryFeedback?.isCorrect ? (
           <div className="max-w-md mx-auto space-y-3">

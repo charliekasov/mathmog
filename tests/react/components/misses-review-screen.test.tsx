@@ -851,3 +851,132 @@ describe('MissesReviewScreen — exact-match estimation', () => {
     expect(screen.queryByText(/% off — within 10% counts as correct\./)).not.toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Phase 2D.3 — capture-time identity line + capture-time-family retry
+// ---------------------------------------------------------------------------
+
+describe('MissesReviewScreen — 2D.3 identity line (capture-time)', () => {
+  const IDENTITY =
+    "So close. 0.84 is one digit off in the last place. 5/6 = 0.8333… At 2 decimal places, that's 0.83.";
+
+  it('renders diagnosisMessage between "You said:" and the retry box', () => {
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({
+            prompt: 'Convert 5/6 to a decimal (3 decimal places)',
+            correctAnswer: '0.83 or 0.833 or 0.8333',
+            studentAnswer: '0.84',
+            validationKind: 'number',
+            diagnosisMessage: IDENTITY,
+            diagnosisCode: 'frac-last-digit',
+          }),
+        ]}
+        onDone={() => {}}
+      />,
+    );
+
+    const said = screen.getByText('You said: 0.84');
+    const line = screen.getByText(IDENTITY);
+    const retry = screen.getByPlaceholderText('Try the answer again...');
+    // Document order: "You said:" → identity line → retry input.
+    expect(said.compareDocumentPosition(line) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(line.compareDocumentPosition(retry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('pre-2D.3 records (no diagnosisMessage) render exactly as before', () => {
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({
+            prompt: 'Convert 5/6 to a decimal (3 decimal places)',
+            correctAnswer: '0.83 or 0.833 or 0.8333',
+            studentAnswer: '0.84',
+            validationKind: 'number',
+          }),
+        ]}
+        onDone={() => {}}
+      />,
+    );
+
+    expect(screen.getByText('You said: 0.84')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Try the answer again...')).toBeInTheDocument();
+    expect(screen.queryByText(/So close|Full story|one digit off/)).not.toBeInTheDocument();
+  });
+
+  it('the diagnosisCode is never rendered', () => {
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({
+            validationKind: 'number',
+            correctAnswer: '0.83 or 0.833 or 0.8333',
+            diagnosisMessage: IDENTITY,
+            diagnosisCode: 'frac-last-digit',
+          }),
+        ]}
+        onDone={() => {}}
+      />,
+    );
+    expect(screen.queryByText(/frac-last-digit/)).not.toBeInTheDocument();
+  });
+});
+
+describe('MissesReviewScreen — 2D.3 retry grades against the CAPTURE-TIME family', () => {
+  const familyMiss = () =>
+    makeMiss({
+      prompt: 'Convert 5/6 to a decimal (3 decimal places)',
+      correctAnswer: '0.83 or 0.833 or 0.8333',
+      studentAnswer: '0.84',
+      validationKind: 'number',
+      // No correctAnswerNumeric: array answers never capture one.
+    });
+
+  it('accepts any stored family member on retry (0.833)', async () => {
+    const user = userEvent.setup();
+    render(<MissesReviewScreen misses={[familyMiss()]} onDone={() => {}} />);
+
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '0.833');
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(screen.getByText(/Correct — nice recovery!/)).toBeInTheDocument();
+  });
+
+  it('accepts the shortest stored member too (0.83)', async () => {
+    const user = userEvent.setup();
+    render(<MissesReviewScreen misses={[familyMiss()]} onDone={() => {}} />);
+
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '0.83');
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(screen.getByText(/Correct — nice recovery!/)).toBeInTheDocument();
+  });
+
+  it('rejects a non-member retry (0.84 again) and auto-reveals', async () => {
+    const user = userEvent.setup();
+    render(<MissesReviewScreen misses={[familyMiss()]} onDone={() => {}} />);
+
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '0.84');
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(screen.getByText(/Not quite\. Here.s the answer\./)).toBeInTheDocument();
+    expect(screen.getByText('0.83 or 0.833 or 0.8333')).toBeInTheDocument();
+  });
+
+  it('scalar number retries are unchanged (correctAnswerNumeric path)', async () => {
+    const user = userEvent.setup();
+    render(
+      <MissesReviewScreen
+        misses={[
+          makeMiss({ correctAnswer: '48', correctAnswerNumeric: 48, validationKind: 'number', studentAnswer: '54' }),
+        ]}
+        onDone={() => {}}
+      />,
+    );
+
+    await user.type(screen.getByPlaceholderText('Try the answer again...'), '48');
+    await user.click(screen.getByRole('button', { name: /try again/i }));
+    expect(screen.getByText(/Correct — nice recovery!/)).toBeInTheDocument();
+  });
+});

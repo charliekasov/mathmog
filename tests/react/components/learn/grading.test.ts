@@ -206,3 +206,60 @@ describe('learnModuleTopic', () => {
     expect(learnModuleTopic('/missing')).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Phase 2D.3 — Learn and Drill agree by construction (shared helper)
+// ---------------------------------------------------------------------------
+
+import {
+  isFaithfulFractionTranscription,
+  roundFraction,
+  truncateFraction,
+} from '../../../../src/core/math-problems';
+
+describe('2D.3 — shared faithful-transcription single source (Learn ≡ Drill)', () => {
+  // The Drill validator's array-answer acceptance is, by construction,
+  //   family-member match  OR  isFaithfulFractionTranscription(itemId, typed)
+  // — the SAME core helper `gradeLearnRecall` consumes. This sweep pins the
+  // equivalence: for every fraction item and a wide probe set, the Learn
+  // verdict equals that formula, so the two surfaces cannot disagree about
+  // an answer without a test failing here.
+  it('Learn verdict ≡ (family ∪ shared transcription check) over a probe sweep of every fraction item', () => {
+    for (const module of FRACTION_CONVERSIONS_LEARN_MODULES) {
+      for (const item of module.items) {
+        const family = FRACTION_ACCEPTED_DECIMALS[item.id];
+        const [num, den] = item.id.split('/').map(Number);
+        const probes = new Set<string>(family.map(String));
+        for (let places = 1; places <= 8; places++) {
+          probes.add(String(truncateFraction(num, den, places)));
+          probes.add(String(roundFraction(num, den, places)));
+        }
+        // Off-family noise: corrupted last digits + classic confusions.
+        for (const p of [...probes]) {
+          const last = Number(p[p.length - 1]);
+          probes.add(p.slice(0, -1) + String((last + 2) % 10));
+        }
+        probes.add('0.5');
+        probes.add('1');
+        probes.add('0.123456');
+        for (const typed of probes) {
+          const drillVerdict =
+            family.includes(Number(typed)) ||
+            isFaithfulFractionTranscription(item.id, typed);
+          expect(
+            gradeLearnRecall(item, typed).correct,
+            `${item.id} ⊢ "${typed}" (Learn must equal Drill)`
+          ).toBe(drillVerdict);
+        }
+      }
+    }
+  });
+
+  it('the headline unification cases grade correct in Learn (and therefore Drill)', () => {
+    const oneThird = findItem('fraction_conversions/fractions_thirds', '1/3');
+    expect(gradeLearnRecall(oneThird, '0.3333').correct).toBe(true);
+    expect(gradeLearnRecall(oneThird, '0.3334').correct).toBe(false);
+    const oneSeventh = findItem('fraction_conversions/fractions_sevenths', '1/7');
+    expect(gradeLearnRecall(oneSeventh, '0.142857').correct).toBe(true);
+  });
+});

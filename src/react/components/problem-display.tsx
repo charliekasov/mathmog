@@ -116,6 +116,8 @@ export function ProblemDisplay({
     feedback,
     estimationTier,
     estimationDeviation,
+    missDiagnosis,
+    correctEnrichment,
     showAnswer,
     handleCheckAnswer,
     handleNewProblem,
@@ -302,10 +304,14 @@ export function ProblemDisplay({
 
           {showRevealControls && !feedback && !revealedAnswer && (
             <div className="flex flex-row gap-2 justify-center mt-2">
+              {/* h-11 sm:h-9 — 44px mobile hit target, matching the Learn
+                  "Don't know?" precedent (2A.4 ui-glow-up cross-surface flag,
+                  applied here as the 2D.3 rider). */}
               <ui.Button
                 onClick={onShowMe}
                 variant="ghost"
                 size="sm"
+                className="h-11 sm:h-9"
                 data-tour="mathmog-show-me"
               >
                 Show me
@@ -314,6 +320,7 @@ export function ProblemDisplay({
                 onClick={onSkip}
                 variant="ghost"
                 size="sm"
+                className="h-11 sm:h-9"
                 data-tour="mathmog-skip"
               >
                 Skip
@@ -408,10 +415,34 @@ export function ProblemDisplay({
                 }`}
               >
                 {feedback === 'correct' ? (
-                  '✅ Correct!'
+                  <>
+                    ✅ Correct!
+                    {/* 2D.3 correct-but-enriched postscript — one muted line,
+                        non-canonical accepted members of repeating fractions
+                        only. Never renders in speed (this whole feedback
+                        block is speed-suppressed). Not italic: the digits
+                        are the payload. */}
+                    {correctEnrichment && (
+                      <span className="block text-sm font-normal text-muted-foreground mt-1 max-w-md mx-auto">
+                        {correctEnrichment}
+                      </span>
+                    )}
+                  </>
                 ) : (
                   <>
                     <span className="text-2xl">💪</span> Not quite!
+                    {/* 2D.3 error-identity line — `diagnoseMiss` verbatim
+                        (echoes the typed answer by construction; states a
+                        fact about the number, never intent). Null renders
+                        nothing extra: verdict + explanation, as before.
+                        text-foreground, NOT verdict amber: amber-600 at this
+                        size fails AA, and amber is the verdict channel while
+                        this line is the teaching channel (reviewer R4). */}
+                    {missDiagnosis && (
+                      <span className="block text-base font-medium text-foreground mt-1 max-w-md mx-auto">
+                        {missDiagnosis.message}
+                      </span>
+                    )}
                   </>
                 )}
               </div>

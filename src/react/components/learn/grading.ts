@@ -23,6 +23,7 @@ import { FRACTION_ACCEPTED_DECIMALS } from '../../../core/learn/modules';
 import type { LearnItem } from '../../../core/learn/types';
 import {
   fractionPrecisionPolicy,
+  isFaithfulFractionTranscription,
   repeatingDecimalDisplay,
   roundFraction,
   truncateFraction,
@@ -63,13 +64,6 @@ function parseFractionItemId(id: string): { num: number; den: number } | null {
   return match ? { num: Number(match[1]), den: Number(match[2]) } : null;
 }
 
-/**
- * Upper bound on typed decimal places the transcription check will verify.
- * Past ~10 places float comparison stops being trustworthy; nobody
- * faithfully transcribes that far from a teach card.
- */
-const MAX_TRANSCRIPTION_PLACES = 10;
-
 /** Grades a Recall-tier typed answer. Blank or non-numeric input is a miss. */
 export function gradeLearnRecall(
   item: LearnItem<string, number>,
@@ -86,22 +80,12 @@ export function gradeLearnRecall(
   // correct truncation or rounding of the true value at the typed
   // precision — any precision from the floor up — grades correct.
   // More-correct is never wrong; the product never grades its own teach
-  // card's digits as a miss. Note this is Learn-side only: the Drill's
-  // family (ceiling = canonical + 1) is 2D.1-ratified and untouched —
-  // unification is a flagged 2D.3 question.
-  const family = FRACTION_ACCEPTED_DECIMALS[item.id];
-  if (family !== undefined && family.length > 1) {
-    const frac = parseFractionItemId(item.id);
-    const places = (trimmed.split('.')[1] ?? '').length;
-    if (
-      frac !== null &&
-      places >= fractionPrecisionPolicy(frac.den).floorPlaces &&
-      places <= MAX_TRANSCRIPTION_PLACES &&
-      (value === truncateFraction(frac.num, frac.den, places) ||
-        value === roundFraction(frac.num, frac.den, places))
-    ) {
-      return { correct: true, value };
-    }
+  // card's digits as a miss. The check itself lives in core
+  // (`isFaithfulFractionTranscription`) and is SHARED with the Drill
+  // validator — the 2D.3 Charlie-ratified unification; Learn and Drill
+  // agree by construction.
+  if (isFaithfulFractionTranscription(item.id, trimmed)) {
+    return { correct: true, value };
   }
   return { correct: false, value };
 }

@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useState, useCallback, useContext, useRef, type ReactNode, type Dispatch, type SetStateAction } from 'react';
-import { generateProblem, simplifyFraction } from '../../core/math-problems';
+import { generateProblem, simplifyFraction, isFaithfulFractionTranscription } from '../../core/math-problems';
 import { getTopicInfo } from '../../core/drill-topics';
+import { diagnoseMiss, fractionEnrichmentPostscript } from '../../core/diagnosis';
+import type { MissDiagnosis } from '../../core/diagnosis';
 import type { Difficulty, Problem, AdaptiveData, PendingLevelUp } from '../../core/types';
 import type { MissedMathmogProblem, MissedMathmogProblemKind } from '../../core/miss-types';
 
@@ -52,6 +54,18 @@ interface ProblemContextValue {
   feedback: string;
   estimationTier: EstimationTier;
   estimationDeviation: number | null;
+  // Phase 2D.3 feedback intelligence. Both are computed once at check time
+  // from the problem's stamped `fact` (null when the problem carries none —
+  // estimation problems, Level-2/3 types, percent-direction conversions):
+  // - `missDiagnosis`: the error-identity line for an incorrect answer
+  //   (`diagnoseMiss`); null = generic re-teach, render nothing extra.
+  // - `correctEnrichment`: the correct-but-enriched postscript for a
+  //   non-canonical accepted member of a repeating fraction's family.
+  // Rendering is untimed-only — the speed feedback block shows nothing new
+  // mid-drill; speed diagnosis reaches the student via the captured
+  // `diagnosisMessage` on the miss record in misses-review.
+  missDiagnosis: MissDiagnosis | null;
+  correctEnrichment: string | null;
   score: { correct: number; total: number };
   showAnswer: boolean;
   adaptiveData: AdaptiveData;
@@ -84,6 +98,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
   const [feedback, setFeedback] = useState('');
   const [estimationTier, setEstimationTier] = useState<EstimationTier>(null);
   const [estimationDeviation, setEstimationDeviation] = useState<number | null>(null);
+  const [missDiagnosis, setMissDiagnosis] = useState<MissDiagnosis | null>(null);
+  const [correctEnrichment, setCorrectEnrichment] = useState<string | null>(null);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [showAnswer, setShowAnswer] = useState(false);
   const [problemHistory, setProblemHistory] = useState<string[]>([]);
@@ -118,6 +134,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       setFeedback('');
       setEstimationTier(null);
       setEstimationDeviation(null);
+      setMissDiagnosis(null);
+      setCorrectEnrichment(null);
       setShowAnswer(false);
 
       setProblemHistory(prev => {
@@ -143,6 +161,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
       setFeedback('');
       setEstimationTier(null);
       setEstimationDeviation(null);
+      setMissDiagnosis(null);
+      setCorrectEnrichment(null);
       setShowAnswer(false);
     }
   }, [currentLevel, currentDifficulty]); // Removed problemHistory from deps
@@ -250,6 +270,19 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
               : parseFloat(String(acceptableAnswer));
             return !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.0001;
           });
+          // 2D.3 over-precision unification (Charlie-ratified 2026-06-11):
+          // beyond the displayed family, any faithful truncation/rounding of
+          // the true value at the typed precision grades correct — 0.3333
+          // for 1/3 — via the SAME core helper Learn's `gradeLearnRecall`
+          // consumes. Grader-side by design: the family arrays, the 2D.1
+          // policy table, and the explanation strings are untouched.
+          if (!isCorrect && currentProblem.fact?.topic === 'fraction_conversions') {
+            isCorrect = isFaithfulFractionTranscription(
+              currentProblem.fact.itemId,
+              userAnswerTrimmed,
+              currentProblem.fact.percentShift ? 'percent' : 'decimal'
+            );
+          }
         } else {
           const correctNum = typeof currentProblem.answer === 'number'
             ? currentProblem.answer
@@ -271,6 +304,27 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     setFeedback(isCorrect ? 'correct' : 'incorrect');
     setShowAnswer(true);
 
+    // 2D.3 feedback intelligence — both lookups are pure and run once at
+    // check time. Percent-direction problems (fracToPerc) are deliberately
+    // skipped: the decimal-space diagnosers don't apply, and the chat-owned
+    // decision punted them to the generic re-teach (the explanation string
+    // already carries the full story).
+    const fact = currentProblem.fact;
+    let diagnosis: MissDiagnosis | null = null;
+    let enrichment: string | null = null;
+    if (fact && !fact.percentShift) {
+      if (isCorrect && fact.topic === 'fraction_conversions') {
+        enrichment = fractionEnrichmentPostscript(fact.itemId, userAnswerTrimmed);
+      } else if (!isCorrect) {
+        const wrongValue = Number(userAnswerTrimmed);
+        if (userAnswerTrimmed !== '' && Number.isFinite(wrongValue)) {
+          diagnosis = diagnoseMiss(fact.topic, fact.itemId, wrongValue);
+        }
+      }
+    }
+    setMissDiagnosis(diagnosis);
+    setCorrectEnrichment(enrichment);
+
     if (!isCorrect) {
       setMissedProblems(prev => [
         ...prev,
@@ -282,6 +336,11 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
           ...(deviationPercent !== undefined ? { deviationPercent } : {}),
           ...(correctAnswerNumeric !== undefined ? { correctAnswerNumeric } : {}),
           ...(currentProblem.explanation ? { explanation: currentProblem.explanation } : {}),
+          // 2D.3: identity line resolved at CAPTURE time — the record can't
+          // re-derive it later (no fact id stored). Misses-review renders
+          // `diagnosisMessage` between "You said:" and the retry box; the
+          // code is the deferred tutor-telemetry anchor.
+          ...(diagnosis ? { diagnosisMessage: diagnosis.message, diagnosisCode: diagnosis.code } : {}),
         },
       ]);
     }
@@ -373,6 +432,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     setFeedback('');
     setEstimationTier(null);
     setEstimationDeviation(null);
+    setMissDiagnosis(null);
+    setCorrectEnrichment(null);
     setShowAnswer(false);
     setAdaptiveData({
       consecutiveCorrect: 0,
@@ -416,6 +477,8 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
     feedback,
     estimationTier,
     estimationDeviation,
+    missDiagnosis,
+    correctEnrichment,
     score,
     showAnswer,
     adaptiveData,

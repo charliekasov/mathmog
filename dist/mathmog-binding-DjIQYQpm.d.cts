@@ -90,6 +90,22 @@ interface MissedMathmogProblem {
     diagnosisCode?: string;
 }
 
+/** One diagnosed miss: a stable pattern id plus the student-facing line. */
+interface MissDiagnosis {
+    /**
+     * Stable error-pattern id (e.g. "tt-adjacent-product",
+     * "frac-under-precision") for telemetry and tests. Never shown to
+     * students.
+     */
+    code: string;
+    /**
+     * One short student-facing line. States a fact about the number, never
+     * the student's intent; ends with the true value so the re-teach rides
+     * along.
+     */
+    message: string;
+}
+
 /**
  * The graduated retrieval ladder, easy to hard (design doc §2.2). Order is
  * load-bearing: `escalateTier` / `dropTier` move along this array.
@@ -383,4 +399,4 @@ declare function parseMathmogLearnModuleId(moduleId: string): {
     scopeId: string;
 } | null;
 
-export { type AdaptiveData as A, learnSessionPhase as B, mathmogLearnModuleId as C, type Difficulty as D, parseMathmogLearnModuleId as E, startNextLearnRound as F, INITIAL_LEARN_TIER as I, LEARN_TIER_LADDER as L, MATHMOG_LEARN_CONFIG as M, type PendingLevelUp as P, type QuizzedLearnTier as Q, RECOGNIZE_OPTION_COUNT as R, type SpeedChallengeState as S, type LearnActionResult as a, type LearnConfig as b, type LearnDistractorSet as c, type LearnItem as d, type LearnItemState as e, type LearnItemStatus as f, type LearnModuleDef as g, type LearnRoundState as h, type LearnRoundSummary as i, type LearnRoundTrace as j, type LearnSessionConfig as k, type LearnSessionEvent as l, type LearnSessionPhase as m, type LearnSessionState as n, type LearnTier as o, MEMORIZE_LEARN_TOPICS as p, type MemorizeLearnTopic as q, type MissedMathmogProblem as r, type MissedMathmogProblemKind as s, type Problem as t, type ProblemFact as u, applyLearnAnswer as v, applyLearnSeen as w, createLearnSession as x, currentLearnItemId as y, getLearnItemState as z };
+export { type AdaptiveData as A, getLearnItemState as B, learnSessionPhase as C, type Difficulty as D, mathmogLearnModuleId as E, parseMathmogLearnModuleId as F, startNextLearnRound as G, INITIAL_LEARN_TIER as I, LEARN_TIER_LADDER as L, MATHMOG_LEARN_CONFIG as M, type PendingLevelUp as P, type QuizzedLearnTier as Q, RECOGNIZE_OPTION_COUNT as R, type SpeedChallengeState as S, type LearnActionResult as a, type LearnConfig as b, type LearnDistractorSet as c, type LearnItem as d, type LearnItemState as e, type LearnItemStatus as f, type LearnModuleDef as g, type LearnRoundState as h, type LearnRoundSummary as i, type LearnRoundTrace as j, type LearnSessionConfig as k, type LearnSessionEvent as l, type LearnSessionPhase as m, type LearnSessionState as n, type LearnTier as o, MEMORIZE_LEARN_TOPICS as p, type MemorizeLearnTopic as q, type MissDiagnosis as r, type MissedMathmogProblem as s, type MissedMathmogProblemKind as t, type Problem as u, type ProblemFact as v, applyLearnAnswer as w, applyLearnSeen as x, createLearnSession as y, currentLearnItemId as z };

@@ -1009,3 +1009,336 @@ describe('ProblemDisplay — window keydown listener', () => {
     fake.remove();
   });
 });
+
+// ===========================================================================
+// 10. Phase 2D.3 — feedback intelligence (identity line, enrichment
+//     postscript, over-precision unification, capture-time storage).
+// ===========================================================================
+
+import { diagnoseMiss, fractionEnrichmentPostscript } from '../../../src/core/diagnosis';
+
+const frac56Problem = (): Problem => ({
+  question: 'Convert 5/6 to a decimal (3 decimal places)',
+  answer: [0.83, 0.833, 0.8333],
+  type: 'Fraction to Decimal',
+  explanation: '5/6 = 5 ÷ 6 = 0.8333… — to 3 decimal places, 0.833',
+  inputType: 'number',
+  fact: { topic: 'fraction_conversions', itemId: '5/6' },
+});
+
+const frac13Problem = (): Problem => ({
+  question: 'Convert 1/3 to a decimal (2 decimal places)',
+  answer: [0.33, 0.333],
+  type: 'Fraction to Decimal',
+  explanation: '1/3 = 1 ÷ 3 = 0.3333… — to 2 decimal places, 0.33',
+  inputType: 'number',
+  fact: { topic: 'fraction_conversions', itemId: '1/3' },
+});
+
+const frac23Problem = (): Problem => ({
+  question: 'Convert 2/3 to a decimal (2 decimal places)',
+  answer: [0.66, 0.67, 0.666, 0.667],
+  type: 'Fraction to Decimal',
+  explanation: '2/3 = 2 ÷ 3 = 0.6666… — to 2 decimal places, 0.66 or 0.67',
+  inputType: 'number',
+  fact: { topic: 'fraction_conversions', itemId: '2/3' },
+});
+
+const frac17Problem = (): Problem => ({
+  question: 'Convert 1/7 to a decimal (3 decimal places)',
+  answer: [0.14, 0.142, 0.143, 0.1428, 0.1429],
+  type: 'Fraction to Decimal',
+  explanation: '1/7 = 1 ÷ 7 = 0.142857… — to 3 decimal places, 0.142 or 0.143',
+  inputType: 'number',
+  fact: { topic: 'fraction_conversions', itemId: '1/7' },
+});
+
+const frac38Problem = (): Problem => ({
+  question: 'Convert 3/8 to a decimal (3 decimal places)',
+  answer: 0.375,
+  type: 'Fraction to Decimal',
+  explanation: '3/8 = 3 ÷ 8 = 0.375',
+  inputType: 'number',
+  fact: { topic: 'fraction_conversions', itemId: '3/8' },
+});
+
+const frac56PercentProblem = (): Problem => ({
+  question: 'Convert 5/6 to a percent (1 decimal places)',
+  answer: [83, 83.3],
+  type: 'Fraction to Percent',
+  explanation: '5/6 = 0.8333… = 83.3333…% — to 1 decimal place, 83.3% or 83.3%',
+  inputType: 'number',
+  fact: { topic: 'fraction_conversions', itemId: '5/6', percentShift: true },
+});
+
+const ttProblem = (): Problem => ({
+  question: '6 × 8 = ?',
+  answer: 48,
+  type: 'Times Tables',
+  explanation: '6 × 8 = 48.',
+  inputType: 'number',
+  fact: { topic: 'times_tables', itemId: '6x8' },
+});
+
+const activateSpeed = () =>
+  act(() =>
+    handle!.speedChallenge.setSpeedChallenge({
+      enabled: true,
+      duration: 2,
+      timeLeft: 120,
+      isActive: true,
+      results: null,
+    }),
+  );
+
+describe('ProblemDisplay — 2D.3 untimed miss identity line', () => {
+  it('renders the diagnoseMiss line VERBATIM under the verdict on an untimed miss', () => {
+    queueProblems([frac56Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.84'));
+
+    expect(handle!.problem.feedback).toBe('incorrect');
+    const expected = diagnoseMiss('fraction_conversions', '5/6', 0.84)!.message;
+    // Pin the actual copy too, not just the indirection.
+    expect(expected).toBe(
+      "So close. 0.84 is one digit off in the last place. 5/6 = 0.8333… At 2 decimal places, that's 0.83.",
+    );
+    expect(screen.getByText(expected)).toBeInTheDocument();
+    expect(screen.getByText(/Not quite!/)).toBeInTheDocument();
+  });
+
+  it('renders the mechanical times-tables identity line on a free-recall wrong answer', () => {
+    queueProblems([ttProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('54'));
+
+    expect(
+      screen.getByText('54 is 6 × 9. 6 × 8 is one 6 less: 48.'),
+    ).toBeInTheDocument();
+  });
+
+  it('null diagnosis: verdict + explanation only, exactly as before (no extra line)', () => {
+    queueProblems([ttProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    // 50 matches no mechanical identity (no adjacent product, no addition
+    // slip, no digit swap) — diagnoseMiss returns null.
+    act(() => handle!.problem.handleCheckAnswer('50'));
+
+    expect(handle!.problem.feedback).toBe('incorrect');
+    expect(handle!.problem.missDiagnosis).toBeNull();
+    expect(screen.getByText(/Not quite!/)).toBeInTheDocument();
+    expect(screen.getByText('Explanation')).toBeInTheDocument();
+    expect(screen.queryByText(/is 6 ×/)).not.toBeInTheDocument();
+  });
+
+  it('problems without a stamped fact never diagnose (estimation, legacy shapes)', () => {
+    queueProblems([numberProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('5'));
+
+    expect(handle!.problem.feedback).toBe('incorrect');
+    expect(handle!.problem.missDiagnosis).toBeNull();
+    expect(handle!.problem.missedProblems[0].diagnosisMessage).toBeUndefined();
+  });
+
+  it('two-line budget: verdict + ONE identity line, never a postscript on a miss', () => {
+    queueProblems([frac56Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.84'));
+
+    const expected = diagnoseMiss('fraction_conversions', '5/6', 0.84)!.message;
+    expect(screen.getAllByText(expected)).toHaveLength(1);
+    expect(handle!.problem.correctEnrichment).toBeNull();
+    expect(screen.queryByText(/Full story|rounded form/)).not.toBeInTheDocument();
+  });
+
+  it('clears the identity line when the next problem arrives', () => {
+    queueProblems([frac56Problem(), numberProblem({ question: 'Second' })]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.84'));
+    expect(handle!.problem.missDiagnosis).not.toBeNull();
+
+    act(() => handle!.problem.handleNewProblem());
+    expect(handle!.problem.missDiagnosis).toBeNull();
+    expect(
+      screen.queryByText(/one digit off in the last place/),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('ProblemDisplay — 2D.3 SPEED: nothing new mid-drill (pinned)', () => {
+  it('identity line does NOT render during an active speed challenge — but the capture-time lookup still stores it for misses-review', () => {
+    queueProblems([frac56Problem(), frac56Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    activateSpeed();
+    act(() => handle!.problem.handleCheckAnswer('0.84'));
+
+    const message = diagnoseMiss('fraction_conversions', '5/6', 0.84)!.message;
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Not quite!/)).not.toBeInTheDocument();
+
+    // Diagnosis defers to misses-review: stored on the captured record.
+    expect(handle!.problem.missedProblems).toHaveLength(1);
+    expect(handle!.problem.missedProblems[0].diagnosisMessage).toBe(message);
+    expect(handle!.problem.missedProblems[0].diagnosisCode).toBe('frac-last-digit');
+  });
+
+  it('enrichment postscript does NOT render during an active speed challenge', () => {
+    queueProblems([frac23Problem(), frac23Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    activateSpeed();
+    act(() => handle!.problem.handleCheckAnswer('0.67'));
+
+    expect(handle!.problem.feedback).toBe('correct');
+    expect(screen.queryByText(/rounded form|Full story/)).not.toBeInTheDocument();
+  });
+});
+
+describe('ProblemDisplay — 2D.3 Drill over-precision unification (Charlie-ratified)', () => {
+  it('accepts 0.3333 for 1/3 (beyond the displayed family, faithful at the typed precision)', () => {
+    queueProblems([frac13Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.3333'));
+    expect(handle!.problem.feedback).toBe('correct');
+    expect(handle!.problem.score).toEqual({ correct: 1, total: 1 });
+  });
+
+  it('accepts 0.142857 for 1/7 (the full displayed repetend)', () => {
+    queueProblems([frac17Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.142857'));
+    expect(handle!.problem.feedback).toBe('correct');
+  });
+
+  it('rejects 0.3334 and under-floor 0.3 for 1/3 (unfaithful / de-endorsed)', () => {
+    queueProblems([frac13Problem(), frac13Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.3334'));
+    expect(handle!.problem.feedback).toBe('incorrect');
+
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.3'));
+    expect(handle!.problem.feedback).toBe('incorrect');
+  });
+
+  it('accepts faithful percent-space transcriptions on fracToPerc (83.33 for 5/6)', () => {
+    queueProblems([frac56PercentProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('83.33'));
+    expect(handle!.problem.feedback).toBe('correct');
+  });
+
+  it('percent-direction misses carry NO diagnosis (punted to generic re-teach)', () => {
+    queueProblems([frac56PercentProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('84'));
+
+    expect(handle!.problem.feedback).toBe('incorrect');
+    expect(handle!.problem.missDiagnosis).toBeNull();
+    expect(handle!.problem.missedProblems[0].diagnosisMessage).toBeUndefined();
+    expect(handle!.problem.missedProblems[0].diagnosisCode).toBeUndefined();
+  });
+});
+
+describe('ProblemDisplay — 2D.3 correct-but-enriched postscript', () => {
+  it('fires for a rounded (non-canonical) accepted member, muted under the verdict', () => {
+    queueProblems([frac23Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.67'));
+
+    expect(handle!.problem.feedback).toBe('correct');
+    const expected = fractionEnrichmentPostscript('2/3', '0.67')!;
+    expect(expected).toBe(
+      '0.67 is the rounded form. The exact value is 0.6666…, so 0.66 or 0.67 both count.',
+    );
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  it('fires for a short truncation (0.83 for 5/6) with the full-story line', () => {
+    queueProblems([frac56Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.83'));
+
+    expect(
+      screen.getByText(
+        'Full story: 5/6 = 0.8333… The digits repeat forever, so 0.83, 0.833, and so on all count.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('does NOT fire for the canonical truncation (the taught answer)', () => {
+    queueProblems([frac23Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.66'));
+
+    expect(handle!.problem.feedback).toBe('correct');
+    expect(handle!.problem.correctEnrichment).toBeNull();
+    expect(screen.queryByText(/rounded form|Full story/)).not.toBeInTheDocument();
+  });
+
+  it('NEVER fires for terminating fractions (wallpaper risk)', () => {
+    queueProblems([frac38Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.375'));
+
+    expect(handle!.problem.feedback).toBe('correct');
+    expect(handle!.problem.correctEnrichment).toBeNull();
+    expect(screen.queryByText(/rounded form|Full story/)).not.toBeInTheDocument();
+  });
+
+  it('does NOT fire on percent-direction problems (decimal-space surface only)', () => {
+    queueProblems([frac56PercentProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('83.3'));
+
+    expect(handle!.problem.feedback).toBe('correct');
+    expect(handle!.problem.correctEnrichment).toBeNull();
+  });
+});
+
+describe('ProblemDisplay — 2D.3 capture-time identity storage', () => {
+  it('a diagnosed miss stores diagnosisMessage + diagnosisCode on the record', () => {
+    queueProblems([frac56Problem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('0.84'));
+
+    const record = handle!.problem.missedProblems[0];
+    expect(record.diagnosisMessage).toBe(
+      diagnoseMiss('fraction_conversions', '5/6', 0.84)!.message,
+    );
+    expect(record.diagnosisCode).toBe('frac-last-digit');
+    // The pre-2D.3 fields are unchanged alongside.
+    expect(record.studentAnswer).toBe('0.84');
+    expect(record.validationKind).toBe('number');
+  });
+
+  it('an undiagnosed miss stores neither field (record shape as before)', () => {
+    queueProblems([ttProblem()]);
+    render(<Providers />);
+    act(() => handle!.problem.handleNewProblem());
+    act(() => handle!.problem.handleCheckAnswer('50'));
+
+    const record = handle!.problem.missedProblems[0];
+    expect(record.diagnosisMessage).toBeUndefined();
+    expect(record.diagnosisCode).toBeUndefined();
+  });
+});
