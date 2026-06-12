@@ -71,7 +71,8 @@ const rangeItems = (lo: number, hi: number): LearnItem<string, number>[] => {
 const squaresModule = (
   scopeId: string,
   lo: number,
-  hi: number
+  hi: number,
+  nextScopeId?: string
 ): LearnModuleDef<string, number> => {
   const items = rangeItems(lo, hi);
   return {
@@ -82,15 +83,29 @@ const squaresModule = (
       itemId: item.id,
       distractors: SQUARE_DISTRACTORS[Number(item.id.split('^')[0])],
     })),
+    ...(nextScopeId !== undefined && {
+      nextModuleId: mathmogLearnModuleId('perfect_squares', nextScopeId),
+    }),
   };
 };
 
-/** One module per registry scope; ranges match `squaresRangeForScope`. */
+/**
+ * One module per registry scope; ranges match `squaresRangeForScope`.
+ *
+ * Learn-side adjacency (2A.5): 1–5 → 1–10 → 11–15 → 16–20. After 1–10 the
+ * acquisition step is the GENTLER half of the hard range (11²–15², five new
+ * items), not the Drill-side widen rail (squares_full, half review) and not
+ * the full 11–20 block in one bite. 11_15 and 16_20 form a mutual pair for
+ * either entry point. squares_11_20 points DOWN at its unacquired
+ * complement for the cold 11–20 entrant (same precedent as cubes 6–10 →
+ * 1–5; the acquired bit silences it on the canonical path). squares_full is
+ * all-review — no stored next.
+ */
 export const PERFECT_SQUARES_LEARN_MODULES: LearnModuleDef<string, number>[] = [
   squaresModule('squares_full', 1, 20),
-  squaresModule('squares_1_5', 1, 5),
-  squaresModule('squares_1_10', 1, 10),
-  squaresModule('squares_11_15', 11, 15),
-  squaresModule('squares_11_20', 11, 20),
-  squaresModule('squares_16_20', 16, 20),
+  squaresModule('squares_1_5', 1, 5, 'squares_1_10'),
+  squaresModule('squares_1_10', 1, 10, 'squares_11_15'),
+  squaresModule('squares_11_15', 11, 15, 'squares_16_20'),
+  squaresModule('squares_11_20', 11, 20, 'squares_1_10'),
+  squaresModule('squares_16_20', 16, 20, 'squares_11_15'),
 ];

@@ -173,12 +173,16 @@ const ttScopeLabel = (scopeId: string): string => {
 
 const ttModule = (
   scopeId: string,
-  items: LearnItem<string, number>[]
+  items: LearnItem<string, number>[],
+  nextScopeId?: string
 ): LearnModuleDef<string, number> => ({
   id: mathmogLearnModuleId('times_tables', scopeId),
   label: ttScopeLabel(scopeId),
   items,
   distractorSets: items.map(ttDistractorSet),
+  ...(nextScopeId !== undefined && {
+    nextModuleId: mathmogLearnModuleId('times_tables', nextScopeId),
+  }),
 });
 
 /**
@@ -186,15 +190,27 @@ const ttModule = (
  * Memorize fact set; the scope and the module are the same content unit
  * viewed two ways). A test pins this list against the registry so a new
  * scope can't ship without its module decision.
+ *
+ * Learn-side adjacency (2A.5): the acquisition ladder runs easy → 2×–5× →
+ * 6×–9× → 10×–12×; the singleton hard rows chain 6 → 7 → 8 → 9 and exit to
+ * 10×–12×, the next genuinely-new block. Pointing just_9 at the combined
+ * 6×–9× would offer an all-review module to a student who climbed the
+ * singles (user-stories F1: Daniel's just-completed 7× table points at the
+ * 8× table, not 6×–9×). tt_6_9 and tt_10_12 form a mutual pair so either
+ * entry point offers the other; the acquired bit retires whichever is
+ * covered. NOTE: retiring tt_6_9 for a student who climbed the SINGLES
+ * depends on the 2B.2 predicate honoring the fact-coverage contract on
+ * `AcquiredModulePredicate` (offers.ts), not module-id equality. tt_full
+ * has nothing new beyond it — no offer.
  */
 export const TIMES_TABLES_LEARN_MODULES: LearnModuleDef<string, number>[] = [
   ttModule('tt_full', multiRowItems([...TT_FACTORS])),
-  ttModule('tt_easy', multiRowItems([2, 5, 10])),
-  ttModule('tt_2_5', multiRowItems([2, 3, 4, 5])),
-  ttModule('tt_6_9', multiRowItems([6, 7, 8, 9])),
-  ttModule('tt_10_12', multiRowItems([10, 11, 12])),
-  ttModule('tt_just_6', rowItems(6)),
-  ttModule('tt_just_7', rowItems(7)),
-  ttModule('tt_just_8', rowItems(8)),
-  ttModule('tt_just_9', rowItems(9)),
+  ttModule('tt_easy', multiRowItems([2, 5, 10]), 'tt_2_5'),
+  ttModule('tt_2_5', multiRowItems([2, 3, 4, 5]), 'tt_6_9'),
+  ttModule('tt_6_9', multiRowItems([6, 7, 8, 9]), 'tt_10_12'),
+  ttModule('tt_10_12', multiRowItems([10, 11, 12]), 'tt_6_9'),
+  ttModule('tt_just_6', rowItems(6), 'tt_just_7'),
+  ttModule('tt_just_7', rowItems(7), 'tt_just_8'),
+  ttModule('tt_just_8', rowItems(8), 'tt_just_9'),
+  ttModule('tt_just_9', rowItems(9), 'tt_10_12'),
 ];

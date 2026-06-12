@@ -2321,22 +2321,25 @@ var ttScopeLabel = (scopeId) => {
   if (!scope) throw new Error(`Unknown times_tables scope: ${scopeId}`);
   return scope.label;
 };
-var ttModule = (scopeId, items) => ({
+var ttModule = (scopeId, items, nextScopeId) => ({
   id: mathmogLearnModuleId("times_tables", scopeId),
   label: ttScopeLabel(scopeId),
   items,
-  distractorSets: items.map(ttDistractorSet)
+  distractorSets: items.map(ttDistractorSet),
+  ...nextScopeId !== void 0 && {
+    nextModuleId: mathmogLearnModuleId("times_tables", nextScopeId)
+  }
 });
 var TIMES_TABLES_LEARN_MODULES = [
   ttModule("tt_full", multiRowItems([...TT_FACTORS])),
-  ttModule("tt_easy", multiRowItems([2, 5, 10])),
-  ttModule("tt_2_5", multiRowItems([2, 3, 4, 5])),
-  ttModule("tt_6_9", multiRowItems([6, 7, 8, 9])),
-  ttModule("tt_10_12", multiRowItems([10, 11, 12])),
-  ttModule("tt_just_6", rowItems(6)),
-  ttModule("tt_just_7", rowItems(7)),
-  ttModule("tt_just_8", rowItems(8)),
-  ttModule("tt_just_9", rowItems(9))
+  ttModule("tt_easy", multiRowItems([2, 5, 10]), "tt_2_5"),
+  ttModule("tt_2_5", multiRowItems([2, 3, 4, 5]), "tt_6_9"),
+  ttModule("tt_6_9", multiRowItems([6, 7, 8, 9]), "tt_10_12"),
+  ttModule("tt_10_12", multiRowItems([10, 11, 12]), "tt_6_9"),
+  ttModule("tt_just_6", rowItems(6), "tt_just_7"),
+  ttModule("tt_just_7", rowItems(7), "tt_just_8"),
+  ttModule("tt_just_8", rowItems(8), "tt_just_9"),
+  ttModule("tt_just_9", rowItems(9), "tt_10_12")
 ];
 
 // src/core/learn/modules/scope-label.ts
@@ -2380,7 +2383,7 @@ var rangeItems = (lo, hi) => {
   for (let n = lo; n <= hi; n++) items.push(squareItem(n));
   return items;
 };
-var squaresModule = (scopeId, lo, hi) => {
+var squaresModule = (scopeId, lo, hi, nextScopeId) => {
   const items = rangeItems(lo, hi);
   return {
     id: mathmogLearnModuleId("perfect_squares", scopeId),
@@ -2389,16 +2392,19 @@ var squaresModule = (scopeId, lo, hi) => {
     distractorSets: items.map((item) => ({
       itemId: item.id,
       distractors: SQUARE_DISTRACTORS[Number(item.id.split("^")[0])]
-    }))
+    })),
+    ...nextScopeId !== void 0 && {
+      nextModuleId: mathmogLearnModuleId("perfect_squares", nextScopeId)
+    }
   };
 };
 var PERFECT_SQUARES_LEARN_MODULES = [
   squaresModule("squares_full", 1, 20),
-  squaresModule("squares_1_5", 1, 5),
-  squaresModule("squares_1_10", 1, 10),
-  squaresModule("squares_11_15", 11, 15),
-  squaresModule("squares_11_20", 11, 20),
-  squaresModule("squares_16_20", 16, 20)
+  squaresModule("squares_1_5", 1, 5, "squares_1_10"),
+  squaresModule("squares_1_10", 1, 10, "squares_11_15"),
+  squaresModule("squares_11_15", 11, 15, "squares_16_20"),
+  squaresModule("squares_11_20", 11, 20, "squares_1_10"),
+  squaresModule("squares_16_20", 16, 20, "squares_11_15")
 ];
 
 // src/core/learn/modules/perfect-cubes.ts
@@ -2424,7 +2430,7 @@ var rangeItems2 = (lo, hi) => {
   for (let n = lo; n <= hi; n++) items.push(cubeItem(n));
   return items;
 };
-var cubesModule = (scopeId, lo, hi) => {
+var cubesModule = (scopeId, lo, hi, nextScopeId) => {
   const items = rangeItems2(lo, hi);
   return {
     id: mathmogLearnModuleId("perfect_cubes", scopeId),
@@ -2433,14 +2439,17 @@ var cubesModule = (scopeId, lo, hi) => {
     distractorSets: items.map((item) => ({
       itemId: item.id,
       distractors: CUBE_DISTRACTORS[Number(item.id.split("^")[0])]
-    }))
+    })),
+    ...nextScopeId !== void 0 && {
+      nextModuleId: mathmogLearnModuleId("perfect_cubes", nextScopeId)
+    }
   };
 };
 var PERFECT_CUBES_LEARN_MODULES = [
   cubesModule("cubes_full", 1, 10),
-  cubesModule("cubes_1_3", 1, 3),
-  cubesModule("cubes_1_5", 1, 5),
-  cubesModule("cubes_6_10", 6, 10)
+  cubesModule("cubes_1_3", 1, 3, "cubes_1_5"),
+  cubesModule("cubes_1_5", 1, 5, "cubes_6_10"),
+  cubesModule("cubes_6_10", 6, 10, "cubes_1_5")
 ];
 
 // src/core/learn/modules/fractions.ts
@@ -2499,7 +2508,7 @@ var fractionItem = (num, den) => ({
 var itemsForDenominators = (dens) => dens.flatMap(
   (den) => fractionBasesByDenominator[den].numerators.map((num) => fractionItem(num, den))
 );
-var fractionsModule = (scopeId, dens) => {
+var fractionsModule = (scopeId, dens, nextScopeId) => {
   const items = itemsForDenominators(dens);
   return {
     id: mathmogLearnModuleId("fraction_conversions", scopeId),
@@ -2510,19 +2519,22 @@ var fractionsModule = (scopeId, dens) => {
         itemId: item.id,
         distractors: FRACTION_DISTRACTORS[item.id]
       })
-    )
+    ),
+    ...nextScopeId !== void 0 && {
+      nextModuleId: mathmogLearnModuleId("fraction_conversions", nextScopeId)
+    }
   };
 };
 var FRACTION_CONVERSIONS_LEARN_MODULES = [
   fractionsModule("fractions_full", ALL_DENOMINATORS),
-  fractionsModule("fractions_friendly", [2, 4, 5]),
-  fractionsModule("fractions_halves_fourths", [2, 4]),
-  fractionsModule("fractions_fifths", [5]),
-  fractionsModule("fractions_eighths", [8]),
-  fractionsModule("fractions_thirds", [3]),
-  fractionsModule("fractions_sixths", [6]),
+  fractionsModule("fractions_friendly", [2, 4, 5], "fractions_thirds"),
+  fractionsModule("fractions_halves_fourths", [2, 4], "fractions_fifths"),
+  fractionsModule("fractions_fifths", [5], "fractions_thirds"),
+  fractionsModule("fractions_eighths", [8], "fractions_sevenths"),
+  fractionsModule("fractions_thirds", [3], "fractions_ninths"),
+  fractionsModule("fractions_sixths", [6], "fractions_eighths"),
   fractionsModule("fractions_sevenths", [7]),
-  fractionsModule("fractions_ninths", [9])
+  fractionsModule("fractions_ninths", [9], "fractions_sixths")
 ];
 
 // src/core/learn/modules/index.ts

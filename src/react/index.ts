@@ -75,3 +75,12 @@ export {
   learnModuleTopic,
   type LearnRecallVerdict,
 } from './components/learn/grading';
+
+// ── Learn completion offers (Phase 2A.5) ─────────────────────────────
+// Slot content for `LearnSessionHost`'s `completionSlot`: the portal
+// computes offers with `mathmogLearnCompletionOffers` (core) and mounts
+// this with its navigation callback.
+export {
+  LearnCompletionOffers,
+  type LearnCompletionOffersProps,
+} from './components/learn/completion-offers';

@@ -52,7 +52,8 @@ const rangeItems = (lo: number, hi: number): LearnItem<string, number>[] => {
 const cubesModule = (
   scopeId: string,
   lo: number,
-  hi: number
+  hi: number,
+  nextScopeId?: string
 ): LearnModuleDef<string, number> => {
   const items = rangeItems(lo, hi);
   return {
@@ -63,13 +64,24 @@ const cubesModule = (
       itemId: item.id,
       distractors: CUBE_DISTRACTORS[Number(item.id.split('^')[0])],
     })),
+    ...(nextScopeId !== undefined && {
+      nextModuleId: mathmogLearnModuleId('perfect_cubes', nextScopeId),
+    }),
   };
 };
 
-/** One module per registry scope; ranges match `cubesRangeForScope`. */
+/**
+ * One module per registry scope; ranges match `cubesRangeForScope`.
+ *
+ * Learn-side adjacency (2A.5): 1–3 → 1–5 → 6–10 (the new portion of Full,
+ * per user-stories F1: Iris's widen-into-unacquired moment on Perfect Cubes
+ * resolves as "Learn the new portion first"). cubes_1_5 and cubes_6_10 are
+ * a mutual pair; cubes_full is all-review once both halves are acquired —
+ * no stored next.
+ */
 export const PERFECT_CUBES_LEARN_MODULES: LearnModuleDef<string, number>[] = [
   cubesModule('cubes_full', 1, 10),
-  cubesModule('cubes_1_3', 1, 3),
-  cubesModule('cubes_1_5', 1, 5),
-  cubesModule('cubes_6_10', 6, 10),
+  cubesModule('cubes_1_3', 1, 3, 'cubes_1_5'),
+  cubesModule('cubes_1_5', 1, 5, 'cubes_6_10'),
+  cubesModule('cubes_6_10', 6, 10, 'cubes_1_5'),
 ];

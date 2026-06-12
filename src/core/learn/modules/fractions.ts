@@ -175,7 +175,8 @@ const itemsForDenominators = (dens: readonly number[]): LearnItem<string, number
 
 const fractionsModule = (
   scopeId: string,
-  dens: readonly number[]
+  dens: readonly number[],
+  nextScopeId?: string
 ): LearnModuleDef<string, number> => {
   const items = itemsForDenominators(dens);
   return {
@@ -188,21 +189,34 @@ const fractionsModule = (
         distractors: FRACTION_DISTRACTORS[item.id],
       })
     ),
+    ...(nextScopeId !== undefined && {
+      nextModuleId: mathmogLearnModuleId('fraction_conversions', nextScopeId),
+    }),
   };
 };
 
 /**
  * One module per registry scope; denominator lists match the Drill's
  * `fractionDenominatorsForScope` (pinned by test).
+ *
+ * Learn-side adjacency (2A.5): the family ladder climbs by difficulty —
+ * halves/fourths → fifths → thirds (the gentlest repeating family) →
+ * ninths (n/9 = 0.nn is one rule and its anchor is the thirds; teaching it
+ * while 1/3 = 0.33 is fresh converts six facts into one generalization —
+ * 2A.5 reviewer ordering) → sixths (the awkward 0.166/0.833 halving) →
+ * eighths → sevenths (the 142857 wheel, hardest, last). fractions_friendly
+ * exits to thirds, same continuation as fifths. fractions_sevenths is the
+ * end of the ladder and fractions_full is all-review — no stored next on
+ * either.
  */
 export const FRACTION_CONVERSIONS_LEARN_MODULES: LearnModuleDef<string, number>[] = [
   fractionsModule('fractions_full', ALL_DENOMINATORS),
-  fractionsModule('fractions_friendly', [2, 4, 5]),
-  fractionsModule('fractions_halves_fourths', [2, 4]),
-  fractionsModule('fractions_fifths', [5]),
-  fractionsModule('fractions_eighths', [8]),
-  fractionsModule('fractions_thirds', [3]),
-  fractionsModule('fractions_sixths', [6]),
+  fractionsModule('fractions_friendly', [2, 4, 5], 'fractions_thirds'),
+  fractionsModule('fractions_halves_fourths', [2, 4], 'fractions_fifths'),
+  fractionsModule('fractions_fifths', [5], 'fractions_thirds'),
+  fractionsModule('fractions_eighths', [8], 'fractions_sevenths'),
+  fractionsModule('fractions_thirds', [3], 'fractions_ninths'),
+  fractionsModule('fractions_sixths', [6], 'fractions_eighths'),
   fractionsModule('fractions_sevenths', [7]),
-  fractionsModule('fractions_ninths', [9]),
+  fractionsModule('fractions_ninths', [9], 'fractions_sixths'),
 ];

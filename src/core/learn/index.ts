@@ -66,6 +66,14 @@ export {
   MATHMOG_LEARN_MODULES,
 } from './modules';
 
+export type { AcquiredModulePredicate, MathmogOffer } from './offers';
+
+export {
+  resolveLearnNextModule,
+  validateLearnAdjacency,
+  mathmogLearnCompletionOffers,
+} from './offers';
+
 export type { MemorizeLearnTopic } from './mathmog-binding';
 
 export {

@@ -168,6 +168,20 @@ interface LearnModuleDef<TPrompt = string, TAnswer = string> {
     label: string;
     items: LearnItem<TPrompt, TAnswer>[];
     distractorSets: LearnDistractorSet<TAnswer>[];
+    /**
+     * Learn-side adjacency rail (Phase 2A.5): the module id of the acquisition
+     * next step — the "Learn the next set" target the completion screen offers
+     * (design doc §6.6). Stored in the registry, never computed (curriculum doc
+     * §3.6), and curated toward the neighbor with the most NEW content, which
+     * is deliberately not always the Drill-side `widerThan` rail: widening a
+     * Drill into half-review content is fine, but the acquisition next step
+     * should teach mostly-new facts (user-stories F1 — Daniel's just-completed
+     * 7× table points at the 8× table, not the 6×–9× combined scope). Absent
+     * means no acquisition offer in this direction; the absence is the message
+     * (curriculum doc §3.7). Chains may form mutual pairs — the offer engine's
+     * acquired-bit check breaks cycles at resolve time.
+     */
+    nextModuleId?: string;
 }
 /**
  * Per-product tuning. `recallsToSolid` is the completion condition: an item

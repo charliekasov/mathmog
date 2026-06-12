@@ -1,5 +1,5 @@
-import { D as Difficulty, u as Problem, q as MemorizeLearnTopic, r as MissDiagnosis, e as LearnItemState, d as LearnItem, c as LearnDistractorSet, g as LearnModuleDef, b as LearnConfig, f as LearnItemStatus, o as LearnTier, Q as QuizzedLearnTier } from '../mathmog-binding-DjIQYQpm.js';
-export { A as AdaptiveData, I as INITIAL_LEARN_TIER, L as LEARN_TIER_LADDER, a as LearnActionResult, h as LearnRoundState, i as LearnRoundSummary, j as LearnRoundTrace, k as LearnSessionConfig, l as LearnSessionEvent, m as LearnSessionPhase, n as LearnSessionState, M as MATHMOG_LEARN_CONFIG, p as MEMORIZE_LEARN_TOPICS, s as MissedMathmogProblem, t as MissedMathmogProblemKind, P as PendingLevelUp, v as ProblemFact, R as RECOGNIZE_OPTION_COUNT, S as SpeedChallengeState, w as applyLearnAnswer, x as applyLearnSeen, y as createLearnSession, z as currentLearnItemId, B as getLearnItemState, C as learnSessionPhase, E as mathmogLearnModuleId, F as parseMathmogLearnModuleId, G as startNextLearnRound } from '../mathmog-binding-DjIQYQpm.js';
+import { D as Difficulty, u as Problem, q as MemorizeLearnTopic, r as MissDiagnosis, e as LearnItemState, d as LearnItem, c as LearnDistractorSet, g as LearnModuleDef, b as LearnConfig, f as LearnItemStatus, o as LearnTier, Q as QuizzedLearnTier } from '../mathmog-binding-CckcqDZ9.js';
+export { A as AdaptiveData, I as INITIAL_LEARN_TIER, L as LEARN_TIER_LADDER, a as LearnActionResult, h as LearnRoundState, i as LearnRoundSummary, j as LearnRoundTrace, k as LearnSessionConfig, l as LearnSessionEvent, m as LearnSessionPhase, n as LearnSessionState, M as MATHMOG_LEARN_CONFIG, p as MEMORIZE_LEARN_TOPICS, s as MissedMathmogProblem, t as MissedMathmogProblemKind, P as PendingLevelUp, v as ProblemFact, R as RECOGNIZE_OPTION_COUNT, S as SpeedChallengeState, w as applyLearnAnswer, x as applyLearnSeen, y as createLearnSession, z as currentLearnItemId, B as getLearnItemState, C as learnSessionPhase, E as mathmogLearnModuleId, F as parseMathmogLearnModuleId, G as startNextLearnRound } from '../mathmog-binding-CckcqDZ9.js';
 import { ClassValue } from 'clsx';
 
 declare const simplifyFraction: (num: number, den: number) => string;
@@ -265,13 +265,44 @@ declare function isLearnEligible(modules: LearnModuleDef<unknown, unknown>[], mo
  * Memorize fact set; the scope and the module are the same content unit
  * viewed two ways). A test pins this list against the registry so a new
  * scope can't ship without its module decision.
+ *
+ * Learn-side adjacency (2A.5): the acquisition ladder runs easy → 2×–5× →
+ * 6×–9× → 10×–12×; the singleton hard rows chain 6 → 7 → 8 → 9 and exit to
+ * 10×–12×, the next genuinely-new block. Pointing just_9 at the combined
+ * 6×–9× would offer an all-review module to a student who climbed the
+ * singles (user-stories F1: Daniel's just-completed 7× table points at the
+ * 8× table, not 6×–9×). tt_6_9 and tt_10_12 form a mutual pair so either
+ * entry point offers the other; the acquired bit retires whichever is
+ * covered. NOTE: retiring tt_6_9 for a student who climbed the SINGLES
+ * depends on the 2B.2 predicate honoring the fact-coverage contract on
+ * `AcquiredModulePredicate` (offers.ts), not module-id equality. tt_full
+ * has nothing new beyond it — no offer.
  */
 declare const TIMES_TABLES_LEARN_MODULES: LearnModuleDef<string, number>[];
 
-/** One module per registry scope; ranges match `squaresRangeForScope`. */
+/**
+ * One module per registry scope; ranges match `squaresRangeForScope`.
+ *
+ * Learn-side adjacency (2A.5): 1–5 → 1–10 → 11–15 → 16–20. After 1–10 the
+ * acquisition step is the GENTLER half of the hard range (11²–15², five new
+ * items), not the Drill-side widen rail (squares_full, half review) and not
+ * the full 11–20 block in one bite. 11_15 and 16_20 form a mutual pair for
+ * either entry point. squares_11_20 points DOWN at its unacquired
+ * complement for the cold 11–20 entrant (same precedent as cubes 6–10 →
+ * 1–5; the acquired bit silences it on the canonical path). squares_full is
+ * all-review — no stored next.
+ */
 declare const PERFECT_SQUARES_LEARN_MODULES: LearnModuleDef<string, number>[];
 
-/** One module per registry scope; ranges match `cubesRangeForScope`. */
+/**
+ * One module per registry scope; ranges match `cubesRangeForScope`.
+ *
+ * Learn-side adjacency (2A.5): 1–3 → 1–5 → 6–10 (the new portion of Full,
+ * per user-stories F1: Iris's widen-into-unacquired moment on Perfect Cubes
+ * resolves as "Learn the new portion first"). cubes_1_5 and cubes_6_10 are
+ * a mutual pair; cubes_full is all-review once both halves are acquired —
+ * no stored next.
+ */
 declare const PERFECT_CUBES_LEARN_MODULES: LearnModuleDef<string, number>[];
 
 /**
@@ -285,6 +316,16 @@ declare const FRACTION_ACCEPTED_DECIMALS: Record<string, number[]>;
 /**
  * One module per registry scope; denominator lists match the Drill's
  * `fractionDenominatorsForScope` (pinned by test).
+ *
+ * Learn-side adjacency (2A.5): the family ladder climbs by difficulty —
+ * halves/fourths → fifths → thirds (the gentlest repeating family) →
+ * ninths (n/9 = 0.nn is one rule and its anchor is the thirds; teaching it
+ * while 1/3 = 0.33 is fresh converts six facts into one generalization —
+ * 2A.5 reviewer ordering) → sixths (the awkward 0.166/0.833 halving) →
+ * eighths → sevenths (the 142857 wheel, hardest, last). fractions_friendly
+ * exits to thirds, same continuation as fifths. fractions_sevenths is the
+ * end of the ladder and fractions_full is all-review — no stored next on
+ * either.
  */
 declare const FRACTION_CONVERSIONS_LEARN_MODULES: LearnModuleDef<string, number>[];
 

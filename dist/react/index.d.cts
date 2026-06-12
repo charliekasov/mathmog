@@ -1,7 +1,35 @@
 import * as React from 'react';
 import { ComponentType, ReactNode, MouseEvent, ForwardRefExoticComponent, InputHTMLAttributes, RefAttributes, Dispatch, SetStateAction } from 'react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
-import { D as Difficulty, u as Problem, r as MissDiagnosis, A as AdaptiveData, s as MissedMathmogProblem, S as SpeedChallengeState, g as LearnModuleDef, k as LearnSessionConfig, n as LearnSessionState, l as LearnSessionEvent, d as LearnItem, q as MemorizeLearnTopic } from '../mathmog-binding-DjIQYQpm.cjs';
+import { D as Difficulty, u as Problem, r as MissDiagnosis, A as AdaptiveData, s as MissedMathmogProblem, S as SpeedChallengeState, g as LearnModuleDef, k as LearnSessionConfig, n as LearnSessionState, l as LearnSessionEvent, d as LearnItem, q as MemorizeLearnTopic } from '../mathmog-binding-CckcqDZ9.cjs';
+
+/**
+ * One offer on a completion surface. The union is the Phase 3 inheritance
+ * point: the Drill loop's widen/narrow offers reuse these two kinds (a
+ * Drill offer at a different scope, a Learn offer for unacquired content)
+ * rather than minting a third vocabulary.
+ * - `drill-scope`: run Drill mode over a (topic, scope) — the retention
+ *   move, only honest for acquired content.
+ * - `learn-module`: start a Learn module — the acquisition move, only
+ *   offered for unacquired content.
+ * Both carry (topic, scopeId) because for Math Mog a module IS a scope
+ * viewed as a Learn target; the call site builds its trainer URL from
+ * either kind the same way.
+ */
+type MathmogOffer = {
+    kind: 'drill-scope';
+    topic: string;
+    scopeId: string;
+    /** Registry scope label — what the Drill dropdown shows. */
+    scopeLabel: string;
+} | {
+    kind: 'learn-module';
+    moduleId: string;
+    /** Module label (same string as the registry scope label). */
+    moduleLabel: string;
+    topic: string;
+    scopeId: string;
+};
 
 /**
  * Generic data-attribute passthrough. Allows package components to anchor
@@ -510,4 +538,23 @@ declare function learnAnswerDisplay(item: LearnItem<string, number>): string;
  */
 declare function learnAnswerRevealDisplay(item: LearnItem<string, number>): string;
 
-export { CraftyContent, DifficultyScalingContent, ElapsedTimer, EstimateContent, type EstimationTier, type LearnRecallVerdict, LearnSessionHost, type LearnSessionHostProps, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, type OnSaveSession, PrintableStudyGuideProvider, type ProblemContextValue, ProblemDisplay, ProblemProvider, type SavePracticeSessionPayload, ScoreDisplay, type SpeedChallengeContextValue, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, TrainerConfigSelector, type TrainerMode, type TrainerModeContextValue, TrainerModeProvider, type TrainerStateContextValue, TrainerStateProvider, type UIPrimitiveBag, acceptedLearnAnswers, gradeLearnRecall, learnAnswerDisplay, learnAnswerRevealDisplay, learnModuleTopic, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
+interface LearnCompletionOffersProps {
+    /** From `mathmogLearnCompletionOffers` — rendered in the order given. */
+    offers: MathmogOffer[];
+    /**
+     * The call site owns what an offer does (trainer navigation) and its
+     * telemetry (offer-tapped lands portal-side, with 2B.6 / Phase 3.4).
+     */
+    onSelectOffer: (offer: MathmogOffer) => void;
+}
+/**
+ * The §6.6 next-step offers, mounted into `LearnSessionHost`'s
+ * `completionSlot` by the portal (2B.2). Calm by the same rules as the
+ * completion screen it lives in: the buttons name content, never the
+ * student's result — no praise, no exclamation, no score commentary
+ * (curriculum §3.7 copy notes). Renders nothing when there are no offers;
+ * the absence is the message, never narrated.
+ */
+declare function LearnCompletionOffers({ offers, onSelectOffer, }: LearnCompletionOffersProps): react_jsx_runtime.JSX.Element | null;
+
+export { CraftyContent, DifficultyScalingContent, ElapsedTimer, EstimateContent, type EstimationTier, LearnCompletionOffers, type LearnCompletionOffersProps, type LearnRecallVerdict, LearnSessionHost, type LearnSessionHostProps, LevelUpDialog, MathmogTrainerProviders, MathmogUIProvider, MemorizeContent, MissesReviewScreen, type OnSaveSession, PrintableStudyGuideProvider, type ProblemContextValue, ProblemDisplay, ProblemProvider, type SavePracticeSessionPayload, ScoreDisplay, type SpeedChallengeContextValue, SpeedChallengeControls, SpeedChallengeProvider, SpeedChallengeReadyScreen, StudyGuide, TrainerConfigSelector, type TrainerMode, type TrainerModeContextValue, TrainerModeProvider, type TrainerStateContextValue, TrainerStateProvider, type UIPrimitiveBag, acceptedLearnAnswers, gradeLearnRecall, learnAnswerDisplay, learnAnswerRevealDisplay, learnModuleTopic, useMathmogUI, useProblem, useSpeedChallenge, useTrainerMode, useTrainerModeOptional, useTrainerState };
