@@ -369,7 +369,9 @@ declare function MissesReviewScreen({ misses, onDone }: MissesReviewScreenProps)
 
 /**
  * The adaptive-leveling celebration modal. Pops at 7 consecutive correct
- * (managed by ProblemProvider), offers a difficulty upgrade.
+ * (managed by ProblemProvider), offers either a difficulty upgrade
+ * (`changeDifficulty`) or, at the top of the ladder / on no-difficulty
+ * memorize topics, a speed challenge (`trySpeedChallenge`).
  *
  * Self-suppresses during an active speed challenge. Accepts an optional
  * `suppressInHomework` prop to disable the dialog in homework mode — the

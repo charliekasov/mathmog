@@ -1035,18 +1035,22 @@ describe('Adaptive level-up — gate at 7 consecutive correct', () => {
     expect(result.current.adaptiveData.pendingLevelUp?.to).toBeUndefined();
   });
 
-  it('memorize topic (hasDifficulty:false) does NOT level-up at 7 correct — no incoherent "Ready for hard?"', () => {
+  it('memorize topic (hasDifficulty:false) offers a speed challenge at 7 — never the incoherent "Ready for hard?"', () => {
     queueProblems(Array.from({ length: 10 }, (_, i) => textProblem({ question: `Q${i}` })));
     const { result } = renderHook(() => useProblem(), { wrapper });
-    // times_tables is a Memorize topic — no easy/medium/hard axis.
+    // times_tables is a Memorize topic — no easy/medium/hard axis, so a streak
+    // earns the speed-challenge offer instead of a difficulty bump.
     act(() => result.current.handleLevelDifficultyChange(1, 'Medium', 'times_tables'));
     for (let i = 0; i < 7; i += 1) {
       act(() => result.current.handleNewProblem());
       act(() => result.current.handleCheckAnswer('Paris'));
     }
-    // No dialog, and the streak keeps counting (no silent reset at 7).
-    expect(result.current.adaptiveData.pendingLevelUp).toBeNull();
-    expect(result.current.adaptiveData.consecutiveCorrect).toBe(7);
+    expect(result.current.adaptiveData.pendingLevelUp).toMatchObject({
+      action: 'trySpeedChallenge',
+    });
+    // Not a difficulty change — no `to` field, never "Ready for hard?".
+    expect(result.current.adaptiveData.pendingLevelUp?.to).toBeUndefined();
+    expect(result.current.adaptiveData.consecutiveCorrect).toBe(0);
   });
 
   it('difficulty-bearing topic (hasDifficulty:true) STILL levels up at 7 correct', () => {

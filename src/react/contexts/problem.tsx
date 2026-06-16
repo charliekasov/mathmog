@@ -350,15 +350,17 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
         const newConsecutiveCorrect = prev.consecutiveCorrect + 1;
 
         if (newConsecutiveCorrect >= 7 && !prev.pendingLevelUp) {
-          let levelUpData: PendingLevelUp | null = null;
+          let levelUpData: PendingLevelUp;
 
           // Difficulty escalation only applies where a difficulty axis
           // exists — the SAME predicate the config selector uses to show or
           // hide the difficulty control (`!topic || topicHasDifficulty(topic)`).
           // Memorize topics (times_tables, perfect_squares, …) are
-          // hasDifficulty:false, so offering "Ready for hard?" on them is
-          // incoherent (there is no harder variant). Read via the ref to
-          // avoid a stale closure, matching handleNewProblem above.
+          // hasDifficulty:false: there is no harder variant, so instead of the
+          // incoherent "Ready for hard?" they fall through to the
+          // speed-challenge offer — mastery earns "you know these cold, go
+          // fast?". Read the topic via the ref to avoid a stale closure,
+          // matching handleNewProblem above.
           const levelTopic = currentTopicRef.current;
           const difficultyApplies = !levelTopic || topicHasDifficulty(levelTopic);
 
@@ -383,7 +385,10 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
               subtitle: "Ready for hard?",
               options: { yes: "Let's ride", no: "This is my safe space" }
             };
-          } else if (difficultyApplies && currentDifficulty === 'Hard') {
+          } else {
+            // Top of the difficulty ladder (Hard on a difficulty-bearing
+            // topic) OR a no-difficulty memorize topic — both earn the
+            // speed-challenge offer.
             levelUpData = {
               action: 'trySpeedChallenge',
               emojis: '🧠🦵🦵🥱',
@@ -393,20 +398,15 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
             };
           }
 
-          // Only consume the streak when a level-up actually fires. On a
-          // no-difficulty topic there is nothing to escalate to, so keep
-          // counting silently (no dialog) rather than resetting every 7.
-          if (levelUpData !== null) {
-            // PRESERVE the prev streakPure value — the trainer's Free Play
-            // suppression effect reads it at this moment to decide whether
-            // to silently decline. handleLevelUp(accept|decline) is the
-            // canonical re-purify site for the streak that follows.
-            return {
-              ...prev,
-              consecutiveCorrect: 0,
-              pendingLevelUp: levelUpData,
-            };
-          }
+          // PRESERVE the prev streakPure value — the trainer's Free Play
+          // suppression effect reads it at this moment to decide whether to
+          // silently decline. handleLevelUp(accept|decline) is the canonical
+          // re-purify site for the streak that follows.
+          return {
+            ...prev,
+            consecutiveCorrect: 0,
+            pendingLevelUp: levelUpData,
+          };
         }
 
         return { ...prev, consecutiveCorrect: newConsecutiveCorrect };

@@ -2114,7 +2114,7 @@ function ProblemProvider({ children }) {
       setAdaptiveData((prev) => {
         const newConsecutiveCorrect = prev.consecutiveCorrect + 1;
         if (newConsecutiveCorrect >= 7 && !prev.pendingLevelUp) {
-          let levelUpData = null;
+          let levelUpData;
           const levelTopic = currentTopicRef.current;
           const difficultyApplies = !levelTopic || topicHasDifficulty(levelTopic);
           if (difficultyApplies && currentDifficulty === "Easy") {
@@ -2138,7 +2138,7 @@ function ProblemProvider({ children }) {
               subtitle: "Ready for hard?",
               options: { yes: "Let's ride", no: "This is my safe space" }
             };
-          } else if (difficultyApplies && currentDifficulty === "Hard") {
+          } else {
             levelUpData = {
               action: "trySpeedChallenge",
               emojis: "\u{1F9E0}\u{1F9B5}\u{1F9B5}\u{1F971}",
@@ -2147,13 +2147,11 @@ function ProblemProvider({ children }) {
               options: { yes: "Feed my speed need", no: "Lemme practice more (I'm so scared)" }
             };
           }
-          if (levelUpData !== null) {
-            return {
-              ...prev,
-              consecutiveCorrect: 0,
-              pendingLevelUp: levelUpData
-            };
-          }
+          return {
+            ...prev,
+            consecutiveCorrect: 0,
+            pendingLevelUp: levelUpData
+          };
         }
         return { ...prev, consecutiveCorrect: newConsecutiveCorrect };
       });
@@ -2825,8 +2823,16 @@ function LevelUpDialog({
 } = {}) {
   const ui = useMathmogUI();
   const { adaptiveData, handleLevelUp } = useProblem();
-  const { speedChallenge } = useSpeedChallenge();
+  const { speedChallenge, setSpeedChallenge } = useSpeedChallenge();
+  const trainerMode = useTrainerModeOptional();
   const { pendingLevelUp } = adaptiveData;
+  const accept = () => {
+    if (pendingLevelUp?.action === "trySpeedChallenge") {
+      trainerMode?.setTrainerMode("drill");
+      setSpeedChallenge((prev) => ({ ...prev, enabled: true }));
+    }
+    handleLevelUp(true);
+  };
   if (!pendingLevelUp || speedChallenge.isActive || suppressInHomework) return null;
   return /* @__PURE__ */ jsx(ui.Dialog, { open: !!pendingLevelUp, onOpenChange: (open) => !open && handleLevelUp(false), children: /* @__PURE__ */ jsxs(ui.DialogContent, { className: "max-w-xl", "data-tour": "mathmog-levelup", children: [
     /* @__PURE__ */ jsxs(ui.DialogHeader, { children: [
@@ -2852,7 +2858,7 @@ function LevelUpDialog({
         ui.Button,
         {
           type: "button",
-          onClick: () => handleLevelUp(true),
+          onClick: accept,
           className: "w-full sm:w-auto bg-green-600 hover:bg-green-700",
           children: pendingLevelUp.options.yes
         }

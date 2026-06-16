@@ -967,6 +967,29 @@ describe('ProblemDisplay — LevelUpDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: /sounds delicious/i }));
     expect(handle!.problem.adaptiveData.pendingLevelUp).toBeNull();
   });
+
+  it('accepting a trySpeedChallenge offer (memorize topic) enables the speed challenge', async () => {
+    queueProblems(Array.from({ length: 15 }, () => numberProblem()));
+    render(<Providers />);
+    // Memorize topic → the streak earns a speed-challenge offer.
+    act(() => handle!.problem.handleLevelDifficultyChange(1, 'Easy', 'times_tables'));
+    pushSevenCorrect();
+
+    expect(handle!.problem.adaptiveData.pendingLevelUp).toMatchObject({
+      action: 'trySpeedChallenge',
+    });
+    expect(handle!.speedChallenge.speedChallenge.enabled).toBe(false);
+
+    // "yes" copy for the speed-challenge offer.
+    await userEvent.click(
+      screen.getByRole('button', { name: /feed my speed need/i }),
+    );
+    // Offer cleared AND the challenge is enabled (consumer routes to its
+    // duration-pick ready screen). No TrainerModeProvider in this harness, so
+    // the Free-Play→drill switch is a no-op here — exercised at the portal level.
+    expect(handle!.problem.adaptiveData.pendingLevelUp).toBeNull();
+    expect(handle!.speedChallenge.speedChallenge.enabled).toBe(true);
+  });
 });
 
 // ===========================================================================

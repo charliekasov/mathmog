@@ -2,11 +2,14 @@
 
 import { useProblem } from '../contexts/problem';
 import { useSpeedChallenge } from '../contexts/speed-challenge';
+import { useTrainerModeOptional } from '../contexts/trainer-mode';
 import { useMathmogUI } from '../ui/provider';
 
 /**
  * The adaptive-leveling celebration modal. Pops at 7 consecutive correct
- * (managed by ProblemProvider), offers a difficulty upgrade.
+ * (managed by ProblemProvider), offers either a difficulty upgrade
+ * (`changeDifficulty`) or, at the top of the ladder / on no-difficulty
+ * memorize topics, a speed challenge (`trySpeedChallenge`).
  *
  * Self-suppresses during an active speed challenge. Accepts an optional
  * `suppressInHomework` prop to disable the dialog in homework mode — the
@@ -22,8 +25,22 @@ export function LevelUpDialog({
 } = {}) {
   const ui = useMathmogUI();
   const { adaptiveData, handleLevelUp } = useProblem();
-  const { speedChallenge } = useSpeedChallenge();
+  const { speedChallenge, setSpeedChallenge } = useSpeedChallenge();
+  // Optional: present in the full trainer, absent in bare/test mounts.
+  const trainerMode = useTrainerModeOptional();
   const { pendingLevelUp } = adaptiveData;
+
+  // Accepting a speed-challenge offer enables the challenge so the consumer
+  // routes to its duration-pick ready screen. Free Play short-circuits before
+  // that screen (it's a Drill-mode concept), so leave Free Play first. The
+  // changeDifficulty path is handled entirely by handleLevelUp.
+  const accept = () => {
+    if (pendingLevelUp?.action === 'trySpeedChallenge') {
+      trainerMode?.setTrainerMode('drill');
+      setSpeedChallenge((prev) => ({ ...prev, enabled: true }));
+    }
+    handleLevelUp(true);
+  };
 
   // Don't show level-up dialog during active speed challenge or in homework mode.
   // In Free Play the trainer's suppression effect silently declines tainted
@@ -57,7 +74,7 @@ export function LevelUpDialog({
           </ui.Button>
           <ui.Button
             type="button"
-            onClick={() => handleLevelUp(true)}
+            onClick={accept}
             className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
           >
             {pendingLevelUp.options.yes}
