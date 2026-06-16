@@ -1035,6 +1035,36 @@ describe('Adaptive level-up — gate at 7 consecutive correct', () => {
     expect(result.current.adaptiveData.pendingLevelUp?.to).toBeUndefined();
   });
 
+  it('memorize topic (hasDifficulty:false) does NOT level-up at 7 correct — no incoherent "Ready for hard?"', () => {
+    queueProblems(Array.from({ length: 10 }, (_, i) => textProblem({ question: `Q${i}` })));
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    // times_tables is a Memorize topic — no easy/medium/hard axis.
+    act(() => result.current.handleLevelDifficultyChange(1, 'Medium', 'times_tables'));
+    for (let i = 0; i < 7; i += 1) {
+      act(() => result.current.handleNewProblem());
+      act(() => result.current.handleCheckAnswer('Paris'));
+    }
+    // No dialog, and the streak keeps counting (no silent reset at 7).
+    expect(result.current.adaptiveData.pendingLevelUp).toBeNull();
+    expect(result.current.adaptiveData.consecutiveCorrect).toBe(7);
+  });
+
+  it('difficulty-bearing topic (hasDifficulty:true) STILL levels up at 7 correct', () => {
+    queueProblems(Array.from({ length: 10 }, (_, i) => textProblem({ question: `Q${i}` })));
+    const { result } = renderHook(() => useProblem(), { wrapper });
+    // multiplication_estimation has a real difficulty axis.
+    act(() => result.current.handleLevelDifficultyChange(2, 'Medium', 'multiplication_estimation'));
+    for (let i = 0; i < 7; i += 1) {
+      act(() => result.current.handleNewProblem());
+      act(() => result.current.handleCheckAnswer('Paris'));
+    }
+    expect(result.current.adaptiveData.pendingLevelUp).toMatchObject({
+      action: 'changeDifficulty',
+      from: 'Medium',
+      to: 'Hard',
+    });
+  });
+
   it('streak-hits-7 does NOT re-arm while pendingLevelUp is still set', () => {
     queueProblems(Array.from({ length: 20 }, (_, i) => textProblem({ question: `Q${i}` })));
     const { result } = renderHook(() => useProblem(), { wrapper });
@@ -1113,8 +1143,11 @@ describe('handleLevelUp', () => {
       textProblem({ question: 'after-levelup' }),
     ]);
     const { result } = renderHook(() => useProblem(), { wrapper });
-    act(() => result.current.handleLevelDifficultyChange(1, 'Easy', 'fractions'));
-    expect(result.current.currentTopic).toBe('fractions');
+    // Must be a registry topic WITH a difficulty axis — the level-up gate now
+    // suppresses escalation on hasDifficulty:false / unknown topics (matching
+    // the config selector). `multiplication_estimation` is hasDifficulty:true.
+    act(() => result.current.handleLevelDifficultyChange(2, 'Easy', 'multiplication_estimation'));
+    expect(result.current.currentTopic).toBe('multiplication_estimation');
     for (let i = 0; i < 7; i += 1) {
       act(() => result.current.handleNewProblem());
       act(() => result.current.handleCheckAnswer('Paris'));
@@ -1122,7 +1155,7 @@ describe('handleLevelUp', () => {
     expect(result.current.adaptiveData.pendingLevelUp).not.toBeNull();
     act(() => result.current.handleLevelUp(true));
     expect(result.current.currentDifficulty).toBe('Medium');
-    expect(result.current.currentTopic).toBe('fractions');
+    expect(result.current.currentTopic).toBe('multiplication_estimation');
   });
 
   it('accept (trySpeedChallenge) does NOT mutate level/difficulty/topic — only adaptiveData', () => {
@@ -1130,7 +1163,8 @@ describe('handleLevelUp', () => {
       ...Array.from({ length: 7 }, (_, i) => textProblem({ question: `Q${i}` })),
     ]);
     const { result } = renderHook(() => useProblem(), { wrapper });
-    act(() => result.current.handleLevelDifficultyChange(2, 'Hard', 'estimations'));
+    // Registry difficulty-bearing topic (see note above); Hard streak → speed-challenge offer.
+    act(() => result.current.handleLevelDifficultyChange(2, 'Hard', 'multiplication_estimation'));
     for (let i = 0; i < 7; i += 1) {
       act(() => result.current.handleNewProblem());
       act(() => result.current.handleCheckAnswer('Paris'));
@@ -1141,7 +1175,7 @@ describe('handleLevelUp', () => {
     act(() => result.current.handleLevelUp(true));
     expect(result.current.currentLevel).toBe(2);
     expect(result.current.currentDifficulty).toBe('Hard');
-    expect(result.current.currentTopic).toBe('estimations');
+    expect(result.current.currentTopic).toBe('multiplication_estimation');
     expect(result.current.adaptiveData.pendingLevelUp).toBeNull();
   });
 });

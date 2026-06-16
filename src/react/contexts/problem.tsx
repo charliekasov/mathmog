@@ -2,7 +2,7 @@
 
 import { createContext, useState, useCallback, useContext, useRef, type ReactNode, type Dispatch, type SetStateAction } from 'react';
 import { generateProblem, simplifyFraction, isFaithfulFractionTranscription } from '../../core/math-problems';
-import { getTopicInfo } from '../../core/drill-topics';
+import { getTopicInfo, topicHasDifficulty } from '../../core/drill-topics';
 import { diagnoseMiss, fractionEnrichmentPostscript } from '../../core/diagnosis';
 import type { MissDiagnosis } from '../../core/diagnosis';
 import type { Difficulty, Problem, AdaptiveData, PendingLevelUp } from '../../core/types';
@@ -352,7 +352,17 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
         if (newConsecutiveCorrect >= 7 && !prev.pendingLevelUp) {
           let levelUpData: PendingLevelUp | null = null;
 
-          if (currentDifficulty === 'Easy') {
+          // Difficulty escalation only applies where a difficulty axis
+          // exists — the SAME predicate the config selector uses to show or
+          // hide the difficulty control (`!topic || topicHasDifficulty(topic)`).
+          // Memorize topics (times_tables, perfect_squares, …) are
+          // hasDifficulty:false, so offering "Ready for hard?" on them is
+          // incoherent (there is no harder variant). Read via the ref to
+          // avoid a stale closure, matching handleNewProblem above.
+          const levelTopic = currentTopicRef.current;
+          const difficultyApplies = !levelTopic || topicHasDifficulty(levelTopic);
+
+          if (difficultyApplies && currentDifficulty === 'Easy') {
             levelUpData = {
               action: 'changeDifficulty',
               from: 'Easy',
@@ -363,7 +373,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
               subtitle: "Ready for medium?",
               options: { yes: "sounds delicious", no: "nah I'm good" }
             };
-          } else if (currentDifficulty === 'Medium') {
+          } else if (difficultyApplies && currentDifficulty === 'Medium') {
             levelUpData = {
               action: 'changeDifficulty',
               from: 'Medium',
@@ -373,7 +383,7 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
               subtitle: "Ready for hard?",
               options: { yes: "Let's ride", no: "This is my safe space" }
             };
-          } else if (currentDifficulty === 'Hard') {
+          } else if (difficultyApplies && currentDifficulty === 'Hard') {
             levelUpData = {
               action: 'trySpeedChallenge',
               emojis: '🧠🦵🦵🥱',
@@ -383,16 +393,20 @@ export function ProblemProvider({ children }: { children: ReactNode }) {
             };
           }
 
-          // Streak hits 7 — set pendingLevelUp but PRESERVE the prev
-          // streakPure value. The trainer's Free Play suppression effect
-          // reads streakPure at this moment to decide whether to silently
-          // decline the level-up. handleLevelUp(accept or decline) is the
-          // canonical re-purify site for the new streak that follows.
-          return {
-            ...prev,
-            consecutiveCorrect: 0,
-            pendingLevelUp: levelUpData,
-          };
+          // Only consume the streak when a level-up actually fires. On a
+          // no-difficulty topic there is nothing to escalate to, so keep
+          // counting silently (no dialog) rather than resetting every 7.
+          if (levelUpData !== null) {
+            // PRESERVE the prev streakPure value — the trainer's Free Play
+            // suppression effect reads it at this moment to decide whether
+            // to silently decline. handleLevelUp(accept|decline) is the
+            // canonical re-purify site for the streak that follows.
+            return {
+              ...prev,
+              consecutiveCorrect: 0,
+              pendingLevelUp: levelUpData,
+            };
+          }
         }
 
         return { ...prev, consecutiveCorrect: newConsecutiveCorrect };

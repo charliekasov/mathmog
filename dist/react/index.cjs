@@ -2136,7 +2136,9 @@ function ProblemProvider({ children }) {
         const newConsecutiveCorrect = prev.consecutiveCorrect + 1;
         if (newConsecutiveCorrect >= 7 && !prev.pendingLevelUp) {
           let levelUpData = null;
-          if (currentDifficulty === "Easy") {
+          const levelTopic = currentTopicRef.current;
+          const difficultyApplies = !levelTopic || topicHasDifficulty(levelTopic);
+          if (difficultyApplies && currentDifficulty === "Easy") {
             levelUpData = {
               action: "changeDifficulty",
               from: "Easy",
@@ -2147,7 +2149,7 @@ function ProblemProvider({ children }) {
               subtitle: "Ready for medium?",
               options: { yes: "sounds delicious", no: "nah I'm good" }
             };
-          } else if (currentDifficulty === "Medium") {
+          } else if (difficultyApplies && currentDifficulty === "Medium") {
             levelUpData = {
               action: "changeDifficulty",
               from: "Medium",
@@ -2157,7 +2159,7 @@ function ProblemProvider({ children }) {
               subtitle: "Ready for hard?",
               options: { yes: "Let's ride", no: "This is my safe space" }
             };
-          } else if (currentDifficulty === "Hard") {
+          } else if (difficultyApplies && currentDifficulty === "Hard") {
             levelUpData = {
               action: "trySpeedChallenge",
               emojis: "\u{1F9E0}\u{1F9B5}\u{1F9B5}\u{1F971}",
@@ -2166,11 +2168,13 @@ function ProblemProvider({ children }) {
               options: { yes: "Feed my speed need", no: "Lemme practice more (I'm so scared)" }
             };
           }
-          return {
-            ...prev,
-            consecutiveCorrect: 0,
-            pendingLevelUp: levelUpData
-          };
+          if (levelUpData !== null) {
+            return {
+              ...prev,
+              consecutiveCorrect: 0,
+              pendingLevelUp: levelUpData
+            };
+          }
         }
         return { ...prev, consecutiveCorrect: newConsecutiveCorrect };
       });
